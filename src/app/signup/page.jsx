@@ -4,12 +4,14 @@ import { Eye, EyeOff, User, Mail, Lock, Loader2 } from "lucide-react"; // Loader
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 
 export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // New state for loading
+  const route = useRouter();
 
   const formhandler = async (e) => {
     e.preventDefault();
@@ -37,6 +39,7 @@ export default function SignupForm() {
         toast.error(error.message);
       } else if (data.user) {
         toast.success("Account created successfully");
+        route.push("/");
       }
     } catch (err) {
       toast.error("Something went wrong");
@@ -49,6 +52,11 @@ export default function SignupForm() {
   const handleGoogleSignIn = async () => {
       const data = await authClient.signIn.social({
     provider: "google",
+    if(data) {
+      toast.success("Account created successfully");
+      route.push("/");
+    }
+
   });
  
 
