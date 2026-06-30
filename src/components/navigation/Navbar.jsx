@@ -97,19 +97,7 @@ export default function Navbar() {
                 <div className="relative">
                   <button
                     onClick={() => setShowProfile(!showProfile)}
-                    className="
-    w-10
-    h-10
-    rounded-full
-    overflow-hidden
-    bg-orange-500
-    text-white
-    font-bold
-    flex
-    items-center
-    justify-center
-    hover:cursor-pointer
-  "
+                    className="w-10 h-10 rounded-full overflow-hidden bg-orange-500 text-white font-bold flex items-center justify-center hover:cursor-pointer"
                   >
                     {session?.user?.image ? (
                       <Image

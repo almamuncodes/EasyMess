@@ -30,10 +30,10 @@ const  messId  = params?.messid;
       name: userData.name,
       email: userData.email,
       image: userData.image,
-      role: "Manager",      // যেহেতু সে ক্রিয়েটর, তাই ম্যানেজার
+      role: "manager",      
       status: "active",
       userId: userData.id,
-      messId: messId,       // URL থেকে পাওয়া আইডি
+      messId: messId,       
     };
 
     try {
