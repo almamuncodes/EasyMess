@@ -68,7 +68,7 @@ const Page = () => {
             className="flex items-center gap-2 px-8 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all shadow-md hover:shadow-orange-200"
           >
             <Home size={20} />
-            Back to Home
+            back to home
           </Link>
         </div>
       </div>

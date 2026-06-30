@@ -1,6 +1,7 @@
 "use client";
 import { GetUser } from '@/components/action/action';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 const JoinMessPage = () => {
   const [inviteCode, setInviteCode] = useState("");
@@ -20,7 +21,7 @@ const JoinMessPage = () => {
   });
 
   const handleJoinRequest = async () => {
-    if (!inviteCode) return alert("please enter invite code");
+    if (!inviteCode) return toast.warning("please enter invite code");
 
     setLoading(true);
     try {
@@ -31,7 +32,7 @@ const JoinMessPage = () => {
       });
 
       const data = await res.json();
-      console.log(data);
+      
 
       if (res.ok) {
        
@@ -45,16 +46,16 @@ const JoinMessPage = () => {
         // user allcreated
         setModal({
           show: true,
-          title: "Already Requested",
-          message: `You have already sent a request to ${data.messName || "this mess"}. Please wait for approval.`,
+          title: data.message === 'Request already pending please wait for approval' ? "Already Requested": "Already Member",
+          message: ` ${data.message || "something went wrong"}`,
           type: "info"
         });
       } else {
-        alert(data.message || "Something went wrong");
+        toast.error(data.message || "Something went wrong");
       }
       setInviteCode("");
     } catch (error) {
-      alert("Server error, please try again.");
+      toast.error("Server error, please try again.");
     } finally {
       setLoading(false);
     }
@@ -68,6 +69,7 @@ const JoinMessPage = () => {
         <input
           type="text"
           placeholder="Enter Invite Code"
+          
           value={inviteCode}
           onChange={(e) => setInviteCode(e.target.value)}
           className="w-full px-4 py-3 mb-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none"
@@ -75,7 +77,7 @@ const JoinMessPage = () => {
         <button
           onClick={handleJoinRequest}
           disabled={loading}
-          className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
+          className="w-full py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition hover:cursor-pointer"
         >
           {loading ? "Processing..." : "Join Now"}
         </button>

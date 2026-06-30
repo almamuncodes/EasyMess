@@ -61,7 +61,7 @@ export default function CreateMessForm() {
       toast.error("Something went wrong!");
     } catch (err) {
       console.error(err);
-      toast.error("Something went wrong!");
+     toast.error(`${err.message}`);
     } finally {
       setLoading(false);
     }
