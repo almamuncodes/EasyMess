@@ -26,7 +26,7 @@ const Page = () => {
       }
 
       try {
-        const res = await fetch(`http://localhost:5000/api/member/role/${userId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
         const data = await res.json();
         setRole(data.role);
       } catch (error) {
