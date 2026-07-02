@@ -84,13 +84,13 @@ export default function Sidebar() {
     },
     {
       name: "Bills",
-      href: "//bills",
+      href: "/dashboard/user-dashboard/bills",
       icon: Receipt,
       roles: ["member"],
     },
     { name: "Members", href: "/dashboard/manager-dashboard/members", icon: Users, roles: ["manager"] },
     { name: "Bazaar", href: "/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
-    { name: "Payments", href: "/manager-dashboard/payments", icon: Wallet, roles: ["manager"] },
+    { name: "Payments", href: "/dashboard/manager-dashboard/payments", icon: Wallet, roles: ["manager"] },
     { name: "pending-requests", href: "/dashboard/manager-dashboard/pending-requests", icon:  ClipboardClock, roles: ["manager"] },
     {
       name: "All Messes",
