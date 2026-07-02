@@ -141,16 +141,14 @@ export default function ManagerDepositsPage() {
       className={`${fraunces.variable} ${inter.variable} ${notoBengali.variable} ${hindSiliguri.variable}`}
       style={{
         minHeight: "100vh",
-        background: "#FFF7ED",
+        background: "#f2f4f1",
        
         color: "#1B2B22",
       }}
     >
-      {/* ===== হেডার ===== */}
-      {/* আগে eyebrow আর heading দুটোতেই "Deposit Ledger" লেখা ছিল (duplicate),
-          আর top/bottom padding অসামঞ্জস্যপূর্ণ ছিল — দুটোই ঠিক করা হলো */}
+
       <header
-        style={{ background: "#F58331", color: "#FFFFFF" }}
+        style={{ background: "#F5A24E", color: "#FFFFFF" }}
         className="px-6 py-6 md:px-12 md:py-7"
       >
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">

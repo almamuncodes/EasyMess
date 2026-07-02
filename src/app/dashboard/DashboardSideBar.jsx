@@ -36,19 +36,19 @@ export default function Sidebar() {
   const menuItems = [
     {
       name: "Overview",
-      href: "/dashboard",
+      href: "/dashboard/user-dashboard/overview",
       icon: LayoutDashboard,
       roles: ["member"],
     },
     {
       name: "Overview",
-      href: "/manager-dashboard",
+      href: "/dashboard/manager-dashboard/overview",
       icon: LayoutDashboard,
       roles: [ "manager"],
     },
     {
       name: "Overview",
-      href: "/dashboard",
+      href: "/dashboard/admin-dashboard/overview",
       icon: LayoutDashboard,
       roles: [ "admin"],
     },
@@ -89,7 +89,8 @@ export default function Sidebar() {
       roles: ["member"],
     },
     { name: "Members", href: "/dashboard/manager-dashboard/members", icon: Users, roles: ["manager"] },
-    { name: "Bazaar", href: "/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
+    { name: "Bazaar", href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
+    { name: "Bazaar", href: "/dashboard/user-dashboard/bazaar", icon: Store, roles: ["member"] },
     { name: "Payments", href: "/dashboard/manager-dashboard/payments", icon: Wallet, roles: ["manager"] },
     { name: "pending-requests", href: "/dashboard/manager-dashboard/pending-requests", icon:  ClipboardClock, roles: ["manager"] },
     {
