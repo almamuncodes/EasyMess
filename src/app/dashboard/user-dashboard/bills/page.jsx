@@ -17,10 +17,6 @@ const hindSiliguri = Hind_Siliguri({
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-/* ============================================================
-   ছোট Helper ফাংশন — এগুলো শুধু ডেটাকে সুন্দর ফরম্যাটে দেখায়,
-   কোনো UI render করে না
-   ============================================================ */
 function taka(n) {
   return "৳" + Number(n || 0).toLocaleString("en-BD");
 }
@@ -33,10 +29,6 @@ function formatDate(d) {
   });
 }
 
-/* ============================================================
-   মূল পেজ — এখানে শুধু ডেটা fetch করা আর বাকি ছোট
-   component গুলোকে সাজানো হচ্ছে (কোনো ভারী JSX নেই)
-   ============================================================ */
 export default function MyDepositsPage() {
   const user = GetUser();
   const userId = user?.user?.id;
@@ -45,6 +37,7 @@ export default function MyDepositsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [selectedNote, setSelectedNote] = useState(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -80,8 +73,6 @@ export default function MyDepositsPage() {
       <div className="max-w-2xl mx-auto px-6 py-10 md:py-14">
         <h1 className="text-2xl font-semibold mb-8">My Deposits</h1>
 
-        {/* সবগুলো নিচের component-ই "reusable" — মানে চাইলে অন্য
-            যেকোনো পেজে import করে আবার ব্যবহার করা যাবে */}
         <TotalCard total={total} count={history.length} />
 
         {errorMsg && <ErrorBanner message={errorMsg} />}
@@ -95,18 +86,46 @@ export default function MyDepositsPage() {
         ) : history.length === 0 ? (
           <EmptyState />
         ) : (
-          
           <div className="flex flex-col gap-3">
             {history.map((deposit) => (
-              <DepositRow key={deposit._id} deposit={deposit} />
+              <DepositRow 
+                key={deposit._id} 
+                deposit={deposit} 
+                onClick={() => setSelectedNote(deposit)} 
+              />
             ))}
           </div>
         )}
       </div>
+
+      {/* Note Detail Modal */}
+      {selectedNote && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6"
+          onClick={() => setSelectedNote(null)}
+        >
+          <div 
+            className="bg-white p-6 rounded-xl w-full max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-lg mb-1">Details</h3>
+            <p className="text-xs text-gray-500 mb-4">{formatDate(selectedNote.date)}</p>
+            <p className="text-sm text-gray-800 leading-relaxed">
+              {selectedNote.note || "No additional note provided."}
+            </p>
+            <button 
+              className="mt-6 w-full py-2.5 rounded-lg text-sm font-medium text-white"
+              style={{ background: "#F58331" }}
+              onClick={() => setSelectedNote(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
 
 function TotalCard({ total, count }) {
   return (
@@ -127,21 +146,20 @@ function TotalCard({ total, count }) {
   );
 }
 
-
-function DepositRow({ deposit }) {
+function DepositRow({ deposit, onClick }) {
   const noteText = deposit.note
     ? `${formatDate(deposit.date)} · ${deposit.note}`
     : formatDate(deposit.date);
 
   return (
     <div
-      className="flex items-center justify-between px-4 py-4 rounded-lg"
+      onClick={onClick}
+      className="flex items-center justify-between px-4 py-4 rounded-lg cursor-pointer"
       style={{ border: "3px solid #EDEDED", background: "#f3f3f3" }}
     >
       <div className="min-w-0">
         <p className="text-sm font-medium tabular-nums">{taka(deposit.amount)}</p>
-        {/* title attribute = hover করলে ব্রাউজার নিজে থেকেই পুরো টেক্সট দেখায় */}
-        <p className="text-xs truncate" style={{ color: "#8A8A78" }} title={noteText}>
+        <p className="text-xs truncate" style={{ color: "#8A8A78" }}>
           {noteText}
         </p>
       </div>
@@ -149,10 +167,6 @@ function DepositRow({ deposit }) {
     </div>
   );
 }
-
-
-//    PaymentBadge — Cash / bKash / Nagad / Bank ছোট বৃত্তাকার ট্যাগ
-//    Props: method (string)
 
 function PaymentBadge({ method }) {
   return (
@@ -165,11 +179,9 @@ function PaymentBadge({ method }) {
   );
 }
 
-//    ErrorBanner — কোনো সমস্যা হলে লাল/গ্রে বক্সে মেসেজ দেখায়
-//    Props: message (string)
-//    ============================================================ */
 function ErrorBanner({ message }) {
   return (
+    
     <div
       className="rounded-lg px-4 py-3 text-sm mb-6"
       style={{ border: "1px solid #E5E5E5", color: "#525252" }}
@@ -179,9 +191,6 @@ function ErrorBanner({ message }) {
   );
 }
 
-//    EmptyState — কোনো deposit না থাকলে এই মেসেজ দেখায়
-//    Props নেই — সবসময় একই দেখায়
-//    ============================================================ */
 function EmptyState() {
   return (
     <div className="text-center py-16" style={{ color: "#A3A3A3" }}>
@@ -189,7 +198,6 @@ function EmptyState() {
     </div>
   );
 }
-
 
 function LoadingSkeleton() {
   return (
