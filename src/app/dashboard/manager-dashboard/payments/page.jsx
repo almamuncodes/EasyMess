@@ -8,6 +8,7 @@ import {
   Hind_Siliguri,
 } from "next/font/google";
 import { GetUser } from "@/components/action/action";
+import Image from "next/image";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -297,7 +298,9 @@ function MemberLedgerRow({
       >
         <div className="flex items-center gap-3">
           {member.image ? (
-            <img
+            <Image
+            width={40}
+            height={40}
               src={member.image}
               alt={member.name}
               className="w-10 h-10 rounded-full object-cover shrink-0"
@@ -347,7 +350,7 @@ function MemberLedgerRow({
             <button
               onClick={onAdd}
               className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-lg"
-              style={{ background: "#1B3A2F", color: "#F1EFE2" }}
+              style={{ background: "#ff6900", color: "#F1EFE2" }}
             >
               <PlusIcon /> New Deposit
             </button>
@@ -461,15 +464,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
         className="w-full max-w-sm rounded-2xl overflow-hidden"
         style={{ background: "#F7F6EE" }}
       >
-        <div
-          style={{
-            height: 14,
-            backgroundImage:
-              "radial-gradient(circle at 10px 0, transparent 6px, #F7F6EE 7px)",
-            backgroundSize: "20px 14px",
-            backgroundColor: "#1B3A2F",
-          }}
-        />
+       
         <div className="px-6 py-5">
           <h2
            
@@ -565,7 +560,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
               type="submit"
               disabled={saving}
               className="flex-1 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
-              style={{ background: "#1B3A2F", color: "#F1EFE2" }}
+              style={{ background: "#ff6900", color: "#F1EFE2" }}
             >
               {saving ? "Saving..." : "Save"}
             </button>
@@ -602,7 +597,7 @@ function ConfirmDialog({ onCancel, onConfirm }) {
           <button
             onClick={onConfirm}
             className="flex-1 py-2 rounded-lg text-sm font-medium"
-            style={{ background: "#C23E73", color: "#FFFFFF" }}
+            style={{ background: "#ff6900", color: "#FFFFFF" }}
           >
             Delete
           </button>

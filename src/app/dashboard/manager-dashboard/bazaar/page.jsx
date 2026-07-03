@@ -337,7 +337,7 @@ function BazaarForm({ initial, isEditing, onSave, onCancelEdit }) {
         <button
           type="submit"
           disabled={saving}
-          className="px-5 py-2.5 rounded-lg text-sm font-medium bg-[#1B3A2F] text-white disabled:opacity-60"
+          className="px-5 py-2.5 rounded-lg text-sm font-medium bg-[#ff6900] text-white disabled:opacity-60"
         >
           {saving ? "Saving..." : isEditing ? "Update Bazaar" : "Save Bazaar"}
         </button>
@@ -346,11 +346,7 @@ function BazaarForm({ initial, isEditing, onSave, onCancelEdit }) {
   );
 }
 
-/* ============================================================
-   ItemRow — one item's title + amount inputs, with a remove button
-   Responsive: mobile-এ title উপরে full-width, amount + cross নিচে পাশাপাশি
-   Props: item, canRemove, onChangeTitle, onChangeAmount, onRemove
-   ============================================================ */
+
 function ItemRow({ item, canRemove, onChangeTitle, onChangeAmount, onRemove }) {
   return (
     <div className="flex flex-col sm:flex-row gap-2">
@@ -382,11 +378,7 @@ function ItemRow({ item, canRemove, onChangeTitle, onChangeAmount, onRemove }) {
   );
 }
 
-/* ============================================================
-   BazaarHistoryCard — one saved bazaar entry in the history list
-   চলতি মাসের এন্ট্রি না হলে Edit/Delete বাটনের বদলে Locked ব্যাজ দেখাবে
-   Props: bazaar (object), onEdit (function), onDelete (function)
-   ============================================================ */
+
 function BazaarHistoryCard({ bazaar, onEdit, onDelete }) {
   const itemNames = bazaar.items.map((i) => i.title).join(", ");
   const editable = isEditable(bazaar);
@@ -410,7 +402,7 @@ function BazaarHistoryCard({ bazaar, onEdit, onDelete }) {
             <button onClick={onEdit} className="text-xs font-medium text-neutral-600 hover:underline">
               Edit
             </button>
-            <button onClick={onDelete} className="text-xs font-medium text-rose-600 hover:underline">
+            <button onClick={onDelete} className="text-xs font-medium text-[#ff6900] hover:underline">
               Delete
             </button>
           </>
@@ -442,7 +434,7 @@ function ConfirmDialog({ onCancel, onConfirm }) {
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 py-2 rounded-lg text-sm font-medium bg-rose-600 text-white"
+            className="flex-1 py-2 rounded-lg text-sm font-medium bg-[#ff6900] text-white"
           >
             Delete
           </button>

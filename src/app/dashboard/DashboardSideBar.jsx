@@ -78,7 +78,7 @@ export default function Sidebar() {
     },
     {
       name: "Bills",
-      href: "/manager-dashboard/bills",
+      href: "/dashboard/manager-dashboard/bills",
       icon: Receipt,
       roles: [ "manager"],
     },
@@ -120,7 +120,7 @@ export default function Sidebar() {
     },
     {
       name: "Settings",
-      href: "/manager-dashboard/settings",
+      href: "/dashboard/manager-dashboard/settings",
       icon: Settings,
       roles: [ "manager"],
     },
