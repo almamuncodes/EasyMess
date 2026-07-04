@@ -62,10 +62,10 @@ export default function MyDepositsPage() {
 
   return (
     <div
-      className={`${inter.variable} ${hindSiliguri.variable}`}
+      className={`${inter.variable} ${hindSiliguri.variable} rounded-2xl border-none`}
       style={{
         minHeight: "100vh",
-        background: "#F5F5F5",
+        background: "#f2f4f1",
         color: "#171717",
         fontFamily: "var(--font-body), var(--font-body-bn), sans-serif",
       }}

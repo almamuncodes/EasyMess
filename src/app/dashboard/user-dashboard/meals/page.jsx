@@ -101,7 +101,7 @@ const MealCalendar = () => {
                   key={type}
                   onClick={() => {
                     if (isBeforeJoining) return;
-                    if (isPast) { toast.error("you can't edit the meal after joining"); return; }
+                    if (isPast) { toast.error("you can't edit the past event"); return; }
                     handleUpdate(day, type, active);
                   }}
                   className={`h-10 rounded ${bgColor} ${!isBeforeJoining && 'hover:cursor-pointer'}`}

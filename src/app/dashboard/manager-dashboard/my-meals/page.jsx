@@ -59,7 +59,7 @@ const MealCalendar = () => {
   
 
   return (
-    <div className="p-5 bg-white rounded-xl shadow max-w-lg mx-auto">
+    <div className="p-5 bg-[#f2f4f1] rounded-xl shadow max-w-lg mx-auto">
   
       <div className="flex justify-between mb-5">
         <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 rounded">←</button>
@@ -101,7 +101,7 @@ const MealCalendar = () => {
                   key={type}
                   onClick={() => {
                     if (isBeforeJoining) return;
-                    if (isPast) { toast.error("you can't edit the meal after joining"); return; }
+                    if (isPast) { toast.error("you can't edit the past event"); return; }
                     handleUpdate(day, type, active);
                   }}
                   className={`h-10 rounded ${bgColor} ${!isBeforeJoining && 'hover:cursor-pointer'}`}

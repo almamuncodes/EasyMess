@@ -139,7 +139,7 @@ export default function ManagerDepositsPage() {
 
   return (
     <div
-      className={`${fraunces.variable} ${inter.variable} ${notoBengali.variable} ${hindSiliguri.variable}`}
+      className={`${fraunces.variable} ${inter.variable} ${notoBengali.variable} ${hindSiliguri.variable} border-none rounded-b-2xl `}
       style={{
         minHeight: "100vh",
         background: "#f2f4f1",
@@ -150,7 +150,7 @@ export default function ManagerDepositsPage() {
 
       <header
         style={{ background: "#F5A24E", color: "#FFFFFF" }}
-        className="px-6 py-6 md:px-12 md:py-7"
+        className="px-6 py-6 md:px-12 md:py-7 border-none rounded-t-2xl"
       >
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
           <div>

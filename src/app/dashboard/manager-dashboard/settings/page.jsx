@@ -92,7 +92,7 @@ export default function ManagerSettingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-400 border-t-transparent" />
       </div>
     );
   }
@@ -106,7 +106,7 @@ export default function ManagerSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-10 ">
       {/* Header / Mess Info Card */}
       <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-orange-100 shadow-sm">
         <div className="relative h-44 w-full bg-gray-100">

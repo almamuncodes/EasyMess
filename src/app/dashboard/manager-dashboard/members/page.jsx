@@ -101,7 +101,7 @@ const ManagerMealDashboard = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-4xl mx-auto bg-[#f2f4f1] rounded-xl shadow">
       <h1 className="text-2xl font-bold mb-6">Manager Meal Dashboard</h1>
       <input
         type="date"
@@ -111,7 +111,9 @@ const ManagerMealDashboard = () => {
       />
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-400 border-t-transparent" />
+      </div>
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -123,7 +125,7 @@ const ManagerMealDashboard = () => {
             ))}
           </div>
 
-          <div className="w-full overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
+          <div className="w-full overflow-x-auto border border-gray-300 rounded-lg shadow-sm">
             <table className="w-full text-center border-collapse min-w-[500px]">
               <thead className="bg-gray-100">
                 <tr>

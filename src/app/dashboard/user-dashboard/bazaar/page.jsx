@@ -87,7 +87,9 @@ export default function BazaarHistory() {
       </div>
 
       {/* States */}
-      {loading && <p className="text-center text-gray-500 py-10">Loading...</p>}
+      {loading && <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-400 border-t-transparent" />
+      </div>}
       {error && <p className="text-center text-red-500 py-4">{error}</p>}
       {!loading && !error && bazaars.length === 0 && (
         <p className="text-center text-gray-400 py-10">No bazaar entries found for this month.</p>

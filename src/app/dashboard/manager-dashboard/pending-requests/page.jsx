@@ -83,7 +83,7 @@ const PendingRequestsPage = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+      <div className="bg-[#f2f4f1] min-h-[100vh] rounded-xl flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
         <p className="text-gray-500 font-medium">
           {" "}
@@ -93,7 +93,7 @@ const PendingRequestsPage = () => {
     );
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[#f2f4f1] min-h-[100vh] rounded-xl ">
       <h1 className="text-2xl font-bold mb-4">Pending Join Requests</h1>
       {requests.length === 0 ? (
         <div className=" p-8 rounded-2xl border border-gray-100 bg-orange-100 shadow-sm text-center">

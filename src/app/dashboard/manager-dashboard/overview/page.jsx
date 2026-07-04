@@ -332,7 +332,7 @@ export default function OverviewDashboard({ role }) {
 
   return (
     <div
-      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26]`}
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen border-none rounded-2xl bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26]`}
     >
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* Header */}

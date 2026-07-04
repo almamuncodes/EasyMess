@@ -119,7 +119,7 @@ export default function ManagerBazaarPage() {
   const isFilterChanged = month !== currentMonth || year !== currentYear;
 
   return (
-    <div className="min-h-screen bg-white text-neutral-900">
+    <div className="min-h-screen bg-[#f2f4f1] border-none rounded-2xl text-neutral-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 md:py-14">
         <h1 className="text-2xl font-semibold mb-1">Bazaar Management</h1>
         <p className="text-sm text-neutral-500 mb-8">Add and track daily mess bazaar</p>
@@ -142,7 +142,7 @@ export default function ManagerBazaarPage() {
             <select
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="text-sm border border-neutral-200 rounded-lg px-2 py-1.5 outline-none"
+              className="text-sm border border-neutral-300 rounded-lg px-2 py-1.5 outline-none"
             >
               <option value="">All months</option>
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
@@ -155,7 +155,7 @@ export default function ManagerBazaarPage() {
             <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="text-sm border border-neutral-200 rounded-lg px-2 py-1.5 outline-none"
+              className="text-sm border border-neutral-300 rounded-lg px-2 py-1.5 outline-none"
             >
               <option value="">All years</option>
               {Array.from({ length: 5 }, (_, i) => Number(currentYear) - i).map((y) => (
@@ -179,7 +179,7 @@ export default function ManagerBazaarPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between border border-neutral-200 rounded-lg px-4 py-3 mb-4">
+        <div className="flex items-center justify-between border border-neutral-300 rounded-lg px-4 py-3 mb-4">
           <span className="text-sm text-neutral-500">
             Total
             {month && ` ${new Date(2000, Number(month) - 1).toLocaleString("en", { month: "long" })}`}
@@ -272,7 +272,7 @@ function BazaarForm({ initial, isEditing, onSave, onCancelEdit }) {
   };
 
   return (
-    <form onSubmit={submit} className="border border-neutral-200 rounded-xl p-4 sm:p-5">
+    <form onSubmit={submit} className="border border-neutral-300 rounded-xl p-4 sm:p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-medium">{isEditing ? "Edit Bazaar" : "Add New Bazaar"}</h2>
         {isEditing && (
@@ -293,7 +293,7 @@ function BazaarForm({ initial, isEditing, onSave, onCancelEdit }) {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none text-sm"
+            className="w-full px-3 py-2 rounded-lg border border-neutral-300 outline-none text-sm"
           />
         </div>
         <div>
@@ -302,7 +302,7 @@ function BazaarForm({ initial, isEditing, onSave, onCancelEdit }) {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Weekly bazaar"
-            className="w-full px-3 py-2 rounded-lg border border-neutral-200 outline-none text-sm"
+            className="w-full px-3 py-2 rounded-lg border border-neutral-300 outline-none text-sm"
           />
         </div>
       </div>
@@ -354,7 +354,7 @@ function ItemRow({ item, canRemove, onChangeTitle, onChangeAmount, onRemove }) {
         value={item.title}
         onChange={(e) => onChangeTitle(e.target.value)}
         placeholder="Item name"
-        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-neutral-200 outline-none text-sm"
+        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-neutral-300 outline-none text-sm"
       />
       <div className="flex items-center gap-2">
         <input
@@ -362,7 +362,7 @@ function ItemRow({ item, canRemove, onChangeTitle, onChangeAmount, onRemove }) {
           value={item.amount}
           onChange={(e) => onChangeAmount(e.target.value)}
           placeholder="Amount"
-          className="flex-1 sm:w-28 min-w-0 px-3 py-2 rounded-lg border border-neutral-200 outline-none text-sm tabular-nums"
+          className="flex-1 sm:w-28 min-w-0 px-3 py-2 rounded-lg border border-neutral-300 outline-none text-sm tabular-nums"
         />
         <button
           type="button"
@@ -384,7 +384,7 @@ function BazaarHistoryCard({ bazaar, onEdit, onDelete }) {
   const editable = isEditable(bazaar);
 
   return (
-    <div className="border border-neutral-200 rounded-xl px-4 py-4">
+    <div className="border border-neutral-300 rounded-xl px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium">{formatDate(bazaar.date)}</p>
