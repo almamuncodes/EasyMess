@@ -112,47 +112,10 @@ Managing a mess manually is time-consuming and error-prone. EasyMess digitizes t
 
 ---
 
-# 📷 Screenshots
 
-> Add screenshots here after completing the project.
 
-```
-/screenshots
-    home.png
-    dashboard.png
-    meal-management.png
-    expense.png
-```
 
----
 
-# 🚀 Installation
-
-```bash
-git clone https://github.com/your-username/easymess.git
-
-cd easymess
-
-npm install
-
-npm run dev
-```
-
----
-
-# ⚙ Environment Variables
-
-Create a `.env` file:
-
-```env
-MONGODB_URI=your_mongodb_uri
-
-JWT_SECRET=your_secret
-
-FIREBASE_API_KEY=your_key
-```
-
----
 
 # 🎯 Project Goals
 
@@ -236,6 +199,6 @@ Full Stack Web Application
 
 ## 👨‍💻 Developer
 
-Developed with ❤️ by **[MD Al Mamun](https://www.facebook.com/mdalmamun.islam.75)**
+Developed with ❤️ by **[MD Al Mamun](https://www.facebook.com/mdalmamun.islam.7564)**
 
 Live Demo: https://easymess.vercel.app/
