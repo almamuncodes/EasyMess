@@ -18,22 +18,7 @@ import { GetUser } from "@/components/action/action";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-/**
- * ===========================================================================
- *  MY MESS — manager control page (wired to the real Express + MongoDB API)
- * ===========================================================================
- *  Endpoints used (see server.js):
- *   GET    /api/manager/my-mess/:userId
- *   GET    /api/manager/members/:userId
- *   PATCH  /api/manager/my-mess
- *   PATCH  /api/manager/invite-code
- *   PATCH  /api/manager/transfer-manager
- *   DELETE /api/manager/member/:memberId
- *
- *  Set NEXT_PUBLIC_API_URL in your .env.local to your backend URL, e.g.
- *  NEXT_PUBLIC_API_URL=http://localhost:5000
- * ===========================================================================
- */
+
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
