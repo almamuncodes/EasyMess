@@ -47,11 +47,7 @@ export default function LandingPage() {
               <p className="mt-3 text-gray-500">Join an existing community</p>
             </Link>
           </div>
-          <div>
-            <p className="text-center text-gray-500 mt-4">
-              Don't have an account? <Link href="/signup">Signup</Link>
-            </p>
-          </div>
+          
         </div>
       </section>
     );

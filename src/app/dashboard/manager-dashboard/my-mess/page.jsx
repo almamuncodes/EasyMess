@@ -565,7 +565,7 @@ export default function MyMess() {
             <div className="mt-5 space-y-2.5">
               {members.map((m) => (
                 <div
-                  key={m._id}
+                  key={m.userId}
                   className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl"
                   style={{ background: "rgba(60,90,69,0.06)" }}
                 >

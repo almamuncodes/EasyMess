@@ -29,7 +29,7 @@ const ManagerMealDashboard = () => {
         const selectedDate = new Date(date);
         selectedDate.setUTCHours(0, 0, 0, 0);
 
-        // সামারি ক্যালকুলেশন: শুধুমাত্র জয়েনিং ডেটের পরের বা সেই দিনের ডাটা যোগ হবে
+        
         const totalBreakfast = result.members.reduce((sum, m) => {
           const joinDate = new Date(m.createdAt);
           joinDate.setUTCHours(0, 0, 0, 0);
