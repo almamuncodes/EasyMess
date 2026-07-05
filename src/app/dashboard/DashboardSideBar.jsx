@@ -66,7 +66,7 @@ export default function Sidebar() {
     },
     {
       name: "My Mess",
-      href: "/manager-dashboard/my-mess",
+      href: "/dashboard/user-dashboard/my-mess",
       icon: Home,
       roles: ["member"],
     },
@@ -112,11 +112,23 @@ export default function Sidebar() {
       icon: BarChart3,
       roles: ["admin"],
     },
+
+
+// 
+// 
+// ai option ta pore change kore dibo apato to change korbo na 
+// 
+// 
+
+
+
+
+    
     {
       name: "Settings",
       href: "/settings",
       icon: Settings,
-      roles: ["member"],
+      roles: ["pore thik korbo ata "],
     },
     {
       name: "Settings",

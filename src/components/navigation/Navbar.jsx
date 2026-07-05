@@ -1,22 +1,21 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
+import { toast } from "sonner";
 
 export default function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const profileRef = useRef(null);
 
-  // Use the hook directly to get session
   const { data: session, isPending } = authClient.useSession();
+  const isLoggedIn = !!session;
 
-  const isLoggedIn = !!session; // Simple boolean check
-  const role = session?.user?.role;
-
-  // for pathname
   const pathname = usePathname();
 
   const publicMenu = [
@@ -26,30 +25,40 @@ export default function Navbar() {
     { name: "About", href: "/about" },
   ];
 
-  // Helper function to get menu based on role
-  const getMenu = () => {
-    if (!isLoggedIn) return publicMenu;
+  const loggedInMenu = [
+    { name: "Home", href: "/" },
+    { name: "Notice", href: "/notice" },
+    { name: "Dashboard", href: "/dashboard" },
+  ];
 
-    // Common links for logged-in users
-    const baseLinks = [
-      { name: "Home", href: "/" },
-      { name: "Dashboard", href: "/dashboard" },
-    ];
+  const navLinks = isLoggedIn ? loggedInMenu : publicMenu;
 
-    if (role === "member" || role === "manager") {
-      return [
-        { name: "Home", href: "/" },
-        { name: "Notice ", href: "/notice" },
-        { name: "Dashboard", href: "/dashboard" },
-      ];
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfile(false);
+      }
     }
-    return baseLinks; // For Admin
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const navLinks = getMenu();
+  // Navbar shadow on scroll
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 4);
+    }
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <nav className="w-full border-b bg-white sticky top-0 z-50">
+    <nav
+      className={`w-full bg-white sticky top-0 z-50 transition-shadow duration-200 ${
+        scrolled ? "shadow-md border-b border-transparent" : "border-b"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center shrink-0">
           <Image
@@ -82,19 +91,17 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="hidden md:flex items-center gap-4">
-          {!isPending && ( // Wait for session to load
+          {!isPending && (
             <>
               {!isLoggedIn ? (
-                <>
-                  <Link
-                    href="/signin"
-                    className="px-5 py-2 rounded-full bg-orange-500 text-white font-medium"
-                  >
-                    Login
-                  </Link>
-                </>
+                <Link
+                  href="/signin"
+                  className="px-5 py-2 rounded-full bg-orange-500 text-white font-medium"
+                >
+                  Login
+                </Link>
               ) : (
-                <div className="relative">
+                <div className="relative" ref={profileRef}>
                   <button
                     onClick={() => setShowProfile(!showProfile)}
                     className="w-10 h-10 rounded-full overflow-hidden bg-orange-500 text-white font-bold flex items-center justify-center hover:cursor-pointer"
@@ -115,12 +122,16 @@ export default function Navbar() {
                     <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border overflow-hidden">
                       <Link
                         href="/profile"
+                        onClick={() => setShowProfile(false)}
                         className="block px-4 py-3 hover:bg-gray-50"
                       >
                         Profile
                       </Link>
                       <button
-                        onClick={() => authClient.signOut()}
+                        onClick={() => {
+                      authClient.signOut();
+                      toast.success("Logged out successfully");
+                    }}
                         className="w-full text-left px-4 py-3 text-red-500 hover:cursor-pointer hover:bg-gray-100"
                       >
                         Logout
@@ -140,8 +151,14 @@ export default function Navbar() {
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-100 p-6 flex flex-col gap-4">
+
+      {/* Mobile Menu with smooth open/close */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="bg-white border-b border-gray-100 p-6 flex flex-col gap-4">
           {navLinks.map((item) => (
             <Link
               key={item.name}
@@ -166,12 +183,13 @@ export default function Navbar() {
               {!isLoggedIn ? (
                 <>
                   <Link
-                    href="/signup"
+                    href="/signin"
                     onClick={() => setMobileMenuOpen(false)}
                     className="bg-orange-500 text-white px-5 py-2 rounded-full text-center"
                   >
-                    Sign Up
+                    Login
                   </Link>
+                 
                 </>
               ) : (
                 <>
@@ -183,7 +201,10 @@ export default function Navbar() {
                     Profile
                   </Link>
                   <button
-                    onClick={() => authClient.signOut()}
+                    onClick={() => {
+                      authClient.signOut();
+                      toast.success("Logged out successfully");
+                    }}
                     className="text-red-500 text-left hover:cursor-pointer"
                   >
                     Logout
@@ -193,7 +214,7 @@ export default function Navbar() {
             </div>
           )}
         </div>
-      )}
+      </div>
     </nav>
   );
 }

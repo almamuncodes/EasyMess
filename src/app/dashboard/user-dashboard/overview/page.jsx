@@ -11,15 +11,7 @@ const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable:
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
 
-// ------------------------------------------------------------
-// Design tokens (see design note at bottom of file)
-// ink      #1B2A26  – headings, primary text
-// paper    #F2F4F1  – page background
-// gold     #C99A3E  – accent / active states
-// positive #3F7D5C  – advance / green
-// negative #B5533C  – due / rust
-// line     #D9DED9  – hairlines
-// ------------------------------------------------------------
+
 
 const taka = (n) =>
   new Intl.NumberFormat("en-BD", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
@@ -180,7 +172,7 @@ const userId = user?.user?.id ;
 
   return (
     <div
-      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26]`}
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26] border rounded-2xl`}
     >
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* Header */}
