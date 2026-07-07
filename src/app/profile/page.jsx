@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 2MB
+
 
 
 export default function ProfilePage() {
@@ -32,7 +33,7 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState("");
-  const imagebb= 'dd7b4d125163f0ed5537537a55851bab';
+  const imagebb = "dd7b4d125163f0ed5537537a55851bab";
 
   // পেজ লোড হওয়ার সময় session + accounts নিয়ে আসা
   useEffect(() => {
@@ -73,7 +74,7 @@ export default function ProfilePage() {
     if (!file) return;
 
     if (file.size > MAX_IMAGE_SIZE) {
-      setImageWarning("Image must be smaller than 2MB. Please choose another image.");
+      setImageWarning("Image must be smaller than 4MB. Please choose another image.");
       setImageFile(null);
       return;
     }
@@ -88,13 +89,10 @@ export default function ProfilePage() {
     const formData = new FormData();
     formData.append("image", file);
 
-    const res = await fetch(
-      `https://api.imgbb.com/1/upload?key=${imagebb}`,
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${imagebb}`, {
+      method: "POST",
+      body: formData,
+    });
 
     const data = await res.json();
     if (!data.success) {
@@ -182,189 +180,260 @@ export default function ProfilePage() {
   async function handleLogout() {
     await authClient.signOut({
       fetchOptions: {
-        onSuccess: () => router.push("/login"),
+        onSuccess: () => router.push("/"),
       },
     });
   }
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-500">Loading...</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-[#9a9691]">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF6900]" />
+          Loading profile
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-800">Profile</h1>
+    <div className="min-h-screen bg-[#F3F1EC]">
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+        .font-display {
+          font-family: "Space Grotesk", sans-serif;
+        }
+        .font-body {
+          font-family: "Inter", sans-serif;
+        }
+        .font-meta {
+          font-family: "IBM Plex Mono", monospace;
+        }
+      `}</style>
 
-      {/* ================= Section 1: Personal Information ================= */}
-      <div className="bg-white rounded-2xl shadow p-6">
-        {!isEditing ? (
-          // ---------- VIEW MODE ----------
-          <div className="flex flex-col items-center text-center space-y-3">
-            <button
-              onClick={() => setShowImageModal(true)}
-              className="rounded-full overflow-hidden ring-4 ring-gray-100 hover:ring-orange-200 transition"
-            >
-              <Image
-                src={user.image || "/default-avatar.png"}
-                alt={user.name}
-                width={112}
-                height={112}
-                className="w-28 h-28 object-cover"
-              />
-            </button>
+      <div className="mx-auto max-w-xl space-y-5 px-4 py-10 font-body sm:py-14">
+        <div className="flex items-baseline justify-between">
+          <h1 className="font-display text-2xl font-semibold text-[#16181D]">
+            Account
+          </h1>
+          <span className="font-meta text-[11px] uppercase tracking-[0.2em] text-[#9a9691]">
+            Profile
+          </span>
+        </div>
 
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">
-                {user.name}
-              </h2>
-              <p className="text-sm text-gray-500">{user.email}</p>
-            </div>
+        {/* ================= Section 1: Identity Card ================= */}
+        <div className="relative overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(22,24,29,0.04),0_8px_24px_-12px_rgba(22,24,29,0.12)] ring-1 ring-[#EAE7E0]">
+          {!isEditing ? (
+            // ---------- VIEW MODE ----------
+            <div className="p-6 sm:p-8">
+              <div className="flex items-start gap-5">
+                <button
+                  onClick={() => setShowImageModal(true)}
+                  className="group relative shrink-0"
+                  aria-label="View profile photo"
+                >
+                  <div className="h-20 w-20 -rotate-2 overflow-hidden rounded-2xl ring-2 ring-[#16181D]/[0.06] transition group-hover:-rotate-1 sm:h-24 sm:w-24">
+                    <Image
+                      src={user.image || "/default-avatar.png"}
+                      alt={user.name}
+                      width={112}
+                      height={112}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  {hasCredentialAccount && (
+                    <span className="absolute -bottom-1.5 -right-1.5 flex h-6 w-6 rotate-6 items-center justify-center rounded-full bg-[#FF6900] font-meta text-[10px] font-bold text-white ring-4 ring-white">
+                      ✓
+                    </span>
+                  )}
+                </button>
 
-            <p className="text-xs text-gray-400">
-              Joined on {new Date(user.createdAt).toLocaleDateString("en-US")}
-            </p>
+                <div className="min-w-0 flex-1 pt-1">
+                  <p className="font-meta text-[10px] uppercase tracking-[0.25em] text-[#FF6900]">
+                    Member profile
+                  </p>
+                  <h2 className="font-display truncate text-2xl font-semibold text-[#16181D] sm:text-3xl">
+                    {user.name}
+                  </h2>
+                  <p className="font-meta truncate text-sm text-[#6b6f76]">
+                    {user.email}
+                  </p>
+                </div>
 
-            <button
-              onClick={() => setIsEditing(true)}
-              className="mt-2 px-6 py-2 rounded-xl bg-[#FF6900] text-white font-medium"
-            >
-              Edit Profile
-            </button>
-          </div>
-        ) : (
-          // ---------- EDIT MODE ----------
-          <div className="space-y-4">
-            <h2 className="font-semibold text-gray-800">Edit Profile</h2>
-
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Image
-                  src={imagePreview || "/default-avatar.png"}
-                  alt={name}
-                  width={80}
-                  height={80}
-                  className="w-20 h-20 rounded-full object-cover"
-                />
-                <label className="absolute bottom-0 right-0 bg-gray-800 text-white text-xs rounded-full px-2 py-1 cursor-pointer">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="shrink-0 rounded-full border border-[#16181D]/10 px-4 py-2 font-display text-xs font-semibold text-[#16181D] transition hover:border-[#FF6900] hover:text-[#FF6900]"
+                >
                   Edit
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
+                </button>
+              </div>
+
+              {/* perforated divider — identity-card tear line */}
+              <div className="my-6 border-t border-dashed border-[#E7E5E1]" />
+
+              <div className="flex flex-wrap items-center justify-between gap-2 font-meta text-[11px] uppercase tracking-wide text-[#9a9691]">
+                <span>
+                  Member since{" "}
+                  {new Date(user.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                <span>{hasCredentialAccount ? "Email login" : "Connected login"}</span>
+              </div>
+            </div>
+          ) : (
+            // ---------- EDIT MODE ----------
+            <div className="p-6 sm:p-8">
+              <p className="font-meta text-[10px] uppercase tracking-[0.25em] text-[#FF6900]">
+                Editing profile
+              </p>
+              <h2 className="font-display mt-1 text-xl font-semibold text-[#16181D]">
+                Update your details
+              </h2>
+
+              <div className="mt-5 flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <div className="h-20 w-20 overflow-hidden rounded-2xl ring-2 ring-[#16181D]/[0.06]">
+                    <Image
+                      src={imagePreview || "/default-avatar.png"}
+                      alt={name}
+                      width={80}
+                      height={80}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <label className="absolute -bottom-2 left-1/2 -translate-x-1/2 cursor-pointer rounded-full bg-[#16181D] px-2.5 py-1 font-meta text-[9px] uppercase tracking-wide text-white">
+                    Change
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <div className="min-w-0">
+                  <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+                    Email
+                  </p>
+                  <p className="truncate font-medium text-[#16181D]">{user.email}</p>
+                </div>
+              </div>
+
+              {imageWarning && (
+                <p className="mt-3 font-meta text-xs text-[#D4453A]">{imageWarning}</p>
+              )}
+
+              <div className="mt-5">
+                <label className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+                  Full name
                 </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 text-[#16181D] outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
+                />
               </div>
 
-              <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p className="font-medium text-gray-800">{user.email}</p>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={handleCancelEdit}
+                  className="flex-1 rounded-xl border border-[#E7E5E1] py-3 font-display text-sm font-semibold text-[#6b6f76] transition hover:bg-[#F6F5F3]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  className="flex-1 rounded-xl bg-[#FF6900] py-3 font-display text-sm font-semibold text-white transition hover:bg-[#e55f00] disabled:opacity-60"
+                >
+                  {savingProfile ? "Saving…" : "Save changes"}
+                </button>
               </div>
+
+              {profileMessage && (
+                <p className="mt-4 text-center font-meta text-xs text-[#6b6f76]">
+                  {profileMessage}
+                </p>
+              )}
             </div>
+          )}
+        </div>
 
-            {imageWarning && (
-              <p className="text-sm text-red-600">{imageWarning}</p>
-            )}
+        {/* ================= Section 2: Account Security ================= */}
+        {/* Google login user দের জন্য এই সেকশন দেখানো হবে না */}
+        {hasCredentialAccount && (
+          <div className="rounded-[28px] bg-white p-6 shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0] sm:p-8">
+            <p className="font-meta text-[10px] uppercase tracking-[0.25em] text-[#9a9691]">
+              Security
+            </p>
+            <h2 className="font-display mt-1 text-xl font-semibold text-[#16181D]">
+              Change password
+            </h2>
 
-            <div>
-              <label className="text-sm text-gray-500">Full Name</label>
+            <form onSubmit={handleChangePassword} className="mt-5 space-y-3">
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full mt-1 border border-gray-200 rounded-xl px-4 py-2 text-gray-800"
+                type="password"
+                placeholder="Current password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                className="w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
               />
-            </div>
+              <input
+                type="password"
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={8}
+                className="w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
+              />
+              <input
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                className="w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
+              />
 
-            <div className="flex gap-3">
               <button
-                onClick={handleCancelEdit}
-                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium"
+                type="submit"
+                disabled={changingPassword}
+                className="w-full rounded-xl bg-[#16181D] py-3 font-display text-sm font-semibold text-white transition hover:bg-black disabled:opacity-60"
               >
-                Cancel
+                {changingPassword ? "Updating…" : "Update password"}
               </button>
-              <button
-                onClick={handleSaveProfile}
-                disabled={savingProfile}
-                className="flex-1 py-3 rounded-xl bg-[#FF6900] text-white font-medium disabled:opacity-60"
-              >
-                {savingProfile ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
+            </form>
 
-            {profileMessage && (
-              <p className="text-sm text-center text-gray-600">
-                {profileMessage}
+            {passwordMessage && (
+              <p className="mt-4 text-center font-meta text-xs text-[#6b6f76]">
+                {passwordMessage}
               </p>
             )}
           </div>
         )}
+
+        {/* ================= Section 3: Logout ================= */}
+        <button
+          onClick={handleLogout}
+          className="w-full rounded-[28px] border border-[#E7E5E1] bg-white py-3.5 font-display text-sm font-semibold text-[#D4453A] shadow-[0_1px_2px_rgba(22,24,29,0.04)] transition hover:border-[#D4453A]/30 hover:bg-[#D4453A]/[0.04]"
+        >
+          Log out
+        </button>
       </div>
-
-      {/* ================= Section 2: Account Security ================= */}
-      {/* Google login user দের জন্য এই সেকশন দেখানো হবে না */}
-      {hasCredentialAccount && (
-        <div className="bg-white rounded-2xl shadow p-5 space-y-3">
-          <h2 className="font-semibold text-gray-800">Change Password</h2>
-
-          <form onSubmit={handleChangePassword} className="space-y-3">
-            <input
-              type="password"
-              placeholder="Current Password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="w-full border border-gray-200 rounded-xl px-4 py-2"
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2"
-            />
-            <input
-              type="password"
-              placeholder="Confirm New Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2"
-            />
-
-            <button
-              type="submit"
-              disabled={changingPassword}
-              className="w-full py-3 rounded-xl bg-gray-800 text-white font-medium disabled:opacity-60"
-            >
-              {changingPassword ? "Updating..." : "Update Password"}
-            </button>
-          </form>
-
-          {passwordMessage && (
-            <p className="text-sm text-center text-gray-600">
-              {passwordMessage}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* ================= Section 3: Logout ================= */}
-      <button
-        onClick={handleLogout}
-        className="w-full py-3 rounded-xl border border-red-300 text-red-600 font-medium hover:bg-red-50"
-      >
-        Logout
-      </button>
 
       {/* ================= Image Lightbox Modal ================= */}
       {showImageModal && (
         <div
           onClick={() => setShowImageModal(false)}
-          className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#16181D]/80 p-4 backdrop-blur-sm"
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <Image
@@ -372,11 +441,12 @@ export default function ProfilePage() {
               alt={user.name}
               width={1000}
               height={1000}
-              className="w-[80vw] max-w-md h-auto rounded-2xl object-cover"
+              className="h-auto w-[80vw] max-w-md rounded-[24px] object-cover"
             />
             <button
               onClick={() => setShowImageModal(false)}
-              className="absolute -top-3 -right-3 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center shadow"
+              className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white font-meta text-[#16181D] shadow"
+              aria-label="Close"
             >
               ✕
             </button>

@@ -7,33 +7,17 @@ import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 // import { fetchOverview } from "@/lib/api";
 
-const display = Fraunces({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-display",
-});
-const body = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-});
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-});
+const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display" });
+const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
+
+
 
 const taka = (n) =>
-  new Intl.NumberFormat("en-BD", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(n || 0);
+  new Intl.NumberFormat("en-BD", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
 
 function monthLabel(month, year) {
-  return new Date(year, month - 1, 1).toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
+  return new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 }
 
 // Perforated "tear tab" edge — the signature element.
@@ -59,9 +43,7 @@ function SummaryCard({ label, value, mono: useMono = true }) {
       <p className="text-[10px] font-semibold uppercase tracking-widest text-[#EA580C]">
         {label}
       </p>
-      <p
-        className={`mt-1 text-2xl font-bold text-gray-950 ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}
-      >
+      <p className={`mt-1 text-2xl font-bold text-gray-950 ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
         {value}
       </p>
     </div>
@@ -73,14 +55,10 @@ function StatusBadge({ status }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        isAdvance
-          ? "bg-[#3F7D5C]/10 text-[#3F7D5C]"
-          : "bg-[#B5533C]/10 text-[#B5533C]"
+        isAdvance ? "bg-[#3F7D5C]/10 text-[#3F7D5C]" : "bg-[#B5533C]/10 text-[#B5533C]"
       }`}
     >
-      <span
-        className={`h-1.5 w-1.5 rounded-full ${isAdvance ? "bg-[#3F7D5C]" : "bg-[#B5533C]"}`}
-      />
+      <span className={`h-1.5 w-1.5 rounded-full ${isAdvance ? "bg-[#3F7D5C]" : "bg-[#B5533C]"}`} />
       {isAdvance ? "Advance" : "Due"}
     </span>
   );
@@ -92,9 +70,7 @@ function LeaderRow({ left, right }) {
     <div className="flex items-baseline gap-2">
       <span className="whitespace-nowrap">{left}</span>
       <span className="flex-1 border-b border-dotted border-[#1B2A26]/25 translate-y-[-3px]" />
-      <span className="whitespace-nowrap font-[family-name:var(--font-mono)]">
-        {right}
-      </span>
+      <span className="whitespace-nowrap font-[family-name:var(--font-mono)]">{right}</span>
     </div>
   );
 }
@@ -108,7 +84,7 @@ export default function OverviewDashboard({ role }) {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const user = GetUser();
-  const userId = user?.user?.id;
+const userId = user?.user?.id ;
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -143,256 +119,61 @@ export default function OverviewDashboard({ role }) {
     return [y - 1, y, y + 1];
   }, [today]);
 
-  // handle download pdf
-  // Uses html2canvas + jsPDF: renders the hidden #pdf-content block (real browser
-  // rendering) into an image, then places that image into the PDF. This avoids
-  // jsPDF's default font limitation, so Bangla (and any other language) renders
-  // correctly since the browser itself is doing the text rendering.
- async function handleDownloadPdf() {
-  if (!data) return;
-
-  setExporting(true);
-
-  try {
-    const html2canvas = (await import("html2canvas")).default;
-    const { jsPDF } = await import("jspdf");
-
-    await document.fonts.ready;
-
-    const element = document.getElementById("pdf-content");
-
-    const canvas = await html2canvas(element, {
-      scale: 1.5, // reduced from 2 to keep file size reasonable
-      backgroundColor: "#ffffff",
-      useCORS: true,
-    });
-
-    // JPEG with 0.85 quality instead of PNG - drastically smaller file size
-    const imgData = canvas.toDataURL("image/jpeg", 0.85);
-
-    const doc = new jsPDF("p", "mm", "a4");
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    doc.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      doc.addPage();
-      doc.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
-    doc.save(
-      `${(data.messName || "easymess").replace(/\s+/g, "_")}_${data.month}_${data.year}.pdf`,
-    );
-  } finally {
-    setExporting(false);
-    toast("PDF generated successfully!");
-  }
-}
-  // handle download excel
-  async function handleDownloadExcel() {
+  async function handleDownloadPdf() {
     if (!data) return;
+
     setExporting(true);
-
+    
     try {
-      const ExcelJS = await import("exceljs");
-      const wb = new ExcelJS.Workbook();
-      const ws = wb.addWorksheet("Report");
+      const { default: jsPDF } = await import("jspdf");
+      const autoTable = (await import("jspdf-autotable")).default;
 
-      // PREMIUM EXCEL COLOR PALETTE
-      const WHITE = "FFFFFFFF"; // White Background
-      const HEADER = "FF1E293B"; // Dark Slate
-      const TITLE = "FF0F766E"; // Emerald
-      const BLUE = "FF2563EB"; // Table Header Blue
-      const SUMMARY = "FFE0F2FE"; // Summary Light Blue
-      const LIGHT = "FFF8FAFC"; // Alternate Row
-      const BORDER = "FFE5E7EB"; // Border
-      const GREEN = "FF16A34A"; // Positive
-      const RED = "FFDC2626"; // Negative
+      const doc = new jsPDF();
 
-      ws.columns = [
-        { width: 24 },
-        { width: 12 },
-        { width: 14 },
-        { width: 12 },
-        { width: 16 },
-        { width: 10 },
-        { width: 12 },
-      ];
+      doc.setFontSize(16);
+      doc.text(data.messName || "EasyMess", 14, 18);
+      doc.setFontSize(10);
+      doc.text(`Month: ${monthLabel(data.month, data.year)}`, 14, 25);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
 
-      // Background Color
-      for (let r = 1; r <= 20 + data.members.length; r++) {
-        for (let c = 1; c <= 7; c++) {
-          ws.getCell(r, c).fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: WHITE },
-          };
-        }
-      }
-
-      ws.getCell("A1").value = data.messName || "EasyMess";
-      ws.getCell("A1").font = { bold: true, size: 20, color: { argb: TITLE } };
-
-      ws.getCell("A2").value = `Month: ${monthLabel(data.month, data.year)}`;
-      ws.getCell("A2").font = { bold: true, size: 12 };
-
-      ws.getCell("A3").value = `Generated: ${new Date().toLocaleDateString()}`;
-      ws.getCell("A3").font = { italic: true, color: { argb: HEADER } };
-
-      const summaryRow = ws.getRow(5);
-      summaryRow.getCell(1).value =
-        `Total Deposit: ${data.summary.totalDeposit}`;
-      summaryRow.getCell(2).value = `Total Bazaar: ${data.summary.totalBazaar}`;
-      summaryRow.getCell(3).value = `Total Meal: ${data.summary.totalMeal}`;
-      summaryRow.getCell(4).value = `Meal Rate: ${data.summary.mealRate}`;
-
-      [1, 2, 3, 4].forEach((c) => {
-        summaryRow.getCell(c).font = { bold: true, color: { argb: HEADER } };
-        summaryRow.getCell(c).fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: SUMMARY },
-        };
-      });
-
-      const headerRow = ws.getRow(7);
-      ["Name", "Meal", "Deposit", "Bill", "Balance", "Status"].forEach(
-        (h, i) => {
-          const cell = headerRow.getCell(i + 1);
-          cell.value = h;
-          cell.font = { bold: true, size: 12, color: { argb: WHITE } };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: BLUE },
-          };
-        },
+      doc.setFontSize(11);
+      doc.text(
+        `Total Deposit: ${taka(data.summary.totalDeposit)}    Total Bazaar: ${taka(
+          data.summary.totalBazaar
+        )}    Total Meal: ${data.summary.totalMeal}    Meal Rate: ${taka(data.summary.mealRate)}`,
+        14,
+        40
       );
 
-      data.members.forEach((m, idx) => {
-        const row = ws.getRow(8 + idx);
-        row.getCell(1).value = m.userName;
-        row.getCell(2).value = m.totalMeal;
-        row.getCell(3).value = m.deposit;
-        row.getCell(4).value = m.bill;
-        row.getCell(5).value = m.balance;
-        row.getCell(6).value = m.status === "advance" ? "Advance" : "Due";
-
-        row.getCell(1).font = { bold: true, color: { argb: HEADER } };
-        row.getCell(5).font = {
-          bold: true,
-          color: { argb: m.balance < 0 ? RED : GREEN },
-        };
+      autoTable(doc, {
+        startY: 46,
+        head: [["Name", "Meal", "Deposit", "Bill", "Balance", "Status"]],
+        body: data.members.map((m) => [
+          m.userName,
+          m.totalMeal,
+          taka(m.deposit),
+          taka(m.bill),
+          taka(m.balance),
+          m.status === "advance" ? "Advance" : "Due",
+        ]),
+        headStyles: { fillColor: [27, 42, 38] },
+        styles: { fontSize: 9 },
       });
 
-      const footerRowIdx = 9 + data.members.length;
-      ws.mergeCells(`A${footerRowIdx}:F${footerRowIdx}`);
-      ws.getCell(`A${footerRowIdx}`).value = "Generated By EasyMess";
+      doc.setFontSize(8);
+      doc.text("Generated By EasyMess", 14, doc.lastAutoTable.finalY + 10);
 
-      ws.getCell(`A${footerRowIdx}`).font = {
-        size: 16,
-        bold: true,
-        color: { argb: TITLE },
-      };
-      ws.getCell(`A${footerRowIdx}`).alignment = { horizontal: "center" };
-
-      const buffer = await wb.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${(data.messName || "easymess").replace(/\s+/g, "_")}_${data.month}_${data.year}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      doc.save(`${(data.messName || "easymess").replace(/\s+/g, "_")}_${data.month}_${data.year}.pdf`);
     } finally {
       setExporting(false);
-      toast("Excel generated successfully!");
+      toast("PDF generated successfully!");
     }
   }
 
   return (
     <div
-      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen border-none rounded-2xl bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26]`}
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26] border rounded-2xl`}
     >
-      {/* Hidden report block used only for PDF export via html2canvas - not shown on screen */}
-      {data && (
-        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
-          <div
-            id="pdf-content"
-            style={{
-              width: "800px",
-              padding: "24px",
-              background: "#fff",
-              color: "#000",
-              fontFamily: "'Noto Sans Bengali', 'Hind Siliguri', sans-serif",
-            }}
-          >
-            <h2>{data.messName || "EasyMess"}</h2>
-            <p>Month: {monthLabel(data.month, data.year)}</p>
-            <p>Generated: {new Date().toLocaleDateString()}</p>
-
-            <p>
-              Total Deposit: ৳ {taka(data.summary.totalDeposit)} &nbsp;&nbsp;
-              Total Bazaar: ৳ {taka(data.summary.totalBazaar)} &nbsp;&nbsp;
-              Total Meal: {data.summary.totalMeal} &nbsp;&nbsp;
-              Meal Rate: ৳ {taka(data.summary.mealRate)}
-            </p>
-
-            <table
-              style={{ width: "100%", borderCollapse: "collapse", marginTop: "16px" }}
-            >
-              <thead>
-                <tr style={{ background: "#1b2a26", color: "#fff" }}>
-                  <th style={{ padding: "6px", textAlign: "left" }}>Name</th>
-                  <th style={{ padding: "6px" }}>Meal</th>
-                  <th style={{ padding: "6px" }}>Deposit</th>
-                  <th style={{ padding: "6px" }}>Bill</th>
-                  <th style={{ padding: "6px" }}>Balance</th>
-                  <th style={{ padding: "6px" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.members.map((m) => (
-                  <tr key={m.userId} style={{ borderBottom: "1px solid #ddd" }}>
-                    <td style={{ padding: "6px" }}>{m.userName}</td>
-                    <td style={{ padding: "6px", textAlign: "center" }}>
-                      {m.totalMeal}
-                    </td>
-                    <td style={{ padding: "6px", textAlign: "center" }}>
-                      {taka(m.deposit)}
-                    </td>
-                    <td style={{ padding: "6px", textAlign: "center" }}>
-                      {taka(m.bill)}
-                    </td>
-                    <td style={{ padding: "6px", textAlign: "center" }}>
-                      {taka(m.balance)}
-                    </td>
-                    <td style={{ padding: "6px", textAlign: "center" }}>
-                      {m.status === "advance" ? "Advance" : "Due"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <p style={{ fontSize: "10px", marginTop: "20px" }}>
-              Generated By EasyMess
-            </p>
-          </div>
-        </div>
-      )}
-
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -413,9 +194,7 @@ export default function OverviewDashboard({ role }) {
             >
               {monthOptions.map((m) => (
                 <option key={m} value={m}>
-                  {new Date(2000, m - 1, 1).toLocaleString("en-US", {
-                    month: "long",
-                  })}
+                  {new Date(2000, m - 1, 1).toLocaleString("en-US", { month: "long" })}
                 </option>
               ))}
             </select>
@@ -442,57 +221,36 @@ export default function OverviewDashboard({ role }) {
         {loading ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-24 animate-pulse rounded-md bg-[#1B2A26]/10"
-              />
+              <div key={i} className="h-24 animate-pulse rounded-md bg-[#1B2A26]/10" />
             ))}
           </div>
         ) : data ? (
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <SummaryCard
-                label="Total Deposit"
-                value={`৳ ${taka(data.summary.totalDeposit)}`}
-                icon="💰"
-              />
-              <SummaryCard
-                label="Total Bazaar"
-                value={`৳ ${taka(data.summary.totalBazaar)}`}
-                icon="🛒"
-              />
-              <SummaryCard
-                label="Total Meals"
-                value={data.summary.totalMeal}
-                icon="🍽️"
-                mono
-              />
-              <SummaryCard
-                label="Meal Rate"
-                value={`৳ ${taka(data.summary.mealRate)}`}
-                icon="💵"
-              />
+              <SummaryCard label="Total Deposit" value={`৳ ${taka(data.summary.totalDeposit)}`} icon="💰" />
+              <SummaryCard label="Total Bazaar" value={`৳ ${taka(data.summary.totalBazaar)}`} icon="🛒" />
+              <SummaryCard label="Total Meals" value={data.summary.totalMeal} icon="🍽️" mono />
+              <SummaryCard label="Meal Rate" value={`৳ ${taka(data.summary.mealRate)}`} icon="💵" />
             </div>
 
             {/* Export bar */}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 pb-4">
-              <p className="font-[family-name:var(--font-display)] text-lg">
-                Member Summary
-              </p>
+              <p className="font-[family-name:var(--font-display)] text-lg">Member Summary</p>
               <div className="flex gap-2">
                 <button
                   onClick={handleDownloadPdf}
                   disabled={exporting}
-                  className="hover:cursor-pointer rounded-md bg-[#ff6900] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition hover:bg-[#ff6900]/90 disabled:opacity-60"
+                  className="rounded-md bg-[#ff6900] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition hover:bg-[#1B2A26]/90 disabled:opacity-60"
                 >
                   {exporting ? "Preparing…" : "📄 Download PDF"}
                 </button>
                 {isManager && (
                   <button
+                    disabled
                     title="Coming soon"
-                    onClick={handleDownloadExcel}
-                    className="hover:cursor-pointer rounded-md border-2 bg-[#fff7ed] border-[#ff6900]/15 px-3 py-2 text-sm font-medium text-[#1B2A26]/60 "
+                    onClick={() => alert("Coming soon!")}
+                    className="rounded-md border border-[#ff6900]/50 px-3 py-2 text-sm font-medium text-[#1B2A26]/40"
                   >
                     📊 Download Excel
                   </button>
@@ -522,15 +280,9 @@ export default function OverviewDashboard({ role }) {
                       }`}
                     >
                       <td className="px-4 py-3">{m.userName}</td>
-                      <td className="px-4 py-3 font-[family-name:var(--font-mono)]">
-                        {m.totalMeal}
-                      </td>
-                      <td className="px-4 py-3 font-[family-name:var(--font-mono)]">
-                        ৳ {taka(m.deposit)}
-                      </td>
-                      <td className="px-4 py-3 font-[family-name:var(--font-mono)]">
-                        ৳ {taka(m.bill)}
-                      </td>
+                      <td className="px-4 py-3 font-[family-name:var(--font-mono)]">{m.totalMeal}</td>
+                      <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.deposit)}</td>
+                      <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.bill)}</td>
                       <td
                         className={`px-4 py-3 font-[family-name:var(--font-mono)] ${
                           m.balance >= 0 ? "text-[#3F7D5C]" : "text-[#B5533C]"
@@ -551,10 +303,7 @@ export default function OverviewDashboard({ role }) {
             {/* Mobile receipt-style cards */}
             <div className="mt-4 space-y-3 sm:hidden">
               {data.members.map((m) => (
-                <div
-                  key={m.userId}
-                  className="rounded-md border border-[#1B2A26]/10 bg-white p-4"
-                >
+                <div key={m.userId} className="rounded-md border border-[#1B2A26]/10 bg-white p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="font-medium">{m.userName}</p>
                     <StatusBadge status={m.status} />
@@ -577,3 +326,4 @@ export default function OverviewDashboard({ role }) {
     </div>
   );
 }
+

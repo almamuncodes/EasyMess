@@ -241,7 +241,7 @@ const userId = user?.user?.id ;
                 <button
                   onClick={handleDownloadPdf}
                   disabled={exporting}
-                  className="rounded-md bg-[#1B2A26] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition hover:bg-[#1B2A26]/90 disabled:opacity-60"
+                  className="rounded-md bg-[#ff6900] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition hover:bg-[#1B2A26]/90 disabled:opacity-60"
                 >
                   {exporting ? "Preparing…" : "📄 Download PDF"}
                 </button>
