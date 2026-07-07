@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
+
 const Page = () => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,6 +76,7 @@ const Page = () => {
 
   // ✅ role paoar por-o same visual language (card + icon + CTA)
   return (
+    
     <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
       <div className="w-full max-w-lg bg-white p-8 rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center text-center">
         <div className="w-24 h-24 rounded-full bg-orange-50 flex items-center justify-center mb-6">
