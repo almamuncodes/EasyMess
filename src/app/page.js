@@ -53,7 +53,7 @@ export default function LandingPage() {
     );
   }
 
-  // User already created/joined
+  // User already has a mess
   return (
     <section className="min-h-screen">
       <h1 className="text-4xl font-bold">Dashboard Content</h1>
