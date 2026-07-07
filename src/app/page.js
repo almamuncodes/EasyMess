@@ -241,7 +241,7 @@ export default function LandingPage() {
             style={{ animationDelay: "0.24s" }}
           >
             <Link
-              href="/login"
+              href="/signin"
               className="rounded-full bg-[#FF6900] px-7 py-3 font-display text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:bg-[#e55f00] hover:shadow-orange-500/30 active:scale-95"
             >
               Log in to get started
