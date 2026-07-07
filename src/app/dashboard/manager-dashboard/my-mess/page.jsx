@@ -48,6 +48,7 @@ export default function MyMess() {
   const user = GetUser();
   const userId = user?.user?.id;
   const router = useRouter();
+  
 
   function flashToast(text) {
     setToast(text);
@@ -245,6 +246,7 @@ export default function MyMess() {
   }
 
   async function removeMember(member) {
+    console.log("member._id:", member._id, "messId:", mess.messId);
     setActionBusy(true);
     const res = await callApi(`/api/manager/member/${member._id}`, "DELETE", {
       userId,
