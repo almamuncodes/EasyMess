@@ -7,7 +7,7 @@ import Image from "next/image";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// আজকের তারিখ YYYY-MM-DD ফরম্যাটে
+// today date and time in Beijing time
 const BD_OFFSET_MS = 6 * 60 * 60 * 1000;
 
 function todayDateString() {
