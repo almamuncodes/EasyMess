@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { GetUser } from "@/components/action/action";
+import { ChevronDown } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -380,20 +381,34 @@ function ItemRow({ item, canRemove, onChangeTitle, onChangeAmount, onRemove }) {
 
 
 function BazaarHistoryCard({ bazaar, onEdit, onDelete }) {
+  const [isOpen, setIsOpen] = useState(false);
   const itemNames = bazaar.items.map((i) => i.title).join(", ");
   const editable = isEditable(bazaar);
 
   return (
     <div className="border border-neutral-300 rounded-xl px-4 py-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-medium">{formatDate(bazaar.date)}</p>
-          <p className="text-xs text-neutral-500 mt-0.5 truncate" title={itemNames}>
-            {bazaar.items.length} item{bazaar.items.length > 1 ? "s" : ""} · {itemNames}
-          </p>
-          {bazaar.note && <p className="text-xs text-neutral-400 mt-0.5">{bazaar.note}</p>}
-        </div>
-        <p className="text-lg font-semibold tabular-nums shrink-0">{taka(bazaar.totalAmount)}</p>
+        <button
+          type="button"
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="flex-1 min-w-0 flex items-start justify-between gap-3 text-left"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium">{formatDate(bazaar.date)}</p>
+            <p className="text-xs text-neutral-500 mt-0.5 truncate" title={itemNames}>
+              {bazaar.items.length} item{bazaar.items.length > 1 ? "s" : ""} · {itemNames}
+            </p>
+            {bazaar.note && <p className="text-xs text-neutral-400 mt-0.5">{bazaar.note}</p>}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <p className="text-lg font-semibold tabular-nums">{taka(bazaar.totalAmount)}</p>
+            <ChevronDown
+              className={`w-4 h-4 text-neutral-400 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </div>
+        </button>
       </div>
 
       <div className="flex items-center gap-3 mt-3 pt-3 border-t border-neutral-100">
@@ -409,6 +424,28 @@ function BazaarHistoryCard({ bazaar, onEdit, onDelete }) {
         ) : (
           <span className="text-xs text-neutral-400">🔒 Locked (previous month)</span>
         )}
+      </div>
+
+      {/* Expandable item list */}
+      <div
+        className={`grid transition-all duration-200 ease-in-out ${
+          isOpen ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-neutral-100 pt-3 space-y-1">
+            {bazaar.items.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-baseline gap-2 text-sm text-neutral-600"
+              >
+                <span className="whitespace-nowrap">{item.title}</span>
+                <span className="flex-1 border-b border-dotted border-neutral-300 mb-1"></span>
+                <span className="whitespace-nowrap">{taka(item.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -457,7 +494,7 @@ function EmptyState() {
 }
 
 function LoadingSkeleton() {
-  return (
+  return ( 
     <div className="flex flex-col gap-3">
       {[1, 2, 3].map((i) => (
         <div key={i} className="h-20 rounded-xl bg-neutral-100 animate-pulse" />

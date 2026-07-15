@@ -4,6 +4,14 @@ import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 
+function getLocalDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const ManagerMealDashboard = () => {
   const user = GetUser();
   const userId = user?.user?.id;
@@ -11,7 +19,7 @@ const ManagerMealDashboard = () => {
     summary: { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 },
     members: [],
   });
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(getLocalDateString());
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
