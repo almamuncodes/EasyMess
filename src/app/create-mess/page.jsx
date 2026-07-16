@@ -13,59 +13,74 @@ export default function CreateMessForm() {
   const creaotrName = user?.user?.name;
   const router = useRouter();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
-    const imageFile = formData.get("image");
+  const formData = new FormData(e.currentTarget);
+  const data = Object.fromEntries(formData.entries());
+  const imageFile = formData.get("image");
 
-    try {
-      // 1. Upload Image to ImgBB
-      const imgData = new FormData();
-      imgData.append("image", imageFile);
+  try {
+    // 1. Image upload — শুধু ছবি থাকলেই চেষ্টা করবে, fail হলেও mess creation আটকাবে না
+    let imageUrl = ""; // fallback default image url দিতে পারো এখানে
 
-      const uploadRes = await fetch(
-        `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
-        { method: "POST", body: imgData }
-      );
-      const imgResult = await uploadRes.json();
-      const imageUrl = imgResult.data.url;
+    if (imageFile && imageFile.size > 0) {
+      try {
+        const imgData = new FormData();
+        imgData.append("image", imageFile);
 
-      // 2. Submit Data to Server
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/createmess`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          messName: data.messName,
-          messLocation: data.messLocation,
-          messImage: imageUrl,
-          createdBy: userId,
-          creaotrName:creaotrName ,
-        }),
-      });
+        const uploadRes = await fetch(
+          `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+          { method: "POST", body: imgData }
+        );
+        const imgResult = await uploadRes.json();
 
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.message || "Failed to create mess");
+        if (imgResult.success) {
+          imageUrl = imgResult.data.url;
+        } else {
+          console.error("Image upload failed:", imgResult);
+          toast.warning("Image upload failed, creating mess without image.");
+        }
+      } catch (imgErr) {
+        console.error("Image upload error:", imgErr);
+        toast.warning("Image upload failed, creating mess without image.");
       }
-
-      if (result.success) {
-        toast.success("Mess Created Successfully!");
-        router.push(`/create-mess/${result.insertedId}`);
-        return;
-      }
-
-      toast.error("Something went wrong!");
-    } catch (err) {
-      console.error(err);
-     toast.error(`${err.message}`);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // 2. Submit Data to Server — এটা image upload এর success/fail এর উপর নির্ভর করবে না
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/createmess`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        messName: data.messName,
+        messLocation: data.messLocation,
+        messImage: imageUrl,
+        createdBy: userId,
+        creaotrName: creaotrName,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.message || "Failed to create mess");
+    }
+
+    if (result.success) {
+      toast.success("Mess Created Successfully!");
+      router.push(`/create-mess/${result.insertedId}`);
+      return;
+    }
+
+    toast.error("Something went wrong!");
+  } catch (err) {
+    console.error(err);
+    toast.error(`${err.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -108,12 +123,12 @@ export default function CreateMessForm() {
 
         {/* Image Upload */}
         <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-600 mb-2">Upload Mess Image</label>
+          <label className="block text-sm font-medium text-gray-600 mb-2">Upload Mess Image <span className="text-gray-400"> (optional) </span> </label>
           <input
             type="file"
             name="image"
             accept="image/*"
-            required
+            
             onChange={handleImageChange}
             className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-600 hover:file:bg-orange-100"
           />

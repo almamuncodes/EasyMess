@@ -62,9 +62,9 @@ const PendingRequestsPage = () => {
             managerId: userId,
             userData: {
               userId: reqData.userId,
-              userName: reqData.userName,
+              
               userEmail: reqData.userEmail,
-              userImage: reqData.userImage,
+             
             },
           }),
         },

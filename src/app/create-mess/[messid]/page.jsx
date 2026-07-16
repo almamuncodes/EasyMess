@@ -14,7 +14,7 @@ const  messId  = params?.messid;
   const router = useRouter();
   const user = GetUser();
   const userData = user?.user;
-  console.log(userData);
+  // console.log(userData);
  useEffect(() => {
   if (!userData || !messId) return;
 
@@ -27,9 +27,9 @@ const  messId  = params?.messid;
 
   const addCreatorAsMember = async () => {
     const memberData = {
-      name: userData.name,
+      
       email: userData.email,
-      image: userData.image,
+     
       role: "manager",      
       status: "active",
       userId: userData.id,

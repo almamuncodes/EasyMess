@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState("");
-  const imagebb = "dd7b4d125163f0ed5537537a55851bab";
+  const imagebb = process.env.NEXT_PUBLIC_IMGBB_KEY;
 
   // পেজ লোড হওয়ার সময় session + accounts নিয়ে আসা
   useEffect(() => {
