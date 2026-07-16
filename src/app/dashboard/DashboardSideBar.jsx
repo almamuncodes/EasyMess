@@ -23,7 +23,7 @@ export default function Sidebar() {
   const [role, setRole] = useState("");
   const user = GetUser();
   const userId = user?.user?.id;
-
+  // console.log('kkk',userId); 
   const fetchUser = async () => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
     const data = await res.json();
@@ -95,7 +95,7 @@ export default function Sidebar() {
     { name: "pending-requests", href: "/dashboard/manager-dashboard/pending-requests", icon:  ClipboardClock, roles: ["manager"] },
     {
       name: "All Messes",
-      href: "/admin/messes",
+      href: "/dashboard/admin-dashboard/messes",
       icon: Building,
       roles: ["admin"],
     },
