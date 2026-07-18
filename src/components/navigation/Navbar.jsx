@@ -7,7 +7,10 @@ import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
+import { useTranslation } from "@/lib/useTranslation";
+
 export default function Navbar() {
+  const { t } = useTranslation();
   const [showProfile, setShowProfile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -19,16 +22,16 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const publicMenu = [
-    { name: "Home", href: "/" },
-    { name: "Features", href: "/features" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "About", href: "/about" },
+    { name: t("home"), href: "/" },
+    { name: t("features"), href: "/features" },
+    { name: t("pricing"), href: "/pricing" },
+    { name: t("about"), href: "/about" },
   ];
 
   const loggedInMenu = [
-    { name: "Home", href: "/" },
-    { name: "Notice", href: "/notice" },
-    { name: "Dashboard", href: "/dashboard" },
+    { name: t("home"), href: "/" },
+    { name: t("notice"), href: "/notice" },
+    { name: t("dashboard"), href: "/dashboard" },
   ];
 
   const navLinks = isLoggedIn ? loggedInMenu : publicMenu;
@@ -52,6 +55,27 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const [lang, setLang] = useState("en");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("lang") || "en";
+      setLang(savedLang);
+    }
+  }, []);
+
+  const toggleLanguage = () => {
+    const newLang = lang === "en" ? "bn" : "en";
+    setLang(newLang);
+    localStorage.setItem("lang", newLang);
+    document.cookie = `lang=${newLang}; path=/; max-age=31536000`;
+    toast.success(newLang === "en" ? "Language switched to English" : "ভাষা বাংলায় পরিবর্তন করা হয়েছে");
+    window.dispatchEvent(new Event("languageChange"));
+    setTimeout(() => {
+      window.location.reload();
+    }, 400);
+  };
 
   return (
     <nav
@@ -91,6 +115,24 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="hidden md:flex items-center gap-4">
+          {/* Language Toggle */}
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 hover:border-orange-500 hover:bg-orange-50/50 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 hover:text-orange-600 hover:cursor-pointer mr-2"
+          >
+            {lang === "en" ? (
+              <>
+                <span className="text-sm">🇬🇧</span>
+                <span>EN</span>
+              </>
+            ) : (
+              <>
+                <span className="text-sm">🇧🇩</span>
+                <span>BD</span>
+              </>
+            )}
+          </button>
+
           {!isPending && (
             <>
               {!isLoggedIn ? (
@@ -98,7 +140,7 @@ export default function Navbar() {
                   href="/signin"
                   className="px-5 py-2 rounded-full bg-orange-500 text-white font-medium"
                 >
-                  Login
+                  {t("login")}
                 </Link>
               ) : (
                 <div className="relative" ref={profileRef}>
@@ -125,16 +167,16 @@ export default function Navbar() {
                         onClick={() => setShowProfile(false)}
                         className="block px-4 py-3 hover:bg-gray-50"
                       >
-                        Profile
+                        {t("profile")}
                       </Link>
                       <button
                         onClick={() => {
                       authClient.signOut();
-                      toast.success("Logged out successfully");
+                      toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
                     }}
                         className="w-full text-left px-4 py-3 text-red-500 hover:cursor-pointer hover:bg-gray-100"
                       >
-                        Logout
+                        {t("logout")}
                       </button>
                     </div>
                   )}
@@ -177,6 +219,27 @@ export default function Navbar() {
             </Link>
           ))}
 
+          {/* Language Toggle for Mobile */}
+          <div className="pt-4 border-t flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-500">Language / ভাষা</span>
+            <button
+              onClick={toggleLanguage}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 hover:border-orange-500 hover:bg-orange-50/50 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 hover:text-orange-600 hover:cursor-pointer"
+            >
+              {lang === "en" ? (
+                <>
+                  <span className="text-sm">🇬🇧</span>
+                  <span>EN</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm">🇧🇩</span>
+                  <span>BD</span>
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Mobile Menu for Login/Signup/Profile */}
           {!isPending && (
             <div className="pt-4 border-t flex flex-col gap-3">
@@ -187,9 +250,8 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="bg-orange-500 text-white px-5 py-2 rounded-full text-center"
                   >
-                    Login
+                    {t("login")}
                   </Link>
-                 
                 </>
               ) : (
                 <>
@@ -198,16 +260,16 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="text-gray-700"
                   >
-                    Profile
+                    {t("profile")}
                   </Link>
                   <button
                     onClick={() => {
                       authClient.signOut();
-                      toast.success("Logged out successfully");
+                      toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
                     }}
                     className="text-red-500 text-left hover:cursor-pointer"
                   >
-                    Logout
+                    {t("logout")}
                   </button>
                 </>
               )}

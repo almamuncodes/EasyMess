@@ -4,6 +4,7 @@ import { AlertTriangle, Home, Loader2, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/lib/useTranslation";
 
 
 const Page = () => {
@@ -12,6 +13,7 @@ const Page = () => {
   const user = GetUser();
   const userId = user?.user?.id;
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!user) {
@@ -30,6 +32,15 @@ const Page = () => {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
         const data = await res.json();
         setRole(data.role);
+
+        // Redirect based on role
+        if (data.role === "member") {
+          router.replace("/dashboard/user-dashboard/overview");
+        } else if (data.role === "manager") {
+          router.replace("/dashboard/manager-dashboard/overview");
+        } else if (data.role === "admin") {
+          router.replace("/dashboard/admin-dashboard/overview");
+        }
       } catch (error) {
         console.error("Error fetching role:", error);
       } finally {
@@ -38,13 +49,13 @@ const Page = () => {
     };
 
     fetchUserRole();
-  }, [userId]);
+  }, [userId, router]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Checking your mess access...</p>
+        <p className="text-gray-500 font-medium">{t("checkingAccess")}</p>
       </div>
     );
   }
@@ -57,17 +68,17 @@ const Page = () => {
             <AlertTriangle className="w-12 h-12 text-orange-500" />
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-3">
-            Mess Access Required
+            {t("messAccessRequired")}
           </h1>
           <p className="text-gray-500 mb-8 max-w-sm">
-            You are not a member of any mess yet. Please create a new mess or join an existing one to access the dashboard.
+            {t("notAMember")}
           </p>
           <Link
             href="/"
             className="flex items-center gap-2 px-8 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all shadow-md hover:shadow-orange-200"
           >
             <Home size={20} />
-            back to home
+            {t("backToHome")}
           </Link>
         </div>
       </div>
@@ -83,16 +94,16 @@ const Page = () => {
           <UtensilsCrossed className="w-12 h-12 text-orange-500" />
         </div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-2">
-          Welcome back!
+          {t("welcomeBack")}
         </h1>
         <p className="text-gray-500 mb-1">
-          You're logged in as
+          {t("loggedInAs")}
         </p>
         <span className="px-4 py-1 rounded-full bg-orange-100 text-orange-600 font-semibold text-sm capitalize mb-6">
           {role}
         </span>
         <p className="text-gray-400 text-sm">
-          Dashboard content goes here...
+          {t("dashboardContent")}
         </p>
       </div>
     </div>

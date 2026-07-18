@@ -15,129 +15,149 @@ import {
   UserCog,
   ClipboardClock,
 } from "lucide-react";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/lib/useTranslation";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [role, setRole] = useState("");
-  const user = GetUser();
-  const userId = user?.user?.id;
-  // console.log('kkk',userId); 
-  const fetchUser = async () => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
-    const data = await res.json();
-    setRole(data.role);
+  const [mounted, setMounted] = useState(false);
 
-    return data;
-  };
-  fetchUser();
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const { t, lang } = useTranslation();
+
+  useEffect(() => {
+    const loadSessionAndRole = async () => {
+      try {
+        const sessionRes = await authClient.getSession();
+        const userId = sessionRes?.data?.user?.id;
+        if (!userId) return;
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
+        const data = await res.json();
+        setRole(data.role);
+      } catch (error) {
+        console.error("Error loading session/role:", error);
+      }
+    };
+
+    if (mounted) {
+      loadSessionAndRole();
+    }
+  }, [mounted]);
+
+  if (!mounted) {
+    return (
+      <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white border-r border-gray-100 p-6 animate-pulse">
+        <div className="mb-10">
+          <div className="h-4 bg-gray-100 rounded w-20 px-4"></div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="h-10 bg-gray-50 rounded-xl"></div>
+          <div className="h-10 bg-gray-50 rounded-xl"></div>
+          <div className="h-10 bg-gray-50 rounded-xl"></div>
+        </div>
+      </aside>
+    );
+  }
 
   const menuItems = [
     {
-      name: "Overview",
+      name: t("overview"),
       href: "/dashboard/user-dashboard/overview",
       icon: LayoutDashboard,
       roles: ["member"],
     },
     {
-      name: "Overview",
+      name: t("overview"),
       href: "/dashboard/manager-dashboard/overview",
       icon: LayoutDashboard,
       roles: [ "manager"],
     },
     {
-      name: "Overview",
+      name: t("overview"),
       href: "/dashboard/admin-dashboard/overview",
       icon: LayoutDashboard,
       roles: [ "admin"],
     },
     {
-      name: "My Mess",
+      name: t("myMess"),
       href: "/dashboard/manager-dashboard/my-mess",
       icon: Home,
       roles: [ "manager"],
     },
     {
-      name: "My Meals",
+      name: t("myMeals"),
       href: "/dashboard/manager-dashboard/my-meals",
       icon: Utensils,
       roles: [ "manager"],
     },
     {
-      name: "My Mess",
+      name: t("myMess"),
       href: "/dashboard/user-dashboard/my-mess",
       icon: Home,
       roles: ["member"],
     },
     {
-      name: "Meals",
+      name: t("mealsSidebar"),
       href: "/dashboard/user-dashboard/meals",
       icon: Utensils,
       roles: ["member"],
     },
     {
-      name: "Bills",
+      name: t("billsSidebar"),
       href: "/dashboard/manager-dashboard/bills",
       icon: Receipt,
       roles: [ "manager"],
     },
     {
-      name: "Bills",
+      name: t("billsSidebar"),
       href: "/dashboard/user-dashboard/bills",
       icon: Receipt,
       roles: ["member"],
     },
-    { name: "Members", href: "/dashboard/manager-dashboard/members", icon: Users, roles: ["manager"] },
-    { name: "Bazaar", href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
-    { name: "Bazaar", href: "/dashboard/user-dashboard/bazaar", icon: Store, roles: ["member"] },
-    { name: "Payments", href: "/dashboard/manager-dashboard/payments", icon: Wallet, roles: ["manager"] },
-    { name: "pending-requests", href: "/dashboard/manager-dashboard/pending-requests", icon:  ClipboardClock, roles: ["manager"] },
+    { name: t("membersSidebar"), href: "/dashboard/manager-dashboard/members", icon: Users, roles: ["manager"] },
+    { name: t("bazaarSidebar"), href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
+    { name: t("bazaarSidebar"), href: "/dashboard/user-dashboard/bazaar", icon: Store, roles: ["member"] },
+    { name: t("paymentsSidebar"), href: "/dashboard/manager-dashboard/payments", icon: Wallet, roles: ["manager"] },
+    { name: t("pendingRequestsSidebar"), href: "/dashboard/manager-dashboard/pending-requests", icon:  ClipboardClock, roles: ["manager"] },
     {
-      name: "All Messes",
+      name: t("allMessesSidebar"),
       href: "/dashboard/admin-dashboard/messes",
       icon: Building,
       roles: ["admin"],
     },
     {
-      name: "Managers",
+      name: t("managersSidebar"),
       href: "/admin/managers",
       icon: UserCog,
       roles: ["admin"],
     },
-    { name: "Users", href: "/admin/users", icon: Users, roles: ["admin"] },
+    { name: t("usersSidebar"), href: "/admin/users", icon: Users, roles: ["admin"] },
     {
-      name: "Analytics",
+      name: t("analyticsSidebar"),
       href: "/admin/analytics",
       icon: BarChart3,
       roles: ["admin"],
     },
-
-
-// 
-// 
-// ai option ta pore change kore dibo apato to change korbo na 
-// 
-// 
-
-
-
-
-    
     {
-      name: "Settings",
+      name: t("settingsSidebar"),
       href: "/settings",
       icon: Settings,
       roles: ["pore thik korbo ata "],
     },
     {
-      name: "Settings",
+      name: t("settingsSidebar"),
       href: "/dashboard/manager-dashboard/settings",
       icon: Settings,
       roles: [ "manager"],
     },
     {
-      name: "Settings",
+      name: t("settingsSidebar"),
       href: "/settings",
       icon: Settings,
       roles: [ "admin"],
@@ -190,7 +210,7 @@ export default function Sidebar() {
       <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white border-r border-gray-100 p-6">
         <div className="mb-10">
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-4">
-            {role ? `${role} Dashboard` : "Menu"}
+            {role ? `${role.toUpperCase()} ${lang === "en" ? "Dashboard" : "ড্যাশবোর্ড"}` : (lang === "en" ? "Menu" : "মেনু")}
           </h2>
         </div>
         <nav className="flex flex-col gap-1.5">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
+import { useTranslation } from "@/lib/useTranslation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -22,6 +23,7 @@ function getBDMonthYear() {
 
 export default function LandingPage() {
   const { data: session, isPending } = authClient.useSession();
+  const { t, lang } = useTranslation();
 
   // null = এখনো চেক করা হচ্ছে, false = mess নেই, true = mess আছে
   const [hasMess, setHasMess] = useState(null);
@@ -212,7 +214,7 @@ export default function LandingPage() {
         {fonts}
         <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-[#9a9691]">
           <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF6900]" />
-          Loading EasyMess
+          {lang === "en" ? "Loading EasyMess" : "EasyMess লোড হচ্ছে..."}
         </div>
       </div>
     );
@@ -233,15 +235,14 @@ export default function LandingPage() {
             className="fade-in-up font-display mt-4 max-w-2xl text-center text-4xl font-bold leading-tight text-[#16181D] sm:text-5xl"
             style={{ animationDelay: "0.08s" }}
           >
-            Run your mess without the group-chat math
+            {t("runMessTitle")}
           </h1>
 
           <p
             className="fade-in-up mt-5 max-w-md text-center text-[#6b6f76]"
             style={{ animationDelay: "0.16s" }}
           >
-            Track meals, split grocery bills, and always know who owes what —
-            all in one place for your mess.
+            {t("runMessDesc")}
           </p>
 
           <div
@@ -252,13 +253,13 @@ export default function LandingPage() {
               href="/signin"
               className="rounded-full bg-[#FF6900] px-7 py-3 font-display text-sm font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:-translate-y-0.5 hover:bg-[#e55f00] hover:shadow-orange-500/30 active:scale-95"
             >
-              Log in to get started
+              {t("loginToGetStarted")}
             </Link>
             <a
               href="#how-it-works"
               className="font-display text-sm font-semibold text-[#16181D] underline decoration-[#E7E5E1] underline-offset-4 hover:decoration-[#FF6900]"
             >
-              See how it works
+              {t("seeHowItWorks")}
             </a>
           </div>
 
@@ -269,17 +270,17 @@ export default function LandingPage() {
           >
             <div className="flex items-center justify-between">
               <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-[#9a9691]">
-                This month
+                {t("thisMonth")}
               </p>
               <p className="font-meta text-[10px] uppercase tracking-[0.2em] text-[#9a9691]">
-                4 members
+                4 {t("members")}
               </p>
             </div>
             <p className="font-display mt-2 text-3xl font-bold text-[#16181D]">
-              ৳4,200
+              ৳৪,২০০
             </p>
             <p className="font-meta text-xs text-[#6b6f76]">
-              split evenly · ৳1,050 each
+              {t("splitEvenly")} · ৳১,০৫০ {t("each")}
             </p>
             <div className="mt-4 flex -space-x-2">
               {["R", "S", "M", "T"].map((initial) => (
@@ -297,16 +298,16 @@ export default function LandingPage() {
           <div className="mt-16 grid w-full gap-4 sm:grid-cols-3">
             {[
               {
-                label: "Track meals",
-                copy: "Log daily meals per member, no more paper charts.",
+                label: t("trackMealsTitle"),
+                copy: t("trackMealsDesc"),
               },
               {
-                label: "Split bills",
-                copy: "Grocery costs divide automatically by meal count.",
+                label: t("splitBillsTitle"),
+                copy: t("splitBillsDesc"),
               },
               {
-                label: "See who owes",
-                copy: "A live running balance for every member, always.",
+                label: t("seeWhoOwesTitle"),
+                copy: t("seeWhoOwesDesc"),
               },
             ].map((f) => (
               <div
@@ -324,24 +325,24 @@ export default function LandingPage() {
           {/* How it works — a real sequence, so numbered steps earn their place here */}
           <div id="how-it-works" className="mt-16 w-full">
             <p className="text-center font-meta text-[11px] uppercase tracking-[0.2em] text-[#9a9691]">
-              How it works
+              {t("howItWorks")}
             </p>
             <div className="mt-6 grid gap-6 sm:grid-cols-3">
               {[
                 {
                   step: "01",
-                  title: "Create or join a mess",
-                  copy: "Start your own mess, or use an invite code to join one that already exists.",
+                  title: t("step1Title"),
+                  copy: t("step1Desc"),
                 },
                 {
                   step: "02",
-                  title: "Mark your daily meals",
-                  copy: "Tap on or off for breakfast, lunch, and dinner before each deadline.",
+                  title: t("step2Title"),
+                  copy: t("step2Desc"),
                 },
                 {
                   step: "03",
-                  title: "Settle up at month end",
-                  copy: "EasyMess turns grocery bills and meal counts into one bill per member.",
+                  title: t("step3Title"),
+                  copy: t("step3Desc"),
                 },
               ].map((s) => (
                 <div key={s.step} className="text-center sm:text-left">
@@ -375,13 +376,13 @@ export default function LandingPage() {
               className="fade-in-up font-display mt-3 text-center text-4xl font-bold text-[#16181D] sm:text-5xl"
               style={{ animationDelay: "0.06s" }}
             >
-              Welcome to EasyMess
+              {t("welcomeToEasyMess")}
             </h1>
             <p
               className="fade-in-up mt-4 text-center text-[#6b6f76]"
               style={{ animationDelay: "0.12s" }}
             >
-              Create your own mess or join an existing one
+              {t("createOrJoinDesc")}
             </p>
 
             <div
@@ -393,10 +394,10 @@ export default function LandingPage() {
                 className="mx-6 flex flex-col items-center justify-center gap-2 rounded-2xl bg-[#FF6900] p-8 text-center text-white shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-1 hover:bg-[#e55f00] hover:shadow-orange-500/30 active:scale-95 sm:mx-0"
               >
                 <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                  Create mess
+                  {t("createMessButton")}
                 </h2>
                 <p className="mt-1 text-sm font-medium text-orange-50 opacity-90 md:text-base">
-                  Start and manage your own mess
+                  {t("startAndManageDesc")}
                 </p>
               </Link>
 
@@ -405,10 +406,10 @@ export default function LandingPage() {
                 className="mx-6 flex flex-col items-center justify-center gap-2 rounded-2xl border border-[#E7E5E1] bg-white p-8 text-center shadow-lg transition-all hover:-translate-y-1 hover:shadow-orange-200/40 active:scale-95 sm:mx-0"
               >
                 <h2 className="font-display text-xl font-bold text-[#16181D] sm:text-2xl">
-                  Join mess
+                  {t("joinMessButton")}
                 </h2>
                 <p className="mt-1 text-sm text-[#6b6f76]">
-                  Join an existing community
+                  {t("joinExistingDesc")}
                 </p>
               </Link>
             </div>
@@ -420,9 +421,9 @@ export default function LandingPage() {
 
   // ================= State 3: Member of an existing mess — read-only overview ================= //
   const mealTypes = [
-    { key: "breakfast", label: "Breakfast" },
-    { key: "lunch", label: "Lunch" },
-    { key: "dinner", label: "Dinner" },
+    { key: "breakfast", label: lang === "en" ? "Breakfast" : "সকাল" },
+    { key: "lunch", label: lang === "en" ? "Lunch" : "দুপুর" },
+    { key: "dinner", label: lang === "en" ? "Dinner" : "রাত" },
   ];
 
   return (
@@ -438,10 +439,10 @@ export default function LandingPage() {
         ) : (
           <>
             <h1 className="font-display mt-2 text-3xl font-bold text-[#16181D]">
-              {messInfo?.messName || "Your mess"}
+              {messInfo?.messName || (lang === "en" ? "Your mess" : "আপনার মেস")}
             </h1>
             <p className="mt-1 font-meta text-xs text-[#9a9691]">
-              {messInfo?.totalMembers ?? "—"} members · managed by{" "}
+              {messInfo?.totalMembers ?? "—"} {t("members")} · {lang === "en" ? "managed by" : "পরিচালনায়"} {" "}
               {messInfo?.managerName || "—"}
             </p>
           </>
@@ -451,7 +452,7 @@ export default function LandingPage() {
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
             <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
-              Meal rate
+              {t("mealRate")}
             </p>
             <p className="font-display mt-1 text-xl font-bold text-[#16181D]">
               {monthSummary ? `৳${monthSummary.mealRate}` : "—"}
@@ -459,7 +460,7 @@ export default function LandingPage() {
           </div>
           <div className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
             <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
-              Your bill
+              {t("yourBill")}
             </p>
             <p className="font-display mt-1 text-xl font-bold text-[#16181D]">
               {monthSummary ? `৳${monthSummary.bill}` : "—"}
@@ -467,7 +468,7 @@ export default function LandingPage() {
           </div>
           <div className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
             <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
-              {monthSummary?.status === "due" ? "You owe" : "Advance"}
+              {monthSummary?.status === "due" ? t("youOwe") : t("advance")}
             </p>
             <p
               className={`font-display mt-1 text-xl font-bold ${
@@ -482,10 +483,10 @@ export default function LandingPage() {
         </div>
 
         <h2 className="font-display mt-10 text-xl font-semibold text-[#16181D]">
-          Today's meals
+          {t("todaysMeals")}
         </h2>
         <p className="mt-1 font-meta text-xs text-[#9a9691]">
-          {new Date().toLocaleDateString("en-US", {
+          {new Date().toLocaleDateString(lang === "en" ? "en-US" : "bn-BD", {
             weekday: "long",
             month: "long",
             day: "numeric",
@@ -495,11 +496,11 @@ export default function LandingPage() {
         {mealsLoading ? (
           <div className="mt-6 flex items-center gap-3 font-meta text-xs uppercase tracking-[0.2em] text-[#9a9691]">
             <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF6900]" />
-            Loading today's meals
+            {t("loadingTodayMeals")}
           </div>
         ) : !todayMeals ? (
           <p className="mt-6 font-meta text-xs text-[#D4453A]">
-            {mealError || "Could not load today's meals."}
+            {mealError ? t("couldNotLoadMeals") : t("couldNotLoadMeals")}
           </p>
         ) : (
           <>
@@ -517,11 +518,9 @@ export default function LandingPage() {
                     {todayMeals.summary?.[m.key] ?? 0}
                   </p>
                   <p className="font-meta text-[10px] text-[#9a9691]">
-                    of {todayMeals.members.length} eating
+                    {t("eatingOf")} {todayMeals.members.length} {t("eating")}
                   </p>
-                  
                 </div>
-                
               ))}
             </div>
 
@@ -529,7 +528,7 @@ export default function LandingPage() {
             <div className="mt-6 rounded-2xl bg-white shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
               <div className="flex items-center justify-between border-b border-[#E7E5E1] px-5 py-3">
                 <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
-                  Member
+                  {t("memberHeader")}
                 </p>
                 <div className="flex gap-6">
                   {mealTypes.map((m) => (
@@ -553,7 +552,7 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2.5">
                       {member.image ? (
                         <Image
-                        width={48}
+                          width={48}
                           height={48}
                           src={member.image}
                           alt={member.name}
@@ -565,10 +564,10 @@ export default function LandingPage() {
                         </span>
                       )}
                       <span className="text-sm font-medium text-[#16181D]">
-                        {isMe ? "You" : member.name}
+                        {isMe ? t("youLabel") : member.name}
                         {member.role === "manager" && (
                           <span className="ml-1.5 font-meta text-[9px] uppercase tracking-wide text-[#9a9691]">
-                            manager
+                            {t("managerLabel")}
                           </span>
                         )}
                       </span>
@@ -581,7 +580,7 @@ export default function LandingPage() {
                           className={`block h-2.5 w-2.5 self-center rounded-full ${
                             member[m.key] ? "bg-[#FF6900]" : "bg-[#E7E5E1]"
                           }`}
-                          title={`${isMe ? "You" : member.name} — ${
+                          title={`${isMe ? t("youLabel") : member.name} — ${
                             m.label
                           } ${member[m.key] ? "on" : "off"}`}
                         />
@@ -593,8 +592,7 @@ export default function LandingPage() {
             </div>
 
             <p className="mt-4 font-meta text-[11px] text-[#9a9691]">
-              This is a view-only overview — go to the dashboard to change
-              your own meals or manage the mess.
+              {t("viewOnlyDesc")}
             </p>
           </>
         )}
