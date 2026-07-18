@@ -104,23 +104,24 @@ export default function MyMess() {
 
   // ---- image upload (client-side preview -> sent as messImage) -----------
 
-  async function uploadToImgBB(file) {
+  async function uploadToCloudinary(file) {
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("file", file);
+    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
 
-    // এখানে তোমার imgbb API Key বসাও
-    const API_KEY = "dd7b4d125163f0ed5537537a55851bab";
-
-    const res = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
     const data = await res.json();
-    if (data.success) {
-      return data.data.url;
+    if (data.secure_url) {
+      return data.secure_url;
     } else {
-      throw new Error("failed to upload image to imgbb");
+      throw new Error("failed to upload image to Cloudinary");
     }
   }
 
@@ -139,7 +140,7 @@ export default function MyMess() {
 
     try {
       flashToast("uploading image...");
-      const imageUrl = await uploadToImgBB(file);
+      const imageUrl = await uploadToCloudinary(file);
 
       setDraft((d) => ({ ...d, messImage: imageUrl }));
       flashToast("image uploaded");

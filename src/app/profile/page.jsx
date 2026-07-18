@@ -84,22 +84,26 @@ export default function ProfilePage() {
     setImagePreview(URL.createObjectURL(file)); // instant preview
   }
 
-  // ImgBB এ ছবি upload করে তার URL রিটার্ন করে
-  async function uploadImageToImgbb(file) {
+  // Cloudinary এ ছবি upload করে তার URL রিটার্ন করে
+  async function uploadImageToCloudinary(file) {
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("file", file);
+    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
 
-    const res = await fetch(`https://api.imgbb.com/1/upload?key=${imagebb}`, {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
     const data = await res.json();
-    if (!data.success) {
+    if (!data.secure_url) {
       throw new Error("Image upload failed");
     }
 
-    return data.data.url;
+    return data.secure_url;
   }
 
   // Save button - name এবং/অথবা image update করে
@@ -110,9 +114,9 @@ export default function ProfilePage() {
 
       let imageUrl = user.image;
 
-      // নতুন ছবি select করা হলে সেটা প্রথমে ImgBB তে upload করা
+      // নতুন ছবি select করা হলে সেটা প্রথমে Cloudinary তে upload করা
       if (imageFile) {
-        imageUrl = await uploadImageToImgbb(imageFile);
+        imageUrl = await uploadImageToCloudinary(imageFile);
       }
 
       const { error } = await authClient.updateUser({

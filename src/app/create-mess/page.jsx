@@ -28,16 +28,17 @@ const handleSubmit = async (e) => {
     if (imageFile && imageFile.size > 0) {
       try {
         const imgData = new FormData();
-        imgData.append("image", imageFile);
+        imgData.append("file", imageFile);
+        imgData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
 
         const uploadRes = await fetch(
-          `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_KEY}`,
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
           { method: "POST", body: imgData }
         );
         const imgResult = await uploadRes.json();
 
-        if (imgResult.success) {
-          imageUrl = imgResult.data.url;
+        if (imgResult.secure_url) {
+          imageUrl = imgResult.secure_url;
         } else {
           console.error("Image upload failed:", imgResult);
           toast.warning("Image upload failed, creating mess without image.");
