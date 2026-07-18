@@ -4,7 +4,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import dns from "node:dns/promises";
  dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
-const client = new MongoClient(process.env.PUBLIC_MONGO_URI);
+const client = new MongoClient(process.env.PUBLIC_MONGO_URI || "mongodb://localhost:27017/easymessUser");
 const db = client.db("easymessUser");
 
 export const auth = betterAuth({
