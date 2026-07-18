@@ -17,19 +17,23 @@ import {
 import { GetUser } from "@/components/action/action";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 
 
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const PAPER = "#f2f4f1";
-const INK = "#22301F";
-const LEDGER = "#3C5A45";
-const LEDGER_DARK = "#28402F";
-const TURMERIC = "#C4901B";
-const STAMP_RED = "#9C4A34";
-
 export default function MyMess() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const PAPER = isDark ? "#020617" : "#f2f4f1";
+  const INK = isDark ? "#f8fafc" : "#22301F";
+  const LEDGER = isDark ? "#94a3b8" : "#3C5A45";
+  const LEDGER_DARK = isDark ? "#cbd5e1" : "#28402F";
+  const TURMERIC = isDark ? "#fbbf24" : "#C4901B";
+  const STAMP_RED = isDark ? "#ef4444" : "#9C4A34";
+
   const [mess, setMess] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -319,8 +323,8 @@ export default function MyMess() {
         .ff-mono { font-family: 'JetBrains Mono', monospace; }
         .stamp-rotate { transform: rotate(-4deg); }
        .paper-card {
-  background: #fbf8ef;
-  border: 1px solid rgba(34, 48, 31, 0.14);
+  background: ${isDark ? "#0f172a" : "#fbf8ef"};
+  border: 1px solid ${isDark ? "#1e293b" : "rgba(34, 48, 31, 0.14)"};
   border-radius: 20px; 
   box-shadow: 0 1px 0 rgba(34, 48, 31, 0.06), 0 8px 24px -12px rgba(34, 48, 31, 0.18);
  
@@ -402,8 +406,8 @@ export default function MyMess() {
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, messImage: e.target.value }))
                   }
-                  className="ff-body text-xs w-full sm:w-28 px-2 py-1.5 rounded-md border bg-white/70 focus:outline-none focus:ring-2"
-                  style={{ borderColor: "rgba(34,48,31,0.2)" }}
+                  className="ff-body text-xs w-full sm:w-28 px-2 py-1.5 rounded-md border bg-white/70 dark:bg-slate-900/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2"
+                  style={{ borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(34,48,31,0.2)" }}
                 />
               )}
             </div>
@@ -444,8 +448,8 @@ export default function MyMess() {
                       onChange={(e) =>
                         setDraft((d) => ({ ...d, messName: e.target.value }))
                       }
-                      className="ff-body w-full px-3 py-2 rounded-lg border bg-white/70 focus:outline-none focus:ring-2"
-                      style={{ borderColor: "rgba(34,48,31,0.2)" }}
+                      className="ff-body w-full px-3 py-2 rounded-lg border bg-white/70 dark:bg-slate-900/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2"
+                      style={{ borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(34,48,31,0.2)" }}
                     />
                   </Field>
                   <Field label="Address">
@@ -457,8 +461,8 @@ export default function MyMess() {
                           messLocation: e.target.value,
                         }))
                       }
-                      className="ff-body w-full px-3 py-2 rounded-lg border bg-white/70 focus:outline-none focus:ring-2"
-                      style={{ borderColor: "rgba(34,48,31,0.2)" }}
+                      className="ff-body w-full px-3 py-2 rounded-lg border bg-white/70 dark:bg-slate-900/70 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2"
+                      style={{ borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(34,48,31,0.2)" }}
                     />
                   </Field>
                 </div>
@@ -495,7 +499,7 @@ export default function MyMess() {
                       onClick={() => setEditing(false)}
                       disabled={saving}
                       className="ff-body inline-flex items-center gap-1.5 text-sm font-medium px-3.5 py-2 rounded-lg border"
-                      style={{ borderColor: "rgba(34,48,31,0.25)" }}
+                      style={{ borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(34,48,31,0.25)" }}
                     >
                       Cancel
                     </button>
@@ -713,10 +717,9 @@ export default function MyMess() {
 function DetailRow({ icon, label }) {
   return (
     <div
-      className="flex items-center gap-2.5 ff-body text-sm"
-      style={{ color: "rgba(34,48,31,0.8)" }}
+      className="flex items-center gap-2.5 ff-body text-sm text-[#22301F]/80 dark:text-[#f8fafc]/80"
     >
-      <span style={{ color: "#3C5A45" }}>{icon}</span>
+      <span className="text-[#3C5A45] dark:text-[#cbd5e1]">{icon}</span>
       {label}
     </div>
   );

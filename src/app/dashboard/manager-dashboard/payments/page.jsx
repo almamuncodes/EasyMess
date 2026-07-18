@@ -139,13 +139,7 @@ export default function ManagerDepositsPage() {
 
   return (
     <div
-      className={`${fraunces.variable} ${inter.variable} ${notoBengali.variable} ${hindSiliguri.variable} border-none rounded-b-2xl `}
-      style={{
-        minHeight: "100vh",
-        background: "#f2f4f1",
-       
-        color: "#1B2B22",
-      }}
+      className={`${fraunces.variable} ${inter.variable} ${notoBengali.variable} ${hindSiliguri.variable} border-none rounded-b-2xl min-h-screen bg-[#f2f4f1] dark:bg-slate-950 text-[#1B2B22] dark:text-slate-100 font-sans`}
     >
 
       <header
@@ -173,12 +167,10 @@ export default function ManagerDepositsPage() {
       {/* ===== ফিল্টার বার ===== */}
       <div className="max-w-5xl mx-auto px-6 md:px-12 -mt-5">
         <div
-          className="rounded-xl shadow-sm p-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center"
-          style={{ background: "#F7F6EE", border: "1px solid #DCDCC9" }}
+          className="rounded-xl shadow-sm p-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-[#F7F6EE] dark:bg-slate-900 border border-[#DCDCC9] dark:border-slate-800"
         >
           <div
-            className="flex items-center gap-2 flex-1 px-3 py-2 rounded-lg"
-            style={{ background: "#FFFFFF" }}
+            className="flex items-center gap-2 flex-1 px-3 py-2 rounded-lg bg-white dark:bg-slate-950 border border-neutral-200 dark:border-slate-800"
           >
             <SearchIcon />
             <input
@@ -192,8 +184,7 @@ export default function ManagerDepositsPage() {
             type="month"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ background: "#FFFFFF", border: "1px solid #DCDCC9" }}
+            className="px-3 py-2 rounded-lg text-sm outline-none bg-white dark:bg-slate-950 text-neutral-900 dark:text-slate-100 border border-[#DCDCC9] dark:border-slate-800"
           />
           {(search || month) && (
             <button
@@ -201,8 +192,7 @@ export default function ManagerDepositsPage() {
                 setSearch("");
                 setMonth("");
               }}
-              className="text-sm px-3 py-2 rounded-lg"
-              style={{ color: "#5B6A5F" }}
+              className="text-sm px-3 py-2 rounded-lg text-[#5B6A5F] dark:text-slate-400"
             >
               Reset
             </button>
@@ -289,8 +279,7 @@ function MemberLedgerRow({
 }) {
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ background: "#F7F6EE", border: "1px solid #DCDCC9" }}
+      className="rounded-xl overflow-hidden bg-[#F7F6EE] dark:bg-slate-900 border border-[#DCDCC9] dark:border-slate-800 text-neutral-900 dark:text-slate-100"
     >
       <button
         onClick={onToggle}
@@ -324,8 +313,8 @@ function MemberLedgerRow({
           </div>
 
           <div>
-            <p className="font-medium text-[#1B2B22]">{member.name}</p>
-            <p className="text-xs" style={{ color: "#8A8A78" }}>
+            <p className="font-medium text-[#1B2B22] dark:text-slate-100">{member.name}</p>
+            <p className="text-xs text-[#8A8A78] dark:text-slate-400">
               {member.history?.length || 0} entries
             </p>
           </div>
@@ -343,8 +332,7 @@ function MemberLedgerRow({
 
       {expanded && (
         <div
-          className="px-5 pb-5 pt-1"
-          style={{ borderTop: "1px dashed #C9C9B0" }}
+          className="px-5 pb-5 pt-1 border-t border-dashed border-[#C9C9B0] dark:border-slate-800"
         >
           <div className="flex justify-end mb-3 mt-3">
             <button
@@ -369,11 +357,7 @@ function MemberLedgerRow({
                 return (
                   <div
                     key={d._id}
-                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg group"
-                    style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #EDEDDF",
-                    }}
+                    className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg group bg-white dark:bg-slate-950 border border-[#EDEDDF] dark:border-slate-800"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span
@@ -388,8 +372,7 @@ function MemberLedgerRow({
                         </p>
                         {/* hover korle full note dekhabe (title attribute = native browser tooltip) */}
                         <p
-                          className="text-xs truncate"
-                          style={{ color: "#8A8A78" }}
+                          className="text-xs truncate text-[#8A8A78] dark:text-slate-450"
                           title={noteText}
                         >
                           {noteText}
@@ -461,8 +444,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-2xl overflow-hidden"
-        style={{ background: "#F7F6EE" }}
+        className="w-full max-w-sm rounded-2xl overflow-hidden bg-[#F7F6EE] dark:bg-slate-900 border border-[#DCDCC9] dark:border-slate-800 text-neutral-900 dark:text-slate-100"
       >
        
         <div className="px-6 py-5">
@@ -489,8 +471,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full mb-3 px-3 py-2 rounded-lg outline-none text-sm tabular-nums"
-            style={{ background: "#FFFFFF", border: "1px solid #DCDCC9" }}
+            className="w-full mb-3 px-3 py-2 rounded-lg outline-none text-sm tabular-nums bg-white dark:bg-slate-950 text-neutral-900 dark:text-slate-100 border border-[#DCDCC9] dark:border-slate-800"
             placeholder="2000"
             autoFocus
           />

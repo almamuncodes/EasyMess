@@ -39,11 +39,11 @@ function Perforation({ className = "" }) {
 
 function SummaryCard({ label, value, mono: useMono = true }) {
   return (
-    <div className="rounded-2xl bg-[#FFF7ED] border border-[#FFEEDD] p-5 shadow-sm">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#EA580C]">
+    <div className="rounded-2xl bg-[#FFF7ED] dark:bg-slate-900 border border-[#FFEEDD] dark:border-slate-800 p-5 shadow-sm">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#EA580C] dark:text-orange-400">
         {label}
       </p>
-      <p className={`mt-1 text-2xl font-bold text-gray-950 ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
+      <p className={`mt-1 text-2xl font-bold text-gray-950 dark:text-slate-100 ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
         {value}
       </p>
     </div>
@@ -69,7 +69,7 @@ function LeaderRow({ left, right }) {
   return (
     <div className="flex items-baseline gap-2">
       <span className="whitespace-nowrap">{left}</span>
-      <span className="flex-1 border-b border-dotted border-[#1B2A26]/25 translate-y-[-3px]" />
+      <span className="flex-1 border-b border-dotted border-current/20 translate-y-[-3px]" />
       <span className="whitespace-nowrap font-[family-name:var(--font-mono)]">{right}</span>
     </div>
   );
@@ -172,7 +172,7 @@ const userId = user?.user?.id ;
 
   return (
     <div
-      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] font-[family-name:var(--font-body)] text-[#1B2A26] border rounded-2xl`}
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 font-[family-name:var(--font-body)] text-[#1B2A26] dark:text-slate-200 border dark:border-slate-800 rounded-2xl`}
     >
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         {/* Header */}
@@ -190,7 +190,7 @@ const userId = user?.user?.id ;
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-md border border-[#1B2A26]/15 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
+              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
             >
               {monthOptions.map((m) => (
                 <option key={m} value={m}>
@@ -201,7 +201,7 @@ const userId = user?.user?.id ;
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="rounded-md border border-[#1B2A26]/15 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
+              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
             >
               {yearOptions.map((y) => (
                 <option key={y} value={y}>
@@ -235,7 +235,7 @@ const userId = user?.user?.id ;
             </div>
 
             {/* Export bar */}
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 pb-4">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
               <p className="font-[family-name:var(--font-display)] text-lg">Member Summary</p>
               <div className="flex gap-2">
                 <button
@@ -250,7 +250,7 @@ const userId = user?.user?.id ;
                     disabled
                     title="Coming soon"
                     onClick={() => alert("Coming soon!")}
-                    className="rounded-md border border-[#1B2A26]/15 px-3 py-2 text-sm font-medium text-[#1B2A26]/40"
+                    className="rounded-md border border-[#ff6900]/50 px-3 py-2 text-sm font-medium text-[#1B2A26]/40 dark:text-slate-400"
                   >
                     📊 Download Excel
                   </button>
@@ -259,10 +259,10 @@ const userId = user?.user?.id ;
             </div>
 
             {/* Desktop table */}
-            <div className="mt-4 hidden overflow-hidden rounded-md border border-[#1B2A26]/10 bg-white sm:block">
+            <div className="mt-4 hidden overflow-hidden rounded-md border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 sm:block">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[#1B2A26]/10 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50">
+                  <tr className="border-b border-[#1B2A26]/10 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50 dark:text-slate-400">
                     <th className="px-4 py-3 font-medium">Member</th>
                     <th className="px-4 py-3 font-medium">Meal</th>
                     <th className="px-4 py-3 font-medium">Deposit</th>
@@ -275,8 +275,8 @@ const userId = user?.user?.id ;
                   {data.members.map((m, idx) => (
                     <tr
                       key={m.userId}
-                      className={`border-b border-[#1B2A26]/5 last:border-0 ${
-                        idx % 2 === 1 ? "bg-[#1B2A26]/[0.02]" : ""
+                      className={`border-b border-[#1B2A26]/5 dark:border-slate-800/50 last:border-0 ${
+                        idx % 2 === 1 ? "bg-[#1B2A26]/[0.02] dark:bg-slate-800/20" : ""
                       }`}
                     >
                       <td className="px-4 py-3">{m.userName}</td>
@@ -285,7 +285,7 @@ const userId = user?.user?.id ;
                       <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.bill)}</td>
                       <td
                         className={`px-4 py-3 font-[family-name:var(--font-mono)] ${
-                          m.balance >= 0 ? "text-[#3F7D5C]" : "text-[#B5533C]"
+                          m.balance >= 0 ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
                         }`}
                       >
                         {m.balance >= 0 ? "+" : ""}
@@ -303,12 +303,12 @@ const userId = user?.user?.id ;
             {/* Mobile receipt-style cards */}
             <div className="mt-4 space-y-3 sm:hidden">
               {data.members.map((m) => (
-                <div key={m.userId} className="rounded-md border border-[#1B2A26]/10 bg-white p-4">
+                <div key={m.userId} className="rounded-md border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <p className="font-medium">{m.userName}</p>
                     <StatusBadge status={m.status} />
                   </div>
-                  <div className="space-y-1 text-sm text-[#1B2A26]/80">
+                  <div className="space-y-1 text-sm text-[#1B2A26]/80 dark:text-slate-300">
                     <LeaderRow left="Meal" right={m.totalMeal} />
                     <LeaderRow left="Deposit" right={`৳ ${taka(m.deposit)}`} />
                     <LeaderRow left="Bill" right={`৳ ${taka(m.bill)}`} />

@@ -39,6 +39,8 @@ export default function LandingPage() {
   const [monthSummary, setMonthSummary] = useState(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
 
+  const [selectedMember, setSelectedMember] = useState(null);
+
   const today = todayDateString();
 
   // ১. ইউজার কোনো mess-এর member কিনা চেক করা
@@ -556,10 +558,14 @@ export default function LandingPage() {
                           height={48}
                           src={member.image}
                           alt={member.name}
-                          className="h-8 w-8 rounded-full object-cover"
+                          className="h-8 w-8 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setSelectedMember(member)}
                         />
                       ) : (
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6900]/10 font-meta text-xs font-semibold text-[#FF6900]">
+                        <span 
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6900]/10 font-meta text-xs font-semibold text-[#FF6900] cursor-pointer hover:bg-[#FF6900]/20 transition-colors"
+                          onClick={() => setSelectedMember(member)}
+                        >
                           {member.name?.charAt(0) || "?"}
                         </span>
                       )}
@@ -597,6 +603,50 @@ export default function LandingPage() {
           </>
         )}
       </section>
+
+      {/* Enlarged Member Profile Detail Modal */}
+      {selectedMember && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300"
+          onClick={() => setSelectedMember(null)}
+        >
+          <div 
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center relative border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl font-bold transition-colors"
+              onClick={() => setSelectedMember(null)}
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+            
+            {selectedMember.image ? (
+              <img 
+                src={selectedMember.image} 
+                alt={selectedMember.name} 
+                className="w-48 h-48 rounded-2xl object-cover mb-4 shadow-lg border border-gray-100 dark:border-slate-800"
+              />
+            ) : (
+              <div className="w-48 h-48 rounded-2xl bg-orange-50 dark:bg-slate-850 flex items-center justify-center mb-4 border border-orange-100 dark:border-slate-800">
+                <span className="text-5xl font-bold text-orange-500">
+                  {selectedMember.name?.charAt(0) || "?"}
+                </span>
+              </div>
+            )}
+            
+            <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">
+              {selectedMember.name}
+            </h3>
+            {selectedMember.role && (
+              <span className="px-3 py-1 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-600 dark:text-orange-400 font-semibold text-xs capitalize mt-1">
+                {selectedMember.role}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,10 +2,11 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 import { useTranslation } from "@/lib/useTranslation";
 
@@ -57,8 +58,11 @@ export default function Navbar() {
   }, []);
 
   const [lang, setLang] = useState("en");
+  const { theme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
 
   useEffect(() => {
+    setThemeMounted(true);
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("lang") || "en";
       setLang(savedLang);
@@ -79,8 +83,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`w-full bg-white sticky top-0 z-50 transition-shadow duration-200 ${
-        scrolled ? "shadow-md border-b border-transparent" : "border-b"
+      className={`w-full bg-white dark:bg-slate-900 sticky top-0 z-50 transition-shadow duration-200 ${
+        scrolled ? "shadow-md border-b border-transparent dark:border-slate-800" : "border-b dark:border-slate-800"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -90,6 +94,7 @@ export default function Navbar() {
             alt="EasyMess"
             width={150}
             height={40}
+            className="dark:brightness-0 dark:invert transition-all duration-200"
           />
         </Link>
 
@@ -115,10 +120,24 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="hidden md:flex items-center gap-4">
+          {/* Theme Toggle */}
+          <button
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center justify-center p-2 rounded-full border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm hover:cursor-pointer"
+            aria-label="Toggle Theme"
+          >
+            {themeMounted && (theme === "dark" ? (
+              <Sun size={16} className="text-orange-400" />
+            ) : (
+              <Moon size={16} className="text-slate-700" />
+            ))}
+            {!themeMounted && <div className="w-4 h-4" />}
+          </button>
+
           {/* Language Toggle */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 hover:border-orange-500 hover:bg-orange-50/50 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 hover:text-orange-600 hover:cursor-pointer mr-2"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer mr-2"
           >
             {lang === "en" ? (
               <>
@@ -219,12 +238,28 @@ export default function Navbar() {
             </Link>
           ))}
 
-          {/* Language Toggle for Mobile */}
+          {/* Theme & Language Toggle for Mobile */}
           <div className="pt-4 border-t flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500">Language / ভাষা</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{lang === "en" ? "Theme" : "থিম"}</span>
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex items-center justify-center p-2 rounded-full border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm hover:cursor-pointer"
+              aria-label="Toggle Theme"
+            >
+              {themeMounted && (theme === "dark" ? (
+                <Sun size={16} className="text-orange-400" />
+              ) : (
+                <Moon size={16} className="text-slate-700" />
+              ))}
+              {!themeMounted && <div className="w-4 h-4" />}
+            </button>
+          </div>
+
+          <div className="pt-4 border-t flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Language / ভাষা</span>
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 hover:border-orange-500 hover:bg-orange-50/50 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 hover:text-orange-600 hover:cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer"
             >
               {lang === "en" ? (
                 <>

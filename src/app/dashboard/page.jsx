@@ -87,22 +87,21 @@ const Page = () => {
 
   // ✅ role paoar por-o same visual language (card + icon + CTA)
   return (
-    
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-      <div className="w-full max-w-lg bg-white p-8 rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center text-center">
-        <div className="w-24 h-24 rounded-full bg-orange-50 flex items-center justify-center mb-6">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-slate-950">
+      <div className="w-full max-w-lg bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-lg border border-gray-100 dark:border-slate-800 flex flex-col items-center text-center">
+        <div className="w-24 h-24 rounded-full bg-orange-50 dark:bg-slate-800 flex items-center justify-center mb-6">
           <UtensilsCrossed className="w-12 h-12 text-orange-500" />
         </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-2">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 mb-2">
           {t("welcomeBack")}
         </h1>
-        <p className="text-gray-500 mb-1">
+        <p className="text-gray-500 dark:text-slate-400 mb-1">
           {t("loggedInAs")}
         </p>
-        <span className="px-4 py-1 rounded-full bg-orange-100 text-orange-600 font-semibold text-sm capitalize mb-6">
+        <span className="px-4 py-1 rounded-full bg-orange-100 dark:bg-slate-800 text-orange-600 dark:text-orange-400 font-semibold text-sm capitalize mb-6">
           {role}
         </span>
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-400 dark:text-slate-500 text-sm">
           {t("dashboardContent")}
         </p>
       </div>

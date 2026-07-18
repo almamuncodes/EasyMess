@@ -62,13 +62,7 @@ export default function MyDepositsPage() {
 
   return (
     <div
-      className={`${inter.variable} ${hindSiliguri.variable} rounded-2xl border-none`}
-      style={{
-        minHeight: "100vh",
-        background: "#f2f4f1",
-        color: "#171717",
-        fontFamily: "var(--font-body), var(--font-body-bn), sans-serif",
-      }}
+      className={`${inter.variable} ${hindSiliguri.variable} rounded-2xl border-none min-h-screen bg-[#f2f4f1] dark:bg-slate-950 text-neutral-900 dark:text-slate-100 font-sans`}
     >
       <div className="max-w-2xl mx-auto px-6 py-10 md:py-14">
         <h1 className="text-2xl font-semibold mb-8">My Deposits</h1>
@@ -77,7 +71,7 @@ export default function MyDepositsPage() {
 
         {errorMsg && <ErrorBanner message={errorMsg} />}
 
-        <p style={{ color: "#18181B" }} className="text-xs mb-3">
+        <p className="text-xs mb-3 text-neutral-800 dark:text-slate-300">
           History
         </p>
 
@@ -98,24 +92,22 @@ export default function MyDepositsPage() {
         )}
       </div>
 
-      {/* Note Detail Modal */}
       {selectedNote && (
         <div 
           className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6"
           onClick={() => setSelectedNote(null)}
         >
           <div 
-            className="bg-white p-6 rounded-xl w-full max-w-sm shadow-xl"
+            className="bg-white dark:bg-slate-900 p-6 rounded-xl w-full max-w-sm shadow-xl text-neutral-900 dark:text-slate-100 border border-neutral-200 dark:border-slate-800"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-semibold text-lg mb-1">Details</h3>
-            <p className="text-xs text-gray-500 mb-4">{formatDate(selectedNote.date)}</p>
-            <p className="text-sm text-gray-800 leading-relaxed">
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">{formatDate(selectedNote.date)}</p>
+            <p className="text-sm text-gray-800 dark:text-slate-200 leading-relaxed">
               {selectedNote.note || "No additional note provided."}
             </p>
             <button 
-              className="mt-6 w-full py-2.5 rounded-lg text-sm font-medium text-white"
-              style={{ background: "#F58331" }}
+              className="mt-6 w-full py-2.5 rounded-lg text-sm font-medium text-white bg-[#F58331] hover:bg-[#F58331]/90"
               onClick={() => setSelectedNote(null)}
             >
               Close
@@ -130,16 +122,15 @@ export default function MyDepositsPage() {
 function TotalCard({ total, count }) {
   return (
     <div
-      className="rounded-xl px-6 py-5 mb-8"
-      style={{ border: "1px solid #E5E5E5", background: "#F58331" }}
+      className="rounded-xl px-6 py-5 mb-8 border border-neutral-200 dark:border-slate-800 bg-[#F58331] text-white"
     >
-      <p style={{ color: "#FFFFFF" }} className="text-xs mb-1">
+      <p className="text-xs mb-1 text-white/95">
         Total Deposit
       </p>
       <p className="text-3xl font-semibold tabular-nums text-white">
         {taka(total)}
       </p>
-      <p style={{ color: "#FFFFFF" }} className="text-xs mt-1">
+      <p className="text-xs mt-1 text-white/95">
         {count} entries
       </p>
     </div>
@@ -154,12 +145,11 @@ function DepositRow({ deposit, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="flex items-center justify-between px-4 py-4 rounded-lg cursor-pointer"
-      style={{ border: "3px solid #EDEDED", background: "#f3f3f3" }}
+      className="flex items-center justify-between px-4 py-4 rounded-lg cursor-pointer border border-[#EDEDED] dark:border-slate-800 bg-[#f3f3f3] dark:bg-slate-900 hover:bg-[#f3f3f3]/80 dark:hover:bg-slate-900/80"
     >
       <div className="min-w-0">
         <p className="text-sm font-medium tabular-nums">{taka(deposit.amount)}</p>
-        <p className="text-xs truncate" style={{ color: "#8A8A78" }}>
+        <p className="text-xs truncate text-[#8A8A78] dark:text-slate-400">
           {noteText}
         </p>
       </div>
@@ -171,8 +161,7 @@ function DepositRow({ deposit, onClick }) {
 function PaymentBadge({ method }) {
   return (
     <span
-      className="text-xs shrink-0 ml-3 px-2.5 py-1 rounded-full"
-      style={{ border: "1px solid #E5E5E5", color: "#525252" }}
+      className="text-xs shrink-0 ml-3 px-2.5 py-1 rounded-full border border-neutral-200 dark:border-slate-800 text-neutral-600 dark:text-slate-350 bg-neutral-50 dark:bg-slate-800"
     >
       {method}
     </span>
@@ -181,10 +170,8 @@ function PaymentBadge({ method }) {
 
 function ErrorBanner({ message }) {
   return (
-    
     <div
-      className="rounded-lg px-4 py-3 text-sm mb-6"
-      style={{ border: "1px solid #E5E5E5", color: "#525252" }}
+      className="rounded-lg px-4 py-3 text-sm mb-6 border border-neutral-200 dark:border-slate-800 text-neutral-600 dark:text-slate-300 bg-rose-50 dark:bg-rose-950/20"
     >
       {message}
     </div>
@@ -193,7 +180,7 @@ function ErrorBanner({ message }) {
 
 function EmptyState() {
   return (
-    <div className="text-center py-16" style={{ color: "#A3A3A3" }}>
+    <div className="text-center py-16 text-neutral-450 dark:text-slate-500">
       <p className="text-sm">No deposits yet</p>
     </div>
   );
@@ -203,7 +190,7 @@ function LoadingSkeleton() {
   return (
     <div className="flex flex-col gap-2">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-14 rounded-lg animate-pulse" style={{ background: "#F5F5F5" }} />
+        <div key={i} className="h-14 rounded-lg animate-pulse bg-neutral-100 dark:bg-slate-800" />
       ))}
     </div>
   );

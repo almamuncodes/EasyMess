@@ -79,11 +79,11 @@ export default function MyMessPage() {
 
   return (
   
-      <div className="max-w-2xl mx-auto p-4 space-y-6 bg-[#F2F4F1] border border-gray-100 rounded-2xl shadow">
-        <h1 className="text-2xl font-semibold text-gray-800">My Mess</h1>
+      <div className="max-w-2xl mx-auto p-4 space-y-6 bg-[#F2F4F1] dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-2xl shadow">
+        <h1 className="text-2xl font-semibold text-gray-800 dark:text-slate-100">My Mess</h1>
 
         {/* ================= Section 1: Mess Information ================= */}
-        <div className="bg-[#fbf8ef] rounded-2xl shadow p-5 space-y-3">
+        <div className="bg-[#fbf8ef] dark:bg-slate-900 rounded-2xl shadow p-5 space-y-3">
           <div className="flex items-center gap-4">
             <Image
               src={messInfo.messImage}
@@ -93,56 +93,56 @@ export default function MyMessPage() {
               className="w-16 h-16 rounded-xl object-cover"
             />
             <div>
-              <h2 className="text-lg font-semibold text-gray-800">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">
                 {messInfo.messName}
               </h2>
-              <p className="text-sm text-gray-500">{messInfo.messLocation}</p>
+              <p className="text-sm text-gray-500 dark:text-slate-400">{messInfo.messLocation}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 pt-2">
+          <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 dark:text-slate-300 pt-2">
             <p>
               Manager:{" "}
-              <span className="font-medium">{messInfo.managerName}</span>
+              <span className="font-medium text-gray-800 dark:text-slate-200">{messInfo.managerName}</span>
             </p>
             <p>
               Total Members:{" "}
-              <span className="font-medium">{messInfo.totalMembers}</span>
+              <span className="font-medium text-gray-800 dark:text-slate-200">{messInfo.totalMembers}</span>
             </p>
           </div>
 
           {/* Invite code - click to copy */}
           <button
             onClick={handleCopyInviteCode}
-            className="w-full flex items-center justify-between bg-[#F0F0F0] hover:bg-gray-100 rounded-xl px-4 py-3 mt-2"
+            className="w-full flex items-center justify-between bg-[#F0F0F0] dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-800/80 rounded-xl px-4 py-3 mt-2"
           >
-            <span className="font-mono font-semibold text-gray-700">
+            <span className="font-mono font-semibold text-gray-700 dark:text-slate-200">
               {messInfo.inviteCode}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-slate-400">
               {copied ? "Copied" : "Copy"}
             </span>
           </button>
         </div>
 
         {/* ================= Section 2: My Information ================= */}
-        <div className="bg-[#FBF8EF] rounded-2xl shadow p-5 space-y-2">
-          <h2 className="font-semibold text-gray-800">My Information</h2>
-          <p className="text-sm text-gray-600">
+        <div className="bg-[#FBF8EF] dark:bg-slate-900 rounded-2xl shadow p-5 space-y-2">
+          <h2 className="font-semibold text-gray-800 dark:text-slate-100">My Information</h2>
+          <p className="text-sm text-gray-600 dark:text-slate-300">
             Role:{" "}
-            <span className="font-medium capitalize">{messInfo.myRole}</span>
+            <span className="font-medium capitalize text-gray-800 dark:text-slate-200">{messInfo.myRole}</span>
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-slate-300">
             Joining Date:{" "}
-            <span className="font-medium">
+            <span className="font-medium text-gray-800 dark:text-slate-200">
               {new Date(messInfo.myJoinDate).toLocaleDateString("en-US")}
             </span>
           </p>
         </div>
 
         {/* ================= Section 3: Current Month Summary ================= */}
-        <div className="bg-[#FBF8EF] rounded-2xl shadow p-5 space-y-3">
-          <h2 className="font-semibold text-gray-800">Current Month Summary</h2>
+        <div className="bg-[#FBF8EF] dark:bg-slate-900 rounded-2xl shadow p-5 space-y-3">
+          <h2 className="font-semibold text-gray-800 dark:text-slate-100">Current Month Summary</h2>
 
           <div className="grid grid-cols-2 gap-4 text-sm ">
             <SummaryItem  label="Total Meal"  value={summary.totalMeal} />
@@ -157,8 +157,8 @@ export default function MyMessPage() {
           <div
             className={`rounded-xl px-4 py-3 text-center font-semibold ${
               summary.status === "advance"
-                ? "bg-[#F0F0F0] text-green-700"
-                : "bg-[#F0F0F0] text-red-700"
+                ? "bg-[#F0F0F0] dark:bg-slate-800 text-green-700 dark:text-green-400"
+                : "bg-[#F0F0F0] dark:bg-slate-800 text-red-700 dark:text-red-400"
             }`}
           >
             {summary.status === "advance"
@@ -168,14 +168,14 @@ export default function MyMessPage() {
         </div>
 
         {/* ================= Section 4: Mess Members (dropdown) ================= */}
-        <div className="bg-[#FBF8EF] rounded-2xl shadow overflow-hidden">
+        <div className="bg-[#FBF8EF] dark:bg-slate-900 rounded-2xl shadow overflow-hidden">
           <button
             onClick={() => setShowMembers((prev) => !prev)}
             className="w-full flex items-center justify-between p-5"
           >
-            <h2 className="font-semibold text-gray-800">
+            <h2 className="font-semibold text-gray-800 dark:text-slate-100">
               Mess Members{" "}
-              <span className="text-gray-400 font-normal">
+              <span className="text-gray-400 dark:text-slate-500 font-normal">
                 ({messInfo.members.length})
               </span>
             </h2>
@@ -188,7 +188,7 @@ export default function MyMessPage() {
                 <div
                   key={m.userId}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2 ${
-                    m.role === "manager" ? "bg-amber-100" : "bg-[#F0F0F0]"
+                    m.role === "manager" ? "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300" : "bg-[#F0F0F0] dark:bg-slate-800 text-neutral-800 dark:text-slate-200"
                   }`}
                 >
                   <Image
@@ -198,11 +198,11 @@ export default function MyMessPage() {
                     height={40}
                     className="w-10 h-10 rounded-full object-cover ring-2 ring-white"
                   />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-slate-200">
                     {m.name}
                   </span>
                   {m.role === "manager" && (
-                    <span className="ml-auto text-xs font-medium bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
+                    <span className="ml-auto text-xs font-medium bg-amber-200 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-1 rounded-full">
                       Manager
                     </span>
                   )}
@@ -215,7 +215,7 @@ export default function MyMessPage() {
         {/* ================= Section 5: Leave Mess ================= */}
         <button
           onClick={() => setShowLeaveModal(true)}
-          className="w-full py-3 rounded-xl border border-red-300 text-red-600 font-medium hover:bg-red-50"
+          className="w-full py-3 rounded-xl border border-red-300 dark:border-red-900/50 text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-950/20"
         >
           Leave Mess
         </button>
@@ -223,11 +223,11 @@ export default function MyMessPage() {
         {/* Leave Mess Modal - informational only, no delete action */}
         {showLeaveModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-sm w-full space-y-4">
-              <h3 className="font-semibold text-gray-800">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full space-y-4 border border-neutral-200 dark:border-slate-800">
+              <h3 className="font-semibold text-gray-800 dark:text-slate-100">
                 Want to leave the mess?
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-slate-350">
                 To leave the mess, please contact your manager. Only the manager
                 can remove you from the mess.
               </p>
@@ -248,9 +248,9 @@ export default function MyMessPage() {
 // Small reusable component for each summary box
 function SummaryItem({ label, value }) {
   return (
-    <div className="bg-[#F0F0F0] rounded-xl px-4 py-3">
-      <p className="text-gray-500 text-xs">{label}</p>
-      <p className="font-semibold text-gray-800">{value}</p>
+    <div className="bg-[#F0F0F0] dark:bg-slate-800 rounded-xl px-4 py-3 text-neutral-900 dark:text-slate-100">
+      <p className="text-gray-500 dark:text-slate-400 text-xs">{label}</p>
+      <p className="font-semibold text-gray-800 dark:text-slate-100">{value}</p>
     </div>
   );
 }
