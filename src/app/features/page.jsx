@@ -1,3 +1,12 @@
+export const metadata = {
+  title: "Features",
+  description: "Explore the core features of EasyMess: automatic meal tracking, bazaar expense log, deposit summary, and monthly bill reports.",
+  keywords: ["Meal Management Features", "Mess Expense Tracker", "Mess Bill Calculator", "Hostel Software features"],
+  alternatives: {
+    canonical: "https://easymess.vercel.app/features",
+  },
+};
+
 import React from 'react'
 
 const page = () => {

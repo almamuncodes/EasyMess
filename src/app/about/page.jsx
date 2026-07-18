@@ -1,3 +1,12 @@
+export const metadata = {
+  title: "About Us",
+  description: "Learn more about EasyMess, a digital platform dedicated to simplifying and automating mess management for bachelors, students, and hostels.",
+  keywords: ["About EasyMess", "Mess Management Software BD", "Hostel Meal Tracker Team"],
+  alternatives: {
+    canonical: "https://easymess.vercel.app/about",
+  },
+};
+
 import React from 'react'
 
 const page = () => {

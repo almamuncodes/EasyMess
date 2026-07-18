@@ -1,3 +1,12 @@
+export const metadata = {
+  title: "Dashboard",
+  description: "EasyMess User Dashboard",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 import React from "react";
 import Sidebar, { Navigation } from "./DashboardSideBar";
 

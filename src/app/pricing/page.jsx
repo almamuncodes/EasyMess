@@ -1,3 +1,12 @@
+export const metadata = {
+  title: "Pricing",
+  description: "Affordable subscription pricing plans for EasyMess: perfect for bachelor messes, student hostels, and shared apartment communities.",
+  keywords: ["Mess Management Pricing", "EasyMess Plans", "Hostel Billing App Cost"],
+  alternatives: {
+    canonical: "https://easymess.vercel.app/pricing",
+  },
+};
+
 import React from 'react'
 
 const page = () => {
