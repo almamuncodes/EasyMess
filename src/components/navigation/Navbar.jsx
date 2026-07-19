@@ -21,7 +21,7 @@ export default function Navbar() {
   const notificationRef = useRef(null);
   const mobileNotificationRef = useRef(null);
 
-  const { notifications, unreadCount, markAllAsRead, markAsRead } = useSocket();
+  const { notifications, unreadCount, markAllAsRead, markAsRead, deleteNotification, clearAllNotifications } = useSocket();
 
   const { data: session, isPending } = authClient.useSession();
   const isLoggedIn = !!session;
@@ -194,17 +194,28 @@ export default function Navbar() {
                       <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50">
                         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
                           <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">{t("notifications")}</h3>
-                          {unreadCount > 0 && (
-                            <button
-                              onClick={() => {
-                                markAllAsRead();
-                                setShowNotifications(false);
-                              }}
-                              className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition hover:cursor-pointer bg-transparent border-0"
-                            >
-                              {t("markAllAsRead")}
-                            </button>
-                          )}
+                          <div className="flex items-center gap-3">
+                            {unreadCount > 0 && (
+                              <button
+                                onClick={() => {
+                                  markAllAsRead();
+                                }}
+                                className="text-xs font-semibold text-orange-500 hover:text-orange-655 dark:hover:text-orange-400 transition hover:cursor-pointer bg-transparent border-0"
+                              >
+                                {t("markAllAsRead")}
+                              </button>
+                            )}
+                            {notifications.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  clearAllNotifications();
+                                }}
+                                className="text-xs font-semibold text-red-500 hover:text-red-600 dark:hover:text-red-400 transition hover:cursor-pointer bg-transparent border-0"
+                              >
+                                {lang === "bn" ? "সব মুছুন" : "Clear All"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div className="max-h-72 overflow-y-auto">
                           {notifications.length === 0 ? (
@@ -215,28 +226,42 @@ export default function Navbar() {
                             notifications.map((notif) => (
                               <div
                                 key={notif._id}
-                                onClick={async () => {
-                                  if (!notif.isRead) {
-                                    await markAsRead(notif._id);
-                                  }
-                                  setShowNotifications(false);
-                                  window.location.href = "/notice";
-                                }}
-                                className={`px-4 py-3 hover:bg-orange-50/30 dark:hover:bg-slate-700/30 transition border-b border-gray-50 dark:border-slate-700/50 cursor-pointer flex gap-3 ${
+                                className={`group px-4 py-3 hover:bg-orange-50/30 dark:hover:bg-slate-700/30 transition border-b border-gray-55 dark:border-slate-700/50 cursor-pointer flex gap-3 relative ${
                                   !notif.isRead ? "bg-orange-50/10 dark:bg-orange-500/5" : ""
                                 }`}
                               >
-                                <div className="shrink-0 mt-0.5">
-                                  <div className={`w-2 h-2 rounded-full ${!notif.isRead ? "bg-orange-500 animate-pulse" : "bg-transparent"}`} />
+                                <div
+                                  onClick={async () => {
+                                    if (!notif.isRead) {
+                                      await markAsRead(notif._id);
+                                    }
+                                    setShowNotifications(false);
+                                    window.location.href = "/notice";
+                                  }}
+                                  className="flex flex-1 gap-3 min-w-0"
+                                >
+                                  <div className="shrink-0 mt-0.5">
+                                    <div className={`w-2 h-2 rounded-full ${!notif.isRead ? "bg-orange-500 animate-pulse" : "bg-transparent"}`} />
+                                  </div>
+                                  <div className="flex-1 min-w-0 text-left pr-4">
+                                    <p className={`text-xs line-clamp-2 ${!notif.isRead ? "font-semibold text-gray-900 dark:text-white" : "font-normal text-gray-600 dark:text-gray-300"}`}>
+                                      {notif.message}
+                                    </p>
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-1">
+                                      {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="flex-1 min-w-0 text-left">
-                                  <p className={`text-xs line-clamp-2 ${!notif.isRead ? "font-semibold text-gray-900 dark:text-white" : "font-normal text-gray-600 dark:text-gray-300"}`}>
-                                    {notif.message}
-                                  </p>
-                                  <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-1">
-                                    {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteNotification(notif._id);
+                                  }}
+                                  className="absolute right-2 top-3.5 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-slate-750 transition md:opacity-0 md:group-hover:opacity-100 hover:cursor-pointer z-10"
+                                  aria-label="Delete Notification"
+                                >
+                                  <X size={12} />
+                                </button>
                               </div>
                             ))
                           )}
@@ -309,17 +334,28 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
                     <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">{t("notifications")}</h3>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={() => {
-                          markAllAsRead();
-                          setShowNotifications(false);
-                        }}
-                        className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition bg-transparent border-0"
-                      >
-                        {t("markAllAsRead")}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => {
+                            markAllAsRead();
+                          }}
+                          className="text-xs font-semibold text-orange-500 hover:text-orange-655 dark:hover:text-orange-400 transition bg-transparent border-0"
+                        >
+                          {t("markAllAsRead")}
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={() => {
+                            clearAllNotifications();
+                          }}
+                          className="text-xs font-semibold text-red-500 hover:text-red-650 transition bg-transparent border-0"
+                        >
+                          {lang === "bn" ? "সব মুছুন" : "Clear All"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {notifications.length === 0 ? (
@@ -330,28 +366,42 @@ export default function Navbar() {
                       notifications.map((notif) => (
                         <div
                           key={notif._id}
-                          onClick={async () => {
-                            if (!notif.isRead) {
-                              await markAsRead(notif._id);
-                            }
-                            setShowNotifications(false);
-                            window.location.href = "/notice";
-                          }}
-                          className={`px-4 py-3 hover:bg-orange-50/30 dark:hover:bg-slate-700/30 transition border-b border-gray-50 dark:border-slate-700/50 cursor-pointer flex gap-3 ${
+                          className={`group px-4 py-3 hover:bg-orange-50/30 dark:hover:bg-slate-700/30 transition border-b border-gray-55 dark:border-slate-700/50 cursor-pointer flex gap-3 relative ${
                             !notif.isRead ? "bg-orange-50/10 dark:bg-orange-500/5" : ""
                           }`}
                         >
-                          <div className="shrink-0 mt-0.5">
-                            <div className={`w-2 h-2 rounded-full ${!notif.isRead ? "bg-orange-500 animate-pulse" : "bg-transparent"}`} />
+                          <div
+                            onClick={async () => {
+                              if (!notif.isRead) {
+                                await markAsRead(notif._id);
+                              }
+                              setShowNotifications(false);
+                              window.location.href = "/notice";
+                            }}
+                            className="flex flex-1 gap-3 min-w-0"
+                          >
+                            <div className="shrink-0 mt-0.5">
+                              <div className={`w-2 h-2 rounded-full ${!notif.isRead ? "bg-orange-500 animate-pulse" : "bg-transparent"}`} />
+                            </div>
+                            <div className="flex-1 min-w-0 text-left pr-4">
+                              <p className={`text-xs line-clamp-2 ${!notif.isRead ? "font-semibold text-gray-900 dark:text-white" : "font-normal text-gray-600 dark:text-gray-300"}`}>
+                                {notif.message}
+                              </p>
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-1">
+                                {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0 text-left">
-                            <p className={`text-xs line-clamp-2 ${!notif.isRead ? "font-semibold text-gray-900 dark:text-white" : "font-normal text-gray-600 dark:text-gray-300"}`}>
-                              {notif.message}
-                            </p>
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-1">
-                              {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
-                            </span>
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notif._id);
+                            }}
+                            className="absolute right-2 top-3.5 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-105 dark:hover:bg-slate-750 transition hover:cursor-pointer z-10"
+                            aria-label="Delete Notification"
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
                       ))
                     )}

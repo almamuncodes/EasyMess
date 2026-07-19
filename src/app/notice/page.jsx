@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useSocket } from "@/components/providers/SocketProvider";
 import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
-import { Plus, Search, Filter, AlertCircle, X, Check } from "lucide-react";
+import { Plus, Search, Filter, AlertCircle, X, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import NoticeCard from "@/components/NoticeCard";
 
@@ -20,6 +20,8 @@ export default function NoticePage() {
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [noticeToDelete, setNoticeToDelete] = useState(null);
+  const [commentToDelete, setCommentToDelete] = useState(null);
   
   // Notice being edited
   const [editingNotice, setEditingNotice] = useState(null);
@@ -213,16 +215,12 @@ export default function NoticePage() {
     }
   };
 
-  // Handle Delete Notice
-  const handleDeleteNotice = async (noticeId) => {
-    const confirmation = confirm(
-      lang === "bn"
-        ? "আপনি কি নিশ্চিত? নোটিশটি ডিলিট করলে এর সকল কমেন্ট ও রিঅ্যাকশন মুছে যাবে।"
-        : "Are you sure? Deleting this notice will remove all comments and reactions."
-    );
+  // Handle Delete Notice Trigger
+  const handleDeleteNotice = (noticeId) => {
+    setNoticeToDelete(noticeId);
+  };
 
-    if (!confirmation) return;
-
+  const executeDeleteNotice = async (noticeId) => {
     try {
       const res = await fetch(`${API_BASE}/api/notices/${noticeId}?userId=${userId}`, {
         method: "DELETE",
@@ -237,6 +235,27 @@ export default function NoticePage() {
       }
     } catch (error) {
       console.error("Error deleting notice:", error);
+      toast.error(lang === "bn" ? "সার্ভার ত্রুটি" : "Server error");
+    }
+  };
+
+  const executeDeleteComment = async (commentId) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/comments/${commentId}?userId=${userId}`, {
+        method: "DELETE",
+        headers: {
+          "x-user-id": userId,
+        }
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(lang === "bn" ? "মন্তব্য ডিলিট করা হয়েছে" : "Comment deleted successfully");
+      } else {
+        toast.error(data.message || "Failed to delete comment");
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
       toast.error(lang === "bn" ? "সার্ভার ত্রুটি" : "Server error");
     }
   };
@@ -406,6 +425,7 @@ export default function NoticePage() {
               role={role}
               onEditClick={openEditModal}
               onDeleteClick={handleDeleteNotice}
+              onDeleteComment={(commentId) => setCommentToDelete(commentId)}
             />
           ))}
         </div>
@@ -621,6 +641,78 @@ export default function NoticePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Notice Deletion Confirmation Modal */}
+      {noticeToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 p-6">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/30 text-red-500 mb-4 mx-auto">
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-center font-bold text-base text-gray-900 dark:text-white mb-2">
+              {lang === "bn" ? "নোটিশটি ডিলিট করতে চান?" : "Delete Notice?"}
+            </h3>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+              {lang === "bn"
+                ? "আপনি কি নিশ্চিত? নোটিশটি ডিলিট করলে এর সকল কমেন্ট ও রিঅ্যাকশন চিরতরে মুছে যাবে।"
+                : "Are you sure? Deleting this notice will permanently remove all of its comments and reactions."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setNoticeToDelete(null)}
+                className="flex-1 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-350 transition hover:cursor-pointer"
+              >
+                {lang === "bn" ? "বাতিল" : "Cancel"}
+              </button>
+              <button
+                onClick={() => {
+                  executeDeleteNotice(noticeToDelete);
+                  setNoticeToDelete(null);
+                }}
+                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-red-500 hover:bg-red-650 text-white transition hover:cursor-pointer"
+              >
+                {lang === "bn" ? "ডিলিট" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Comment Deletion Confirmation Modal */}
+      {commentToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 p-6">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/30 text-red-500 mb-4 mx-auto">
+              <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-center font-bold text-base text-gray-900 dark:text-white mb-2">
+              {lang === "bn" ? "মন্তব্যটি ডিলিট করতে চান?" : "Delete Comment?"}
+            </h3>
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
+              {lang === "bn"
+                ? "আপনি কি আসলেই মন্তব্যটি মুছে ফেলতে চান? এই কাজটি আর ফিরিয়ে আনা সম্ভব নয়।"
+                : "Are you sure you want to delete this comment? This action cannot be undone."}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCommentToDelete(null)}
+                className="flex-1 py-2 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-500 dark:text-gray-350 transition hover:cursor-pointer"
+              >
+                {lang === "bn" ? "বাতিল" : "Cancel"}
+              </button>
+              <button
+                onClick={() => {
+                  executeDeleteComment(commentToDelete);
+                  setCommentToDelete(null);
+                }}
+                className="flex-1 py-2 text-xs font-semibold rounded-xl bg-red-500 hover:bg-red-650 text-white transition hover:cursor-pointer"
+              >
+                {lang === "bn" ? "ডিলিট" : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}

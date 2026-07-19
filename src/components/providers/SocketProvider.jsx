@@ -13,6 +13,8 @@ const SocketContext = createContext({
   fetchNotifications: async () => {},
   markAllAsRead: async () => {},
   markAsRead: async () => {},
+  deleteNotification: async () => {},
+  clearAllNotifications: async () => {},
   messId: null,
 });
 
@@ -76,6 +78,44 @@ export default function SocketProvider({ children }) {
       });
     } catch (error) {
       console.error("Error marking single read:", error);
+      fetchNotifications(userId); // revert on error
+    }
+  };
+
+  // Delete single notification
+  const deleteNotification = async (notificationId) => {
+    try {
+      // Optimistic UI update
+      setNotifications((prev) => {
+        const target = prev.find((n) => n._id === notificationId);
+        if (target && !target.isRead) {
+          setUnreadCount((u) => Math.max(0, u - 1));
+        }
+        return prev.filter((n) => n._id !== notificationId);
+      });
+
+      await fetch(`${API_BASE}/api/notifications/${notificationId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      fetchNotifications(userId); // revert on error
+    }
+  };
+
+  // Clear all notifications for user
+  const clearAllNotifications = async () => {
+    if (!userId) return;
+    try {
+      // Optimistic UI update
+      setNotifications([]);
+      setUnreadCount(0);
+
+      await fetch(`${API_BASE}/api/notifications/${userId}/clear-all`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error clearing all notifications:", error);
       fetchNotifications(userId); // revert on error
     }
   };
@@ -218,6 +258,8 @@ export default function SocketProvider({ children }) {
         fetchNotifications,
         markAllAsRead,
         markAsRead,
+        deleteNotification,
+        clearAllNotifications,
         messId,
       }}
     >
