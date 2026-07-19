@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/Fotter/Footer";
 import ThemeProvider from "@/components/providers/ThemeProvider";
+import SocketProvider from "@/components/providers/SocketProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -85,10 +86,12 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <Navbar/>
-          <Toaster  position="top-left" />
-          {children}
-          <Footer/>
+          <SocketProvider>
+            <Navbar/>
+            <Toaster  position="top-left" />
+            {children}
+            <Footer/>
+          </SocketProvider>
         </ThemeProvider>
       </body>
     </html>

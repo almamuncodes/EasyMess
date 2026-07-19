@@ -2,20 +2,26 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X, Sun, Moon, Bell } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 
 import { useTranslation } from "@/lib/useTranslation";
+import { useSocket } from "@/components/providers/SocketProvider";
 
 export default function Navbar() {
   const { t } = useTranslation();
   const [showProfile, setShowProfile] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const profileRef = useRef(null);
+  const notificationRef = useRef(null);
+  const mobileNotificationRef = useRef(null);
+
+  const { notifications, unreadCount, markAllAsRead, markAsRead } = useSocket();
 
   const { data: session, isPending } = authClient.useSession();
   const isLoggedIn = !!session;
@@ -42,6 +48,13 @@ export default function Navbar() {
     function handleClickOutside(e) {
       if (profileRef.current && !profileRef.current.contains(e.target)) {
         setShowProfile(false);
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(e.target) &&
+        (!mobileNotificationRef.current || !mobileNotificationRef.current.contains(e.target))
+      ) {
+        setShowNotifications(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -162,55 +175,198 @@ export default function Navbar() {
                   {t("login")}
                 </Link>
               ) : (
-                <div className="relative" ref={profileRef}>
-                  <button
-                    onClick={() => setShowProfile(!showProfile)}
-                    className="w-10 h-10 rounded-full overflow-hidden bg-orange-500 text-white font-bold flex items-center justify-center hover:cursor-pointer"
-                  >
-                    {session?.user?.image ? (
-                      <Image
-                        src={session.user.image}
-                        alt={session.user.name || "User"}
-                        width={40}
-                        height={40}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      session?.user?.name?.charAt(0)?.toUpperCase() || "U"
+                <>
+                  {/* Notification Bell Dropdown */}
+                  <div className="relative mr-2" ref={notificationRef}>
+                    <button
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      className="relative p-2 rounded-full border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm hover:cursor-pointer flex items-center justify-center"
+                      aria-label="Notifications"
+                    >
+                      <Bell size={16} />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+                    {showNotifications && (
+                      <div className="absolute right-0 mt-3 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
+                          <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">{t("notifications")}</h3>
+                          {unreadCount > 0 && (
+                            <button
+                              onClick={() => {
+                                markAllAsRead();
+                                setShowNotifications(false);
+                              }}
+                              className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition hover:cursor-pointer bg-transparent border-0"
+                            >
+                              {t("markAllAsRead")}
+                            </button>
+                          )}
+                        </div>
+                        <div className="max-h-72 overflow-y-auto">
+                          {notifications.length === 0 ? (
+                            <div className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                              {t("noNotifications")}
+                            </div>
+                          ) : (
+                            notifications.map((notif) => (
+                              <div
+                                key={notif._id}
+                                onClick={async () => {
+                                  if (!notif.isRead) {
+                                    await markAsRead(notif._id);
+                                  }
+                                  setShowNotifications(false);
+                                  window.location.href = "/notice";
+                                }}
+                                className={`px-4 py-3 hover:bg-orange-50/30 dark:hover:bg-slate-700/30 transition border-b border-gray-50 dark:border-slate-700/50 cursor-pointer flex gap-3 ${
+                                  !notif.isRead ? "bg-orange-50/10 dark:bg-orange-500/5" : ""
+                                }`}
+                              >
+                                <div className="shrink-0 mt-0.5">
+                                  <div className={`w-2 h-2 rounded-full ${!notif.isRead ? "bg-orange-500 animate-pulse" : "bg-transparent"}`} />
+                                </div>
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p className={`text-xs line-clamp-2 ${!notif.isRead ? "font-semibold text-gray-900 dark:text-white" : "font-normal text-gray-600 dark:text-gray-300"}`}>
+                                    {notif.message}
+                                  </p>
+                                  <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-1">
+                                    {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </button>
-                  {showProfile && (
-                    <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border overflow-hidden">
-                      <Link
-                        href="/profile"
-                        onClick={() => setShowProfile(false)}
-                        className="block px-4 py-3 hover:bg-gray-50"
-                      >
-                        {t("profile")}
-                      </Link>
-                      <button
-                        onClick={() => {
-                      authClient.signOut();
-                      toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
-                    }}
-                        className="w-full text-left px-4 py-3 text-red-500 hover:cursor-pointer hover:bg-gray-100"
-                      >
-                        {t("logout")}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  </div>
+
+                  {/* Profile Dropdown */}
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      onClick={() => setShowProfile(!showProfile)}
+                      className="w-10 h-10 rounded-full overflow-hidden bg-orange-500 text-white font-bold flex items-center justify-center hover:cursor-pointer"
+                    >
+                      {session?.user?.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        session?.user?.name?.charAt(0)?.toUpperCase() || "U"
+                      )}
+                    </button>
+                    {showProfile && (
+                      <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden">
+                        <Link
+                          href="/profile"
+                          onClick={() => setShowProfile(false)}
+                          className="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200"
+                        >
+                          {t("profile")}
+                        </Link>
+                        <button
+                          onClick={() => {
+                            authClient.signOut();
+                            toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
+                          }}
+                          className="w-full text-left px-4 py-3 text-red-500 hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-750"
+                        >
+                          {t("logout")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </>
           )}
         </div>
 
-        <button
-          className="md:hidden p-2"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          {isLoggedIn && (
+            <div className="relative" ref={mobileNotificationRef}>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 rounded-full border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm flex items-center justify-center"
+                aria-label="Notifications"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-72 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700 overflow-hidden z-50">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
+                    <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">{t("notifications")}</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => {
+                          markAllAsRead();
+                          setShowNotifications(false);
+                        }}
+                        className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition bg-transparent border-0"
+                      >
+                        {t("markAllAsRead")}
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                        {t("noNotifications")}
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif._id}
+                          onClick={async () => {
+                            if (!notif.isRead) {
+                              await markAsRead(notif._id);
+                            }
+                            setShowNotifications(false);
+                            window.location.href = "/notice";
+                          }}
+                          className={`px-4 py-3 hover:bg-orange-50/30 dark:hover:bg-slate-700/30 transition border-b border-gray-50 dark:border-slate-700/50 cursor-pointer flex gap-3 ${
+                            !notif.isRead ? "bg-orange-50/10 dark:bg-orange-500/5" : ""
+                          }`}
+                        >
+                          <div className="shrink-0 mt-0.5">
+                            <div className={`w-2 h-2 rounded-full ${!notif.isRead ? "bg-orange-500 animate-pulse" : "bg-transparent"}`} />
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <p className={`text-xs line-clamp-2 ${!notif.isRead ? "font-semibold text-gray-900 dark:text-white" : "font-normal text-gray-600 dark:text-gray-300"}`}>
+                              {notif.message}
+                            </p>
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500 block mt-1">
+                              {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <button
+            className="p-2"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu with smooth open/close */}
