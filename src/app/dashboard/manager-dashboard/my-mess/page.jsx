@@ -247,7 +247,7 @@ export default function MyMess() {
       return;
     }
     flashToast(`${member.name} is now the manager`);
-    loadAll();
+    router.push("/dashboard");
   }
 
   async function removeMember(member) {
@@ -684,7 +684,7 @@ export default function MyMess() {
                 onClick={() =>
                   confirmAction.type === "remove"
                     ? removeMember(confirmAction.member)
-                    : `${transferManager(confirmAction.member)}  ${router.push("/dashboard")}`
+                    : transferManager(confirmAction.member)
                 }
                 disabled={actionBusy}
                 className="ff-body flex-1 text-sm font-medium px-4 py-2.5 rounded-lg text-white transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-1.5"
