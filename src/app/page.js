@@ -40,16 +40,6 @@ export default function LandingPage() {
   const [overviewLoading, setOverviewLoading] = useState(true);
 
   const [selectedMember, setSelectedMember] = useState(null);
-  const [isNativeApp, setIsNativeApp] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const isCap = !!window.Capacitor || 
-                    window.navigator.userAgent.includes("Capacitor") ||
-                    window.location.search.includes("platform=android");
-      setIsNativeApp(isCap);
-    }
-  }, []);
 
   // Simulator states for interactive calculator
   const [calcBazaar, setCalcBazaar] = useState(6000);
@@ -573,84 +563,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Mobile App Download Showcase Section */}
-        {!isNativeApp && (
-          <section className="py-16 mx-auto max-w-5xl px-6">
-            <div className="rounded-[32px] bg-gradient-to-br from-orange-50 to-amber-50 dark:from-slate-900/50 dark:to-slate-950 border border-orange-100 dark:border-slate-800/80 p-8 sm:p-12 relative overflow-hidden shadow-xl">
-              {/* Ambient background glows */}
-              <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 bg-orange-200/30 dark:bg-orange-950/15 rounded-full blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 bg-amber-200/30 dark:bg-amber-950/15 rounded-full blur-3xl" />
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center relative">
-                {/* Left Text / Info Area */}
-                <div className="md:col-span-7 flex flex-col text-left">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300 border border-orange-200/50 dark:border-orange-800/30 mb-6 w-fit">
-                    <span>🤖</span> Android Native App
-                  </span>
-                  
-                  <h2 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white">
-                    {isBn ? (
-                      <>
-                        আপনার মেসের হিসাব রাখুন <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-550">
-                          হাতের মুঠোয়
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        EasyMess is now <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-550">
-                          on your Android Phone
-                        </span>
-                      </>
-                    )}
-                  </h2>
-
-                  <p className="mt-4 text-sm text-slate-650 dark:text-slate-400 leading-relaxed max-w-md">
-                    {t("downloadAndroidAppDesc")}
-                  </p>
-
-                  {/* Benefits List */}
-                  <div className="mt-8 space-y-3">
-                    {[t("appBenefit1"), t("appBenefit2"), t("appBenefit3")].map((benefit, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
-                        <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs text-orange-500 font-bold shadow-sm">
-                          ✓
-                        </span>
-                        <span>{benefit}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Big Download Button */}
-                  <div className="mt-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                    <a
-                      href="/downloads/easymess.apk"
-                      download
-                      className="w-full sm:w-auto text-center rounded-xl bg-[#FF6900] px-8 py-4 font-display text-sm font-bold text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition duration-200 active:scale-95 flex items-center justify-center gap-2"
-                    >
-                      <span className="text-lg">⬇️</span> {t("downloadAndroidApp")}
-                    </a>
-                    <span className="text-xs text-slate-500 font-mono">
-                      File size: ~4.0 MB · Android 8.0+
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right Phone Mockup Area */}
-                <div className="md:col-span-5 flex justify-center items-center">
-                  <div className="relative transform hover:scale-105 hover:rotate-1 transition-transform duration-500">
-                    <img 
-                      src="/easymess-screenshot.png" 
-                      alt="EasyMess App Screenshot" 
-                      className="w-[240px] rounded-[36px] shadow-2xl border-4 border-slate-800 dark:border-slate-700" 
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Action Banner (CTA) */}
         <section className="py-16 mx-auto max-w-5xl px-6 mb-12">
@@ -731,26 +644,6 @@ export default function LandingPage() {
                 </p>
               </Link>
             </div>
-
-            {/* Mobile App Download Card for logged in users */}
-            {!isNativeApp && (
-              <div className="mt-10 flex flex-col items-center justify-center p-6 bg-white dark:bg-slate-905 rounded-2xl border border-gray-200/50 dark:border-slate-800 shadow-sm">
-                <span className="text-2xl mb-2">📱</span>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-slate-100">
-                  {t("downloadAndroidApp")}
-                </h4>
-                <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-1 text-center max-w-xs">
-                  {t("downloadAndroidAppDesc")}
-                </p>
-                <a
-                  href="/downloads/easymess.apk"
-                  download
-                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-50 hover:bg-orange-100 dark:bg-orange-950/20 dark:hover:bg-orange-950/40 text-[#FF6900] font-display text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm border border-orange-200/30"
-                >
-                  <span>⬇️</span> {lang === "bn" ? "অ্যাপ ডাউনলোড করুন" : "Download App"}
-                </a>
-              </div>
-            )}
           </div>
         </section>
       </div>
@@ -936,26 +829,6 @@ export default function LandingPage() {
             <p className="mt-4 font-meta text-[11px] text-[#9a9691]">
               {t("viewOnlyDesc")}
             </p>
-
-            {/* Mobile App Download Card for dashboard */}
-            {!isNativeApp && (
-              <div className="mt-8 pt-6 border-t border-[#E7E5E1] text-center flex flex-col items-center">
-                <span className="text-xl mb-1.5">📱</span>
-                <h4 className="text-xs font-bold text-gray-900 dark:text-slate-100">
-                  {t("downloadAndroidApp")}
-                </h4>
-                <p className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">
-                  {t("downloadAndroidAppDesc")}
-                </p>
-                <a
-                  href="/downloads/easymess.apk"
-                  download
-                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-orange-50 dark:hover:bg-slate-800 text-[#FF6900] font-display text-xs font-bold transition-all duration-200 active:scale-95 shadow-sm border border-gray-200 dark:border-slate-800"
-                >
-                  <span>⬇️</span> {lang === "bn" ? "অ্যাপ ডাউনলোড" : "Download App"}
-                </a>
-              </div>
-            )}
           </>
         )}
       </section>

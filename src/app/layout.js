@@ -6,6 +6,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import Navbar from "@/components/navigation/Navbar";
 import Footer from "@/components/Fotter/Footer";
+import BottomNav from "@/components/navigation/BottomNav";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import SocketProvider from "@/components/providers/SocketProvider";
 
@@ -135,8 +136,11 @@ export default function RootLayout({ children }) {
           <SocketProvider>
             <Navbar/>
             <Toaster  position="top-left" />
-            {children}
+            <div className="flex-1 pb-16 md:pb-0">
+              {children}
+            </div>
             <Footer/>
+            <BottomNav />
           </SocketProvider>
         </ThemeProvider>
       </body>

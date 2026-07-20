@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, Sun, Moon, Bell } from "lucide-react";
+import { Menu, X, Sun, Moon, Bell, Settings } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
@@ -414,114 +414,193 @@ export default function Navbar() {
             </div>
           )}
           <button
-            className="p-2"
+            className="p-2 text-gray-700 dark:text-gray-200 hover:cursor-pointer"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? (
+              <X size={24} />
+            ) : isLoggedIn ? (
+              <Settings size={24} className="animate-[spin_12s_linear_infinite] text-orange-500" />
+            ) : (
+              <Menu size={24} />
+            )}
           </button>
         </div>
       </div>
-
-      {/* Mobile Menu with smooth open/close */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="bg-white border-b border-gray-100 p-6 flex flex-col gap-4">
-          {navLinks.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={() => setMobileMenuOpen(false)}
-              className={`
-  font-medium
-  ${
-    pathname === item.href
-      ? "text-orange-500"
-      : "text-gray-700 hover:text-orange-500"
-  }
-`}
-            >
-              {item.name}
-            </Link>
-          ))}
-
-          {/* Theme & Language Toggle for Mobile */}
-          <div className="pt-4 border-t flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{lang === "en" ? "Theme" : "থিম"}</span>
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex items-center justify-center p-2 rounded-full border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm hover:cursor-pointer"
-              aria-label="Toggle Theme"
-            >
-              {themeMounted && (theme === "dark" ? (
-                <Sun size={16} className="text-orange-400" />
-              ) : (
-                <Moon size={16} className="text-slate-700" />
-              ))}
-              {!themeMounted && <div className="w-4 h-4" />}
-            </button>
-          </div>
-
-          <div className="pt-4 border-t flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Language / ভাষা</span>
-            <button
-              onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer"
-            >
-              {lang === "en" ? (
-                <>
-                  <span className="text-sm">🇬🇧</span>
-                  <span>EN</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-sm">🇧🇩</span>
-                  <span>BD</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Mobile Menu for Login/Signup/Profile */}
-          {!isPending && (
-            <div className="pt-4 border-t flex flex-col gap-3">
-              {!isLoggedIn ? (
-                <>
-                  <Link
-                    href="/signin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="bg-orange-500 text-white px-5 py-2 rounded-full text-center"
-                  >
-                    {t("login")}
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-gray-700"
-                  >
-                    {t("profile")}
-                  </Link>
-                  <button
-                    onClick={() => {
-                      trackEvent("logout");
-                      authClient.signOut();
-                      toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
-                    }}
-                    className="text-red-500 text-left hover:cursor-pointer"
-                  >
-                    {t("logout")}
-                  </button>
-                </>
-              )}
+      {isLoggedIn && (
+        <>
+          {/* Backdrop overlay - raised z-index to overlay bottom nav */}
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300 md:hidden ${
+              mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            }`}
+          />
+          
+          {/* Drawer Panel - raised z-index to overlay bottom nav */}
+          <div
+            className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-slate-900 shadow-2xl z-[60] border-l border-gray-100 dark:border-slate-800 p-6 flex flex-col md:hidden transition-transform duration-300 ease-in-out ${
+              mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800">
+              <span className="font-display font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Settings size={18} className="text-orange-500" />
+                {lang === "en" ? "Settings" : "সেটিংস"}
+              </span>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-855 text-gray-500 dark:text-gray-400 hover:cursor-pointer transition-colors"
+                aria-label="Close settings"
+              >
+                <X size={20} />
+              </button>
             </div>
-          )}
+
+            {/* Drawer Body (Settings Items) */}
+            <div className="flex-1 py-6 flex flex-col gap-6">
+              {/* Theme Toggle */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600 dark:text-slate-300">
+                  {lang === "en" ? "Theme" : "থিম"}
+                </span>
+                <button
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="flex items-center justify-center p-2.5 rounded-xl border border-gray-250 dark:border-slate-700 text-gray-700 dark:text-gray-205 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm hover:cursor-pointer"
+                  aria-label="Toggle Theme"
+                >
+                  {themeMounted && (theme === "dark" ? (
+                    <Sun size={16} className="text-orange-400" />
+                  ) : (
+                    <Moon size={16} className="text-slate-700" />
+                  ))}
+                  {!themeMounted && <div className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {/* Language Toggle */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600 dark:text-slate-300">
+                  {lang === "en" ? "Language" : "ভাষা"}
+                </span>
+                <button
+                  onClick={toggleLanguage}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-250 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-205 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer"
+                >
+                  {lang === "en" ? (
+                    <>
+                      <span className="text-sm">🇬🇧</span>
+                      <span>EN</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm">🇧🇩</span>
+                      <span>BD</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Drawer Footer (Logout) - added pb-20 for mobile safety spacing above bottom nav */}
+            <div className="pt-4 pb-20 md:pb-4 border-t border-gray-100 dark:border-slate-800">
+              <button
+                onClick={() => {
+                  trackEvent("logout");
+                  authClient.signOut();
+                  setMobileMenuOpen(false);
+                  toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
+                }}
+                className="w-full py-3 rounded-xl border border-red-200/50 dark:border-red-900/30 text-red-500 bg-red-50/50 dark:bg-red-950/10 hover:bg-red-50 dark:hover:bg-red-950/20 text-center font-display text-sm font-bold transition-all duration-200 active:scale-95 hover:cursor-pointer"
+              >
+                {t("logout")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Mobile Dropdown Menu (Accordion slide-down) - Only for Guest Users */}
+      {!isLoggedIn && (
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-4">
+            {navLinks.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`
+    font-medium
+    ${
+      pathname === item.href
+        ? "text-orange-500"
+        : "text-gray-700 hover:text-orange-500 dark:text-slate-350 dark:hover:text-orange-400"
+    }
+  `}
+              >
+                {item.name}
+              </Link>
+            ))}
+
+            {/* Theme Toggle */}
+            <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{lang === "en" ? "Theme" : "থিম"}</span>
+              <button
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="flex items-center justify-center p-2 rounded-full border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all shadow-sm hover:cursor-pointer"
+                aria-label="Toggle Theme"
+              >
+                {themeMounted && (theme === "dark" ? (
+                  <Sun size={16} className="text-orange-400" />
+                ) : (
+                  <Moon size={16} className="text-slate-700" />
+                ))}
+                {!themeMounted && <div className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {/* Language Toggle */}
+            <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Language / ভাষা</span>
+              <button
+                onClick={toggleLanguage}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer"
+              >
+                {lang === "en" ? (
+                  <>
+                    <span className="text-sm">🇬🇧</span>
+                    <span>EN</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm">🇧🇩</span>
+                    <span>BD</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Mobile Menu Actions */}
+            {!isPending && (
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-3">
+                <Link
+                  href="/signin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="bg-orange-500 text-white px-5 py-2 rounded-full text-center font-medium"
+                >
+                  {t("login")}
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }
