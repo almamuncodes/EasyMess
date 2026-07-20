@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import ImageCropModal from "@/components/ui/ImageCropModal";
+import PageLoader from "@/components/ui/PageLoader";
 
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 2MB
@@ -28,6 +30,7 @@ export default function ProfilePage() {
   const [imageWarning, setImageWarning] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
+  const [cropImageSrc, setCropImageSrc] = useState(null); // image crop editor for selected file
 
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -35,7 +38,6 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState("");
-  const imagebb = process.env.NEXT_PUBLIC_IMGBB_KEY;
 
   // পেজ লোড হওয়ার সময় session + accounts নিয়ে আসা
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function ProfilePage() {
 
         const { data: session } = await authClient.getSession();
         if (!session?.user) {
-          router.push("/login");
+          router.push("/signin");
           return;
         }
 
@@ -53,8 +55,6 @@ export default function ProfilePage() {
         setName(session.user.name || "");
         setImagePreview(session.user.image || "");
 
-        // এই user email+password দিয়ে account বানিয়েছে কিনা চেক করা
-        // (Google দিয়ে login করলে credential account থাকবে না)
         const { data: accounts } = await authClient.listAccounts();
         const hasCredential = accounts?.some(
           (acc) => acc.providerId === "credential",
@@ -70,20 +70,19 @@ export default function ProfilePage() {
     loadProfile();
   }, [router]);
 
-  // Image select হলে size check করা, তারপর preview দেখানো
+  // Image select হলে crop & filter modal ওপেন করা
   function handleImageChange(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > MAX_IMAGE_SIZE) {
-      setImageWarning("Image must be smaller than 4MB. Please choose another image.");
-      setImageFile(null);
-      return;
-    }
-
     setImageWarning("");
+    setCropImageSrc(URL.createObjectURL(file)); // Open crop editor modal
+  }
+
+  function handleCroppedImageApply({ file, previewUrl }) {
     setImageFile(file);
-    setImagePreview(URL.createObjectURL(file)); // instant preview
+    setImagePreview(previewUrl);
+    setCropImageSrc(null);
   }
 
   // Cloudinary এ ছবি upload করে তার URL রিটার্ন করে
@@ -193,14 +192,7 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-[#9a9691]">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF6900]" />
-          Loading profile
-        </div>
-      </div>
-    );
+    return <PageLoader text="Loading profile..." />;
   }
 
   return (
@@ -435,6 +427,15 @@ export default function ProfilePage() {
           Log out
         </button>
       </div>
+
+      {/* ================= Image Crop & Filter Editor Modal ================= */}
+      {cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          onApply={handleCroppedImageApply}
+          onCancel={() => setCropImageSrc(null)}
+        />
+      )}
 
       {/* ================= Image Lightbox Modal ================= */}
       {showImageModal && (

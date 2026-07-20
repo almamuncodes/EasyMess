@@ -18,6 +18,7 @@ import {
 import { GetUser } from "@/components/action/action";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import ImageCropModal from "@/components/ui/ImageCropModal";
 
 
 
@@ -129,28 +130,25 @@ export default function MyMess() {
     }
   }
 
-  // নতুন handlePickImage ফাংশন
-  async function handlePickImage(e) {
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+
+  // handlePickImage - File select হলে crop modal ওপেন করা
+  function handlePickImage(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    // ২ cheke image size
-    const MAX_SIZE_MB = 2;
-    const fileSizeMB = file.size / (1024 * 1024); // বাইট থেকে মেগাবাইটে রূপান্তর
+    setCropImageSrc(URL.createObjectURL(file));
+  }
 
-    if (fileSizeMB > MAX_SIZE_MB) {
-      flashToast(`Image is too large! Please upload a file smaller than 2 MB.`);
-      return;
-    }
-
+  async function handleCroppedImageApply({ file }) {
+    setCropImageSrc(null);
     try {
-      flashToast("uploading image...");
+      flashToast("Uploading mess photo...");
       const imageUrl = await uploadToCloudinary(file);
-
       setDraft((d) => ({ ...d, messImage: imageUrl }));
-      flashToast("image uploaded");
+      flashToast("Mess photo updated");
     } catch (err) {
       console.error(err);
-      flashToast("failed to upload image, please try again");
+      flashToast("Failed to upload image, please try again");
     }
   }
 
@@ -700,6 +698,16 @@ export default function MyMess() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ---- Image Crop Modal ---- */}
+      {cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          cropShape="rectangle"
+          onApply={handleCroppedImageApply}
+          onCancel={() => setCropImageSrc(null)}
+        />
       )}
 
       {/* ---- Toast ---- */}
