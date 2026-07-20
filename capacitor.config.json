@@ -1,0 +1,9 @@
+{
+  "appId": "com.easymess.app",
+  "appName": "EasyMess",
+  "webDir": "out",
+  "server": {
+    "url": "https://easymess.vercel.app",
+    "cleartext": true
+  }
+}
