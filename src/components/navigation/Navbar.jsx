@@ -7,6 +7,8 @@ import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { trackEvent } from "@/lib/analytics";
+
 
 import { useTranslation } from "@/lib/useTranslation";
 import { useSocket } from "@/components/providers/SocketProvider";
@@ -299,6 +301,7 @@ export default function Navbar() {
                         </Link>
                         <button
                           onClick={() => {
+                            trackEvent("logout");
                             authClient.signOut();
                             toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
                           }}
@@ -505,6 +508,7 @@ export default function Navbar() {
                   </Link>
                   <button
                     onClick={() => {
+                      trackEvent("logout");
                       authClient.signOut();
                       toast.success(lang === "en" ? "Logged out successfully" : "সফলভাবে লগআউট করা হয়েছে");
                     }}

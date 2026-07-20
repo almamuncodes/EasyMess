@@ -2,6 +2,8 @@
 import { GetUser } from '@/components/action/action';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
+
 
 const JoinMessPage = () => {
   const [inviteCode, setInviteCode] = useState("");
@@ -35,13 +37,14 @@ const JoinMessPage = () => {
       
 
       if (res.ok) {
-       
+        trackEvent("join_mess", { inviteCode });
         setModal({
           show: true,
           title: "Request Sent!",
           message: `Your request has been sent to ${data.messName || "the mess you requested"}. Please wait for approval.`,
           type: "success"
         });
+
       } else if (res.status === 409) {
         // user allcreated
         setModal({

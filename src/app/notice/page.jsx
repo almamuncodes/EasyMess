@@ -6,6 +6,8 @@ import { useTranslation } from "@/lib/useTranslation";
 import { Plus, Search, Filter, AlertCircle, X, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import NoticeCard from "@/components/NoticeCard";
+import { trackEvent } from "@/lib/analytics";
+
 
 export default function NoticePage() {
   const { socket, messId } = useSocket();
@@ -161,6 +163,7 @@ export default function NoticePage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
+        trackEvent("create_notice", { title, isPinned });
         toast.success(
           lang === "bn" ? "নোটিশ সফলভাবে প্রকাশিত হয়েছে" : "Notice published successfully"
         );
@@ -168,6 +171,7 @@ export default function NoticePage() {
         resetForm();
         fetchNotices(); // reload fallback
       } else {
+
         toast.error(data.message || (lang === "bn" ? "ব্যর্থ হয়েছে" : "Failed to publish notice"));
       }
     } catch (error) {

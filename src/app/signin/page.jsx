@@ -4,6 +4,7 @@ import { Eye, EyeOff, User, Mail, Lock, Loader2 } from "lucide-react"; // Loader
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 export default function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +28,7 @@ export default function SignupForm() {
       if (error) {
         toast.error(error.message);
       } else if (data.user) {
+        trackEvent("login", { method: "email" });
         toast.success("Account logged in successfully");
       }
     } catch (err) {
@@ -37,12 +39,14 @@ export default function SignupForm() {
   };
     // Google Sign In
     const handleGoogleSignIn = async () => {
+        trackEvent("login", { method: "google" });
         const data = await authClient.signIn.social({
       provider: "google",
     });
    
   
     }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
+
 
 const MealCalendar = () => {
   const user = GetUser();
@@ -53,8 +55,14 @@ const MealCalendar = () => {
       body: JSON.stringify({ userId, messId, date: dateStr, mealType: type, status: !currentStatus }),
     });
     const data = await res.json();
-    if (data.success) { fetchMeals(); } else { toast.warning(data.message); }
+    if (data.success) {
+      trackEvent("create_meal", { mealType: type, status: !currentStatus });
+      fetchMeals();
+    } else {
+      toast.warning(data.message);
+    }
   };
+
   console.log( userId, messId,    )
   
 

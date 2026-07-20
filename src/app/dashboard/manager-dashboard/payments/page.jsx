@@ -9,6 +9,8 @@ import {
 } from "next/font/google";
 import { GetUser } from "@/components/action/action";
 import Image from "next/image";
+import { trackEvent } from "@/lib/analytics";
+
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -116,8 +118,15 @@ export default function ManagerDepositsPage() {
     const data = await res.json();
     if (!data.success) throw new Error(data.message || "cannot save");
 
+    trackEvent("payment", {
+      amount: formValues.amount,
+      paymentMethod: formValues.method,
+      type: isEdit ? "edit" : "create",
+    });
+
     setModalState(null);
     loadDeposits();
+
   };
 
   const handleDelete = async (depositId) => {

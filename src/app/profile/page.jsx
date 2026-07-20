@@ -4,6 +4,8 @@ import { authClient } from "@/lib/auth-client"; // তোমার auth client �
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
+
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 2MB
 
@@ -182,6 +184,7 @@ export default function ProfilePage() {
   }
 
   async function handleLogout() {
+    trackEvent("logout");
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => router.push("/"),

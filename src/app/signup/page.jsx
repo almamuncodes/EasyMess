@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 
 export default function SignupForm() {
@@ -38,6 +39,7 @@ export default function SignupForm() {
       if (error) {
         toast.error(error.message);
       } else if (data.user) {
+        trackEvent("sign_up", { method: "email" });
         toast.success("Account created successfully");
         route.push("/");
       }
@@ -50,6 +52,7 @@ export default function SignupForm() {
 
   // Google Sign In
   const handleGoogleSignIn = async () => {
+      trackEvent("sign_up", { method: "google" });
       const data = await authClient.signIn.social({
     provider: "google",
     if(data) {
@@ -61,6 +64,7 @@ export default function SignupForm() {
  
 
   }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">

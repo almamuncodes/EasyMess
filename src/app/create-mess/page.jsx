@@ -4,6 +4,8 @@ import { GetUser } from "@/components/action/action";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
+
 
 export default function CreateMessForm() {
   const [loading, setLoading] = useState(false);
@@ -69,10 +71,12 @@ const handleSubmit = async (e) => {
     }
 
     if (result.success) {
+      trackEvent("create_mess", { messName: data.messName });
       toast.success("Mess Created Successfully!");
       router.push(`/create-mess/${result.insertedId}`);
       return;
     }
+
 
     toast.error("Something went wrong!");
   } catch (err) {
