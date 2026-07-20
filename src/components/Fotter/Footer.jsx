@@ -4,9 +4,9 @@ const Footer = () => {
   return (
     <footer
       style={{ background: "transparent" }}
-      className="w-full pt-6 pb-24 md:pb-6 px-6 text-xs sm:text-sm border-t border-gray-250/30 dark:border-slate-800/40"
+      className="w-full py-4 mb-20 md:mb-0 px-6 text-xs sm:text-sm border-t border-gray-250/30 dark:border-slate-800/40"
     >
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-end md:items-center justify-between gap-3 text-right">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-end md:items-center justify-end gap-3 text-right">
         {/* Copyright notice - Hidden on mobile, visible on desktop */}
         <div className="hidden md:block text-slate-500 dark:text-slate-400">
           EasyMess &copy; {new Date().getFullYear()}. All rights reserved.

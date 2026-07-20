@@ -1,11 +1,6 @@
 import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import dns from "node:dns/promises";
- dns.setServers(["1.1.1.1", "8.8.8.8"]);
-
-const client = new MongoClient(process.env.PUBLIC_MONGO_URI || "mongodb://localhost:27017/easymessUser");
-const db = client.db("easymessUser");
+import { client, db } from "./db";
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, {
@@ -14,6 +9,10 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    sendResetPassword: async ({ user, url, token }) => {
+      // Stub function to let Better Auth generate reset tokens in DB
+    }
   },
   socialProviders: {
     google: {
