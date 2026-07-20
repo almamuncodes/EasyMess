@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock, Loader2, ArrowLeft, ShieldCheck, KeyRound } fr
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import Image from "next/image";
 import { trackEvent } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/useTranslation";
@@ -415,9 +416,11 @@ export default function SigninPage() {
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-slate-700 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer dark:text-white"
             >
-              <img
+              <Image
                 src="https://www.google.com/favicon.ico"
                 alt="Google"
+                width={20}
+                height={20}
                 className="w-5 h-5"
               />
               <span className="font-medium">{t("logInGoogle")}</span>

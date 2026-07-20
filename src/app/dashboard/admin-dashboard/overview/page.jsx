@@ -1,6 +1,7 @@
 "use client";
 
 import { GetUser } from "@/components/action/action";
+import Image from "next/image";
 import {
   Home,
   Users,
@@ -239,10 +240,11 @@ export default function AdminOverviewPage() {
 
                   <div className="h-11 w-11 shrink-0 -rotate-2 overflow-hidden rounded-xl bg-[#F3F1EC] ring-1 ring-[#16181D]/[0.06]">
                     {mess.messImage ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={mess.messImage}
-                        alt={mess.messName}
+                        alt={mess.messName || "Mess Image"}
+                        width={44}
+                        height={44}
                         className="h-full w-full object-cover"
                       />
                     ) : (

@@ -1,5 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image";
+import { getOptimizedImageUrl } from "@/lib/image-utils";
 import { useSocket } from "@/components/providers/SocketProvider";
 import { useTranslation } from "@/lib/useTranslation";
 import { Pin, Calendar, Eye, MessageCircle, MoreVertical, Trash2, Edit2, Check, Smile, Reply, Send, X, Users, AlertTriangle } from "lucide-react";
@@ -319,9 +321,12 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           {notice.authorImage ? (
-            <img
-              src={notice.authorImage}
+            <Image
+              src={getOptimizedImageUrl(notice.authorImage, { width: 80, height: 80 })}
               alt={notice.authorName}
+              width={40}
+              height={40}
+              unoptimized={typeof notice.authorImage === "string" && notice.authorImage.startsWith("http")}
               className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-slate-700"
             />
           ) : (
@@ -453,7 +458,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
                         {seenStatus.seenUsers?.map((u) => (
                           <div key={u.userId} className="flex items-center gap-2">
                             {u.image ? (
-                              <img src={u.image} alt={u.name} className="w-5 h-5 rounded-full object-cover" />
+                              <Image src={u.image} alt={u.name} width={20} height={20} className="w-5 h-5 rounded-full object-cover" />
                             ) : (
                               <div className="w-5 h-5 bg-orange-100 dark:bg-slate-700 text-orange-650 dark:text-orange-400 font-bold text-[10px] rounded-full flex items-center justify-center">
                                 {u.name?.charAt(0).toUpperCase()}
@@ -480,7 +485,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
                         {seenStatus.unseenUsers?.map((u) => (
                           <div key={u.userId} className="flex items-center gap-2">
                             {u.image ? (
-                              <img src={u.image} alt={u.name} className="w-5 h-5 rounded-full object-cover" />
+                              <Image src={u.image} alt={u.name} width={20} height={20} className="w-5 h-5 rounded-full object-cover" />
                             ) : (
                               <div className="w-5 h-5 bg-gray-100 dark:bg-slate-750 text-gray-500 dark:text-gray-400 font-bold text-[10px] rounded-full flex items-center justify-center">
                                 {u.name?.charAt(0).toUpperCase()}
@@ -625,7 +630,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
                         {/* Parent Comment */}
                         <div className="flex gap-2.5 items-start">
                           {comment.userImage ? (
-                            <img src={comment.userImage} alt={comment.userName} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                            <Image src={comment.userImage} alt={comment.userName} width={32} height={32} className="w-8 h-8 rounded-full object-cover shrink-0" />
                           ) : (
                             <div className="w-8 h-8 bg-orange-100 dark:bg-slate-700 text-orange-600 dark:text-orange-400 font-semibold text-xs rounded-full flex items-center justify-center shrink-0">
                               {comment.userName?.charAt(0).toUpperCase()}
@@ -711,7 +716,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
                               return (
                                 <div key={reply._id} className="flex gap-2.5 items-start">
                                   {reply.userImage ? (
-                                    <img src={reply.userImage} alt={reply.userName} className="w-6.5 h-6.5 rounded-full object-cover shrink-0" />
+                                    <Image src={reply.userImage} alt={reply.userName} width={26} height={26} className="w-6.5 h-6.5 rounded-full object-cover shrink-0" />
                                   ) : (
                                     <div className="w-6.5 h-6.5 bg-orange-100 dark:bg-slate-700 text-orange-600 dark:text-orange-400 font-semibold text-[10px] rounded-full flex items-center justify-center shrink-0">
                                       {reply.userName?.charAt(0).toUpperCase()}
@@ -850,7 +855,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
                     <div key={idx} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3">
                         {r.userImage ? (
-                          <img src={r.userImage} alt={r.userName} className="w-8 h-8 rounded-full object-cover border border-gray-100 dark:border-slate-800" />
+                          <Image src={r.userImage} alt={r.userName} width={32} height={32} className="w-8 h-8 rounded-full object-cover border border-gray-100 dark:border-slate-800" />
                         ) : (
                           <div className="w-8 h-8 bg-orange-100 dark:bg-slate-700 text-orange-600 dark:text-orange-400 font-bold text-xs rounded-full flex items-center justify-center">
                             {r.userName?.charAt(0).toUpperCase()}

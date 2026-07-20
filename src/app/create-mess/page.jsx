@@ -3,6 +3,7 @@
 import { GetUser } from "@/components/action/action";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 
@@ -141,11 +142,12 @@ const handleSubmit = async (e) => {
 
         {/* Preview */}
         {preview && (
-          <div className="mb-6">
-            <img
+          <div className="mb-6 relative h-40 w-full">
+            <Image
               src={preview}
               alt="Preview"
-              className="h-40 w-full object-cover rounded-2xl border-2 border-orange-100"
+              fill
+              className="object-cover rounded-2xl border-2 border-orange-100"
             />
           </div>
         )}

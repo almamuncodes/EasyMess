@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Camera,
   MapPin,
@@ -15,7 +16,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { GetUser } from "@/components/action/action";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 
@@ -365,10 +365,11 @@ export default function MyMess() {
                   }}
                 >
                   {(editing ? draft.messImage : mess.messImage) ? (
-                    <img
+                    <Image
                       src={editing ? draft.messImage : mess.messImage}
                       alt={mess.messName}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     <span className="ff-display text-3xl text-white/90">

@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import { useTranslation } from "@/lib/useTranslation";
+import PageLoader from "@/components/ui/PageLoader";
+import { preloadImage, getOptimizedImageUrl, shimmerBlurDataUrl } from "@/lib/image-utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -49,7 +51,7 @@ export default function LandingPage() {
 
   const today = todayDateString();
 
-  // ১. ইউজার কোনো mess-এর member কিনা চেক করা
+  // ১. ইউজার কোনো mess-এর member কিনা চেক করা (উইথ sessionStorage ক্যাশিং)
   useEffect(() => {
     if (!session?.user?.id) {
       setCheckingMess(false);
@@ -57,27 +59,37 @@ export default function LandingPage() {
     }
 
     let ignore = false;
+    const cacheKey = `user_has_mess_${session.user.id}`;
+
+    // Instant cache read
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached !== null) {
+        setHasMess(cached === "true");
+        setCheckingMess(false);
+      }
+    }
 
     async function checkMembership() {
       try {
-        setCheckingMess(true);
-
         const res = await fetch(
           `${API_URL}/api/member/messid/${session.user.id}`,
         );
 
         if (ignore) return;
 
-        // ব্যাকএন্ড 404 পাঠায় যখন ইউজার কোনো মেসের মেম্বার না
         if (res.status === 404) {
           setHasMess(false);
+          if (typeof window !== "undefined") sessionStorage.setItem(cacheKey, "false");
         } else {
           const data = await res.json();
-          setHasMess(!!data.messId);
+          const exists = !!data.messId;
+          setHasMess(exists);
+          if (typeof window !== "undefined") sessionStorage.setItem(cacheKey, String(exists));
         }
       } catch (err) {
         console.error("Failed to check mess membership:", err);
-        if (!ignore) setHasMess(false);
+        if (!ignore && hasMess === null) setHasMess(false);
       } finally {
         if (!ignore) setCheckingMess(false);
       }
@@ -217,15 +229,7 @@ export default function LandingPage() {
 
   // সেশন লোড হচ্ছে, বা লগইন থাকলে mess membership চেক হচ্ছে — flash এড়াতে skeleton
   if (isPending || (session && checkingMess)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F3F1EC]">
-        {fonts}
-        <div className="flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-[#9a9691]">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF6900]" />
-          {lang === "en" ? "Loading EasyMess" : "EasyMess লোড হচ্ছে..."}
-        </div>
-      </div>
-    );
+    return <PageLoader text={lang === "en" ? "Loading EasyMess..." : "EasyMess লোড হচ্ছে..."} />;
   }
 
   const isBn = lang === "bn";
@@ -785,9 +789,11 @@ export default function LandingPage() {
                         <Image
                           width={48}
                           height={48}
-                          src={member.image}
+                          src={getOptimizedImageUrl(member.image, { width: 96, height: 96 })}
                           alt={member.name}
+                          unoptimized={typeof member.image === "string" && member.image.startsWith("http")}
                           className="h-8 w-8 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          onMouseEnter={() => preloadImage(member.image, { width: 400, height: 400 })}
                           onClick={() => setSelectedMember(member)}
                         />
                       ) : (
@@ -852,9 +858,13 @@ export default function LandingPage() {
             </button>
             
             {selectedMember.image ? (
-              <img 
-                src={selectedMember.image} 
+              <Image 
+                src={getOptimizedImageUrl(selectedMember.image, { width: 400, height: 400 })} 
                 alt={selectedMember.name} 
+                width={192}
+                height={192}
+                unoptimized={typeof selectedMember.image === "string" && selectedMember.image.startsWith("http")}
+                sizes="(max-width: 640px) 150px, (max-width: 1024px) 300px, 400px"
                 className="w-48 h-48 rounded-2xl object-cover mb-4 shadow-lg border border-gray-100 dark:border-slate-800"
               />
             ) : (

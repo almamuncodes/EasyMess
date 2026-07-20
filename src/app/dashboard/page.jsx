@@ -7,6 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from "@/lib/useTranslation";
 
 
+import PageLoader from '@/components/ui/PageLoader';
+
 const Page = () => {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,16 @@ const Page = () => {
   const userId = user?.user?.id;
   const router = useRouter();
   const { t } = useTranslation();
+
+  const redirectByRole = (r) => {
+    if (r === "member") {
+      router.replace("/dashboard/user-dashboard/overview");
+    } else if (r === "manager") {
+      router.replace("/dashboard/manager-dashboard/overview");
+    } else if (r === "admin") {
+      router.replace("/dashboard/admin-dashboard/overview");
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -28,18 +40,29 @@ const Page = () => {
         return;
       }
 
+      // Check cache first for instant zero-lag redirect
+      const cachedRole = typeof window !== "undefined" ? sessionStorage.getItem(`user_role_${userId}`) : null;
+      if (cachedRole) {
+        setRole(cachedRole);
+        setLoading(false);
+        redirectByRole(cachedRole);
+      }
+
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
         const data = await res.json();
-        setRole(data.role);
-
-        // Redirect based on role
-        if (data.role === "member") {
-          router.replace("/dashboard/user-dashboard/overview");
-        } else if (data.role === "manager") {
-          router.replace("/dashboard/manager-dashboard/overview");
-        } else if (data.role === "admin") {
-          router.replace("/dashboard/admin-dashboard/overview");
+        
+        if (data.role) {
+          setRole(data.role);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(`user_role_${userId}`, data.role);
+          }
+          redirectByRole(data.role);
+        } else {
+          setRole(null);
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem(`user_role_${userId}`);
+          }
         }
       } catch (error) {
         console.error("Error fetching role:", error);
@@ -52,12 +75,7 @@ const Page = () => {
   }, [userId, router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-        <Loader2 className="w-12 h-12 text-orange-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">{t("checkingAccess")}</p>
-      </div>
-    );
+    return <PageLoader text={t("checkingAccess")} />;
   }
 
   if (!role) {

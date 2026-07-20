@@ -2,6 +2,7 @@
 
 import { GetUser } from "@/components/action/action";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 // ⚠️ userId ekhane tomar auth system theke astese bole ধরে নিলাম
 // (e.g. next-auth session, firebase auth, jwt decode, ইত্যাদি)
@@ -111,11 +112,11 @@ export default function ManagerSettingsPage() {
       <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200 bg-orange-100 shadow-sm">
         <div className="relative h-44 w-full bg-gray-100">
           {messData?.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={messData.image}
-              alt={messData.messName}
-              className="h-full w-full object-cover"
+              alt={messData.messName || "Mess Image"}
+              fill
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-gray-400">
