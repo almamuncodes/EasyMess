@@ -95,7 +95,7 @@ function Modal({ open, onClose, tone = "neutral", eyebrow, title, description, a
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center px-4 pb-20 md:pb-4"
       role="dialog"
       aria-modal="true"
     >
@@ -286,8 +286,19 @@ function MemberRow({ member, index, messId, mess, onDelete, isDeleting }) {
 /* ---------------------------------------------------------------------- */
 export default function AdminMessRegistry() {
   const { data: session, status } = useSession();
-  const [messes, setMesses] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const isAdmin = session?.user?.role === "admin";
+  const adminId = session?.user?.id || session?.user?._id;
+
+  const [messes, setMesses] = useState(() => {
+    if (typeof window !== "undefined" && adminId) {
+      const cached = sessionStorage.getItem(`admin_all_messes_${adminId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => messes.length === 0);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [deleting, setDeleting] = useState(null);
@@ -299,13 +310,18 @@ export default function AdminMessRegistry() {
   const [modal, setModal] = useState({ open: false });
   const closeModal = () => setModal({ open: false });
 
-  const isAdmin = session?.user?.role === "admin";
-  const adminId = session?.user?.id || session?.user?._id;
-
   const loadMesses = useCallback(async () => {
     if (!adminId) return;
 
-    setLoading(true);
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`admin_all_messes_${adminId}`);
+      if (cached) {
+        try { setMesses(JSON.parse(cached)); } catch (e) {}
+      } else {
+        if (messes.length === 0) setLoading(true);
+      }
+    }
+
     setError("");
 
     try {
@@ -313,9 +329,13 @@ export default function AdminMessRegistry() {
       const data = await res.json();
 
       if (data.success) {
-        setMesses(data.data || []);
+        const newMesses = data.data || [];
+        setMesses(newMesses);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_all_messes_${adminId}`, JSON.stringify(newMesses));
+        }
       } else {
-        setError(data.message || "Unable to load messes.");
+        if (messes.length === 0) setError(data.message || "Unable to load messes.");
       }
     } catch (err) {
       setError("Failed to connect to backend. Check your internet connection.");

@@ -441,7 +441,7 @@ export default function ProfilePage() {
       {showImageModal && (
         <div
           onClick={() => setShowImageModal(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#16181D]/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-[#16181D]/80 p-4 pb-20 md:pb-4 backdrop-blur-sm"
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <Image

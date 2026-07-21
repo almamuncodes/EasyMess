@@ -18,16 +18,32 @@ export default function AdminOverviewPage() {
   const user = GetUser();
   const userId = user?.user?.id;
 
-  const [loading, setLoading] = useState(true);
+  const [overview, setOverview] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`admin_overview_${userId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => !overview);
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState("");
-  const [overview, setOverview] = useState(null); // { summary, messWiseMembers }
 
   const loadOverview = useCallback(async () => {
     if (!userId) return;
 
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`admin_overview_${userId}`);
+      if (cached) {
+        try { setOverview(JSON.parse(cached)); } catch (e) {}
+      } else {
+        if (!overview) setLoading(true);
+      }
+    }
+
     try {
-      setLoading(true);
       setError("");
       setUnauthorized(false);
 
@@ -46,6 +62,9 @@ export default function AdminOverviewPage() {
       }
 
       setOverview(result);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(`admin_overview_${userId}`, JSON.stringify(result));
+      }
     } catch (err) {
       console.error("Admin overview failed:", err);
       setError(err.message || "Something went wrong while loading the overview.");

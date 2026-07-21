@@ -204,7 +204,7 @@ export default function ImageCropModal({ imageSrc, onApply, onCancel, cropShape 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/80 p-4 pb-20 md:pb-4 backdrop-blur-md">
       <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-2xl flex flex-col items-center">
         
         {/* Header */}

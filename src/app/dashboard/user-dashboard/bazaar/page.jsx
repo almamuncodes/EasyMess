@@ -20,11 +20,6 @@ const monthNames = [
 ];
 
 export default function BazaarHistory() {
-  const [bazaars, setBazaars] = useState([]);
-  const [grandTotal, setGrandTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [expandedIds, setExpandedIds] = useState(new Set());
   const user = GetUser();
   const userId = user?.user?.id;
 
@@ -32,8 +27,51 @@ export default function BazaarHistory() {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
 
+  const [bazaars, setBazaars] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_bazaar_${userId}_${month}_${year}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.bazaars || [];
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [grandTotal, setGrandTotal] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_bazaar_${userId}_${month}_${year}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.grandTotal || 0;
+        } catch (e) {}
+      }
+    }
+    return 0;
+  });
+  const [loading, setLoading] = useState(() => bazaars.length === 0);
+  const [error, setError] = useState("");
+  const [expandedIds, setExpandedIds] = useState(new Set());
+
   const fetchBazaars = useCallback(async () => {
-    setLoading(true);
+    if (!userId) return;
+
+    const key = `user_bazaar_${userId}_${month}_${year}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setBazaars(parsed.bazaars || []);
+          setGrandTotal(parsed.grandTotal || 0);
+        } catch (e) {}
+      } else {
+        if (bazaars.length === 0) setLoading(true);
+      }
+    }
+
     setError("");
     try {
       const res = await fetch(
@@ -42,16 +80,21 @@ export default function BazaarHistory() {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.message || "Failed to load bazaar history");
-        setBazaars([]);
-        setGrandTotal(0);
+        if (bazaars.length === 0) setError(data.message || "Failed to load bazaar history");
         return;
       }
 
-      setBazaars(data.data);
-      setGrandTotal(data.grandTotal);
+      const newBazaars = data.data || [];
+      const newGrandTotal = data.grandTotal || 0;
+
+      setBazaars(newBazaars);
+      setGrandTotal(newGrandTotal);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(key, JSON.stringify({ bazaars: newBazaars, grandTotal: newGrandTotal }));
+      }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      if (bazaars.length === 0) setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

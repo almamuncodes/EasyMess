@@ -9,9 +9,18 @@ import { useRouter } from "next/navigation";
 const PendingRequestsPage = () => {
   const user = GetUser();
   const userId = user?.user?.id;
-  const [requests, setRequests] = useState([]);
+
+  const [requests, setRequests] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`pending_requests_${userId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
   const [messId, setMessId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => requests.length === 0);
   const router = useRouter();
 
   // Modal state
@@ -23,6 +32,15 @@ const PendingRequestsPage = () => {
       router.push("/signin");
     }
     if (!userId) return;
+
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`pending_requests_${userId}`);
+      if (cached) {
+        try { setRequests(JSON.parse(cached)); } catch (e) {}
+      } else {
+        if (requests.length === 0) setLoading(true);
+      }
+    }
 
     const fetchData = async () => {
       try {
@@ -37,7 +55,13 @@ const PendingRequestsPage = () => {
             `${process.env.NEXT_PUBLIC_API_URL}/api/mess/pending-requests/${messData.messId}`,
           );
           const reqData = await reqRes.json();
-          if (reqData?.success) setRequests(reqData.data);
+          if (reqData?.success) {
+            const newReqs = reqData.data || [];
+            setRequests(newReqs);
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem(`pending_requests_${userId}`, JSON.stringify(newReqs));
+            }
+          }
         }
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -155,7 +179,7 @@ const PendingRequestsPage = () => {
 
       {/* Rejection Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4">
           <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
             <h2 className="text-xl font-bold mb-4">Confirm Rejection</h2>
             <p>

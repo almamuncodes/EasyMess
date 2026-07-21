@@ -12,22 +12,51 @@ export default function ManagerSettingsPage() {
   const user = GetUser();
   const userId = user?.user?.id;
 
-  const [loading, setLoading] = useState(true);
+  const [messData, setMessData] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`manager_settings_${userId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [mealSettings, setMealSettings] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`manager_settings_${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.mealSettings || {};
+        } catch (e) {}
+      }
+    }
+    return {};
+  });
+
+  const [loading, setLoading] = useState(() => !messData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-
-  const [messData, setMessData] = useState(null); // full response
-  const [mealSettings, setMealSettings] = useState({}); // editable copy
-  //   console.log("mealSettings", mealSettings);
-  //   console.log("messData", messData);
 
   // Fetch manager settings on load
   useEffect(() => {
     if (!userId) return;
 
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`manager_settings_${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setMessData(parsed);
+          setMealSettings(parsed.mealSettings || {});
+        } catch (e) {}
+      } else {
+        if (!messData) setLoading(true);
+      }
+    }
+
     const fetchSettings = async () => {
-      setLoading(true);
       setError("");
       try {
         const res = await fetch(
@@ -41,8 +70,11 @@ export default function ManagerSettingsPage() {
 
         setMessData(data);
         setMealSettings(data.mealSettings || {});
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`manager_settings_${userId}`, JSON.stringify(data));
+        }
       } catch (err) {
-        setError(err.message || "Something went wrong");
+        if (!messData) setError(err.message || "Something went wrong");
       } finally {
         setLoading(false);
       }

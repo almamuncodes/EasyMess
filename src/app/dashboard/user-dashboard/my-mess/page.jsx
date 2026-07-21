@@ -9,26 +9,47 @@ import { QrCode, Copy, Check } from "lucide-react";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function MyMessPage() {
-  const [messInfo, setMessInfo] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [showMembers, setShowMembers] = useState(false); // dropdown closed by default
-  const [showQrModal, setShowQrModal] = useState(false);
-
   const user = GetUser();
   const CURRENT_USER_ID = user?.user?.id;
 
-  // Load both APIs together when the page opens
+  const [messInfo, setMessInfo] = useState(() => {
+    if (typeof window !== "undefined" && CURRENT_USER_ID) {
+      const cached = sessionStorage.getItem(`user_my_mess_${CURRENT_USER_ID}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [summary, setSummary] = useState(() => {
+    if (typeof window !== "undefined" && CURRENT_USER_ID) {
+      const cached = sessionStorage.getItem(`user_my_summary_${CURRENT_USER_ID}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => !messInfo);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+
   useEffect(() => {
     if (!CURRENT_USER_ID) return;
 
+    if (typeof window !== "undefined") {
+      const cachedMess = sessionStorage.getItem(`user_my_mess_${CURRENT_USER_ID}`);
+      const cachedSum = sessionStorage.getItem(`user_my_summary_${CURRENT_USER_ID}`);
+      if (cachedMess) { try { setMessInfo(JSON.parse(cachedMess)); } catch (e) {} }
+      if (cachedSum) { try { setSummary(JSON.parse(cachedSum)); } catch (e) {} }
+      if (!cachedMess && !messInfo) setLoading(true);
+    }
+
     async function loadData() {
       try {
-        setLoading(true);
-
         const now = new Date();
         const month = now.getMonth() + 1;
         const year = now.getFullYear();
@@ -48,9 +69,14 @@ export default function MyMessPage() {
 
         setMessInfo(messData);
         setSummary(summaryData);
+
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`user_my_mess_${CURRENT_USER_ID}`, JSON.stringify(messData));
+          sessionStorage.setItem(`user_my_summary_${CURRENT_USER_ID}`, JSON.stringify(summaryData));
+        }
       } catch (err) {
         console.error(err);
-        setError("Failed to load data. Please try again.");
+        if (!messInfo) setError("Failed to load data. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -237,7 +263,7 @@ export default function MyMessPage() {
 
       {/* Leave Mess Modal - informational only, no delete action */}
       {showLeaveModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/40 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full space-y-4 border border-neutral-200 dark:border-slate-800">
             <h3 className="font-semibold text-gray-800 dark:text-slate-100">
               Want to leave the mess?

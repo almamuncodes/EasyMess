@@ -138,7 +138,7 @@ export default function RootLayout({ children }) {
           <SocketProvider>
             <Navbar/>
             <Toaster  position="top-left" />
-            <div className="flex-1">
+            <div className="flex-1 pb-16 md:pb-0">
               {children}
             </div>
             <Footer/>

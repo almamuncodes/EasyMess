@@ -33,24 +33,68 @@ export default function MyDepositsPage() {
   const user = GetUser();
   const userId = user?.user?.id;
 
-  const [history, setHistory] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_deposits_${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.history || [];
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [total, setTotal] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_deposits_${userId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.total || 0;
+        } catch (e) {}
+      }
+    }
+    return 0;
+  });
+  const [loading, setLoading] = useState(() => history.length === 0);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedNote, setSelectedNote] = useState(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
-    setLoading(true);
+
+    const key = `user_deposits_${userId}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setHistory(parsed.history || []);
+          setTotal(parsed.total || 0);
+        } catch (e) {}
+      } else {
+        if (history.length === 0) setLoading(true);
+      }
+    }
+
     setErrorMsg("");
     try {
       const res = await fetch(`${API_BASE}/api/deposits/user/${userId}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "cannot load");
-      setHistory(data.data || []);
-      setTotal(data.total || 0);
+
+      const newHistory = data.data || [];
+      const newTotal = data.total || 0;
+
+      setHistory(newHistory);
+      setTotal(newTotal);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(key, JSON.stringify({ history: newHistory, total: newTotal }));
+      }
     } catch (err) {
-      setErrorMsg(err.message || "something went wrong");
+      if (history.length === 0) setErrorMsg(err.message || "something went wrong");
     } finally {
       setLoading(false);
     }
@@ -94,7 +138,7 @@ export default function MyDepositsPage() {
 
       {selectedNote && (
         <div 
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-6"
+          className="fixed inset-0 bg-black/40 z-[70] flex items-center justify-center p-6 pb-20 md:pb-6"
           onClick={() => setSelectedNote(null)}
         >
           <div 

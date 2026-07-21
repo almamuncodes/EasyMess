@@ -9,35 +9,52 @@ import { trackEvent } from "@/lib/analytics";
 const MealCalendar = () => {
   const user = GetUser();
   const userId = user?.user?.id;
-  const [meals, setMeals] = useState([]);
-  const [messId, setMessId] = useState(null);
-  const [joiningDate, setJoiningDate] = useState(null); 
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
+
+  const [meals, setMeals] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_meals_calendar_${userId}_${month}_${year}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [messId, setMessId] = useState(null);
+  const [joiningDate, setJoiningDate] = useState(null); 
   const router = useRouter();
 
   const daysInMonth = new Date(year, month, 0).getDate();
 
- 
-
-
-
   const fetchMeals = async () => {
     if (!userId) return;
+
+    const key = `user_meals_calendar_${userId}_${month}_${year}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try { setMeals(JSON.parse(cached)); } catch (e) {}
+      }
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/meal/report?userId=${userId}&month=${month}&year=${year}`);
       const data = await res.json();
-      setMeals(data.meals || []);
+      const updatedMeals = data.meals || [];
+      setMeals(updatedMeals);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(key, JSON.stringify(updatedMeals));
+      }
     } catch (err) { console.log(err); }
   };
 
   useEffect(() => {
-    if (!userId) return router.push("/");
+    if (!userId) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/messid/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setMessId(data.messId);
-       
         if (data.createdAt) setJoiningDate(new Date(data.createdAt));
       });
   }, [userId]);

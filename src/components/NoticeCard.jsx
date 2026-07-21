@@ -822,7 +822,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
 
       {/* Reactions Details Modal */}
       {showReactionsModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 pb-20 md:pb-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-155 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">

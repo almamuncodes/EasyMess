@@ -79,23 +79,54 @@ export default function OverviewDashboard({ role }) {
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [year, setYear] = useState(today.getFullYear());
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  
+  const user = GetUser();
+  const userId = user?.user?.id;
+
+  const [data, setData] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`overview_data_${userId}_${month}_${year}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => !data);
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
-  const user = GetUser();
-const userId = user?.user?.id ;
+
   useEffect(() => {
+    if (!userId) return;
     let cancelled = false;
-    setLoading(true);
+
+    const key = `overview_data_${userId}_${month}_${year}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setData(parsed);
+          setLoading(false);
+        } catch (e) {}
+      } else {
+        if (!data) setLoading(true);
+      }
+    }
+
     setError("");
 
     fetchOverview({ userId, month, year })
       .then((res) => {
-        if (!cancelled) setData(res);
+        if (!cancelled) {
+          setData(res);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(key, JSON.stringify(res));
+          }
+        }
       })
       .catch((err) => {
-        if (!cancelled) setError(err.message || "কিছু একটা ভুল হয়েছে");
+        if (!cancelled && !data) setError(err.message || "কিছু একটা ভুল হয়েছে");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

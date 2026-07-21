@@ -10,12 +10,18 @@ import { useTranslation } from "@/lib/useTranslation";
 import PageLoader from '@/components/ui/PageLoader';
 
 const Page = () => {
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
   const user = GetUser();
   const userId = user?.user?.id;
   const router = useRouter();
   const { t } = useTranslation();
+
+  const [role, setRole] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      return sessionStorage.getItem(`user_role_${userId}`);
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => !role);
 
   const redirectByRole = (r) => {
     if (r === "member") {
@@ -34,6 +40,10 @@ const Page = () => {
   }, [user, router]);
 
   useEffect(() => {
+    if (role) {
+      redirectByRole(role);
+    }
+    
     const fetchUserRole = async () => {
       if (!userId) {
         setLoading(false);

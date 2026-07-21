@@ -28,18 +28,55 @@ export default function LandingPage() {
   const { t, lang } = useTranslation();
 
   // null = এখনো চেক করা হচ্ছে, false = mess নেই, true = mess আছে
-  const [hasMess, setHasMess] = useState(null);
-  const [checkingMess, setCheckingMess] = useState(true);
+  const [hasMess, setHasMess] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("user_has_mess");
+      if (cached !== null) return cached === "true";
+    }
+    return null;
+  });
+
+  const [checkingMess, setCheckingMess] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("user_has_mess");
+      if (cached !== null) return false;
+    }
+    return true;
+  });
 
   // Today's meal counts (read-only overview)
-  const [todayMeals, setTodayMeals] = useState(null); // { summary, members }
-  const [mealsLoading, setMealsLoading] = useState(true);
+  const [todayMeals, setTodayMeals] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("cached_today_meals");
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [mealsLoading, setMealsLoading] = useState(() => !todayMeals);
   const [mealError, setMealError] = useState("");
 
   // Mess info (name, manager, member count) + this month's meal rate/bill — also read-only
-  const [messInfo, setMessInfo] = useState(null);
-  const [monthSummary, setMonthSummary] = useState(null);
-  const [overviewLoading, setOverviewLoading] = useState(true);
+  const [messInfo, setMessInfo] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("cached_mess_info");
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [monthSummary, setMonthSummary] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("cached_month_summary");
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [overviewLoading, setOverviewLoading] = useState(() => !messInfo);
 
   const [selectedMember, setSelectedMember] = useState(null);
 
@@ -54,7 +91,7 @@ export default function LandingPage() {
   // ১. ইউজার কোনো mess-এর member কিনা চেক করা (উইথ sessionStorage ক্যাশিং)
   useEffect(() => {
     if (!session?.user?.id) {
-      setCheckingMess(false);
+      if (!isPending) setCheckingMess(false);
       return;
     }
 
@@ -63,7 +100,7 @@ export default function LandingPage() {
 
     // Instant cache read
     if (typeof window !== "undefined") {
-      const cached = sessionStorage.getItem(cacheKey);
+      const cached = sessionStorage.getItem(cacheKey) || sessionStorage.getItem("user_has_mess");
       if (cached !== null) {
         setHasMess(cached === "true");
         setCheckingMess(false);
@@ -80,12 +117,18 @@ export default function LandingPage() {
 
         if (res.status === 404) {
           setHasMess(false);
-          if (typeof window !== "undefined") sessionStorage.setItem(cacheKey, "false");
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(cacheKey, "false");
+            sessionStorage.setItem("user_has_mess", "false");
+          }
         } else {
           const data = await res.json();
           const exists = !!data.messId;
           setHasMess(exists);
-          if (typeof window !== "undefined") sessionStorage.setItem(cacheKey, String(exists));
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(cacheKey, String(exists));
+            sessionStorage.setItem("user_has_mess", String(exists));
+          }
         }
       } catch (err) {
         console.error("Failed to check mess membership:", err);
@@ -100,7 +143,7 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [session]);
+  }, [session, isPending]);
 
   // ২. Mess পাওয়া গেলে আজকের meal status আনা (এইটা যেকোনো member এর জন্য কাজ করে, শুধু manager না)
   useEffect(() => {
@@ -113,7 +156,7 @@ export default function LandingPage() {
 
     async function loadTodayMeals() {
       try {
-        setMealsLoading(true);
+        if (!todayMeals) setMealsLoading(true);
         setMealError("");
 
         const res = await fetch(
@@ -129,9 +172,12 @@ export default function LandingPage() {
 
         const data = await res.json();
         setTodayMeals(data);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("cached_today_meals", JSON.stringify(data));
+        }
       } catch (err) {
         console.error("Failed to load today's meals:", err);
-        if (!ignore) setMealError("Could not load today's meals.");
+        if (!ignore && !todayMeals) setMealError("Could not load today's meals.");
       } finally {
         if (!ignore) setMealsLoading(false);
       }
@@ -155,7 +201,7 @@ export default function LandingPage() {
 
     async function loadOverview() {
       try {
-        setOverviewLoading(true);
+        if (!messInfo) setOverviewLoading(true);
 
         const now = new Date();
         const month = now.getMonth() + 1;
@@ -170,8 +216,20 @@ export default function LandingPage() {
 
         if (ignore) return;
 
-        if (messRes.ok) setMessInfo(await messRes.json());
-        if (summaryRes.ok) setMonthSummary(await summaryRes.json());
+        if (messRes.ok) {
+          const messData = await messRes.json();
+          setMessInfo(messData);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("cached_mess_info", JSON.stringify(messData));
+          }
+        }
+        if (summaryRes.ok) {
+          const summaryData = await summaryRes.json();
+          setMonthSummary(summaryData);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("cached_month_summary", JSON.stringify(summaryData));
+          }
+        }
       } catch (err) {
         console.error("Failed to load mess overview:", err);
       } finally {
@@ -227,8 +285,8 @@ export default function LandingPage() {
     `}</style>
   );
 
-  // সেশন লোড হচ্ছে, বা লগইন থাকলে mess membership চেক হচ্ছে — flash এড়াতে skeleton
-  if (isPending || (session && checkingMess)) {
+  // সেশন লোড হচ্ছে, বা লগইন থাকলে mess membership চেক হচ্ছে — flash এড়াতে skeleton (ক্যাশ থাকলে সরাসরি পেজ রেন্ডার হবে)
+  if (isPending && checkingMess) {
     return <PageLoader text={lang === "en" ? "Loading EasyMess..." : "EasyMess লোড হচ্ছে..."} />;
   }
 
@@ -842,7 +900,7 @@ export default function LandingPage() {
       {/* Enlarged Member Profile Detail Modal */}
       {selectedMember && (
         <div 
-          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300"
+          className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4 backdrop-blur-sm transition-all duration-300"
           onClick={() => setSelectedMember(null)}
         >
           <div 

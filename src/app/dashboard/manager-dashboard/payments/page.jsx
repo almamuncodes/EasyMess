@@ -61,18 +61,55 @@ export default function ManagerDepositsPage() {
 
   const managerId = id;
 
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState(() => {
+    if (typeof window !== "undefined" && managerId) {
+      const cached = sessionStorage.getItem(`manager_deposits_${managerId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.members || [];
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [grandTotal, setGrandTotal] = useState(() => {
+    if (typeof window !== "undefined" && managerId) {
+      const cached = sessionStorage.getItem(`manager_deposits_${managerId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.grandTotal || 0;
+        } catch (e) {}
+      }
+    }
+    return 0;
+  });
+  const [loading, setLoading] = useState(() => members.length === 0);
   const [errorMsg, setErrorMsg] = useState("");
   const [month, setMonth] = useState("");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [modalState, setModalState] = useState(null); // { mode: "add" | "edit", memberId, deposit? }
   const [deletingId, setDeletingId] = useState(null);
-  const [grandTotal, setGrandTotal] = useState(0);
 
   const loadDeposits = useCallback(async () => {
-    setLoading(true);
+    if (!managerId) return;
+
+    const key = `manager_deposits_${managerId}_${month}_${search}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setMembers(parsed.members || []);
+          setGrandTotal(parsed.grandTotal || 0);
+        } catch (e) {}
+      } else {
+        if (members.length === 0) setLoading(true);
+      }
+    }
+
     setErrorMsg("");
     try {
       const params = new URLSearchParams({ managerId });
@@ -86,8 +123,15 @@ export default function ManagerDepositsPage() {
 
       if (!data.success) throw new Error(data.message || "cannot load");
 
-      setMembers(data.data || []);
-      setGrandTotal(data.grandTotal || 0);
+      const newMembers = data.data || [];
+      const newGrandTotal = data.grandTotal || 0;
+
+      setMembers(newMembers);
+      setGrandTotal(newGrandTotal);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(key, JSON.stringify({ members: newMembers, grandTotal: newGrandTotal }));
+      }
     } catch (err) {
       setErrorMsg(err.message || "something went wrong");
     } finally {
@@ -446,7 +490,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4"
       style={{ background: "rgba(27, 43, 34, 0.5)" }}
       onClick={onClose}
     >
@@ -564,7 +608,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
 function ConfirmDialog({ onCancel, onConfirm }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4"
       style={{ background: "rgba(27, 43, 34, 0.5)" }}
       onClick={onCancel}
     >

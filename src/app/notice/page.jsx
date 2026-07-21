@@ -15,10 +15,23 @@ export default function NoticePage() {
   const { data: session, isPending } = authClient.useSession();
   const userId = session?.user?.id;
 
-  const [notices, setNotices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState("");
-  
+  const [notices, setNotices] = useState(() => {
+    if (typeof window !== "undefined" && messId) {
+      const cached = sessionStorage.getItem(`notice_list_${messId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => notices.length === 0);
+  const [role, setRole] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      return sessionStorage.getItem(`user_role_${userId}`) || "";
+    }
+    return "";
+  });
+
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -49,6 +62,9 @@ export default function NoticePage() {
         const res = await fetch(`${API_BASE}/api/member/role/${userId}`);
         const data = await res.json();
         setRole(data.role);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`user_role_${userId}`, data.role);
+        }
       } catch (error) {
         console.error("Error fetching role:", error);
       }
@@ -60,6 +76,17 @@ export default function NoticePage() {
   // Fetch notices list
   const fetchNotices = async () => {
     if (!messId) return;
+
+    const key = `notice_list_${messId}_${activeFilter}_${searchQuery}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try { setNotices(JSON.parse(cached)); } catch (e) {}
+      } else {
+        if (notices.length === 0) setLoading(true);
+      }
+    }
+
     try {
       const url = new URL(`${API_BASE}/api/notices/${messId}`);
       if (searchQuery.trim() !== "") {
@@ -70,7 +97,11 @@ export default function NoticePage() {
       const res = await fetch(url.toString());
       const data = await res.json();
       if (data.success) {
-        setNotices(data.data);
+        const newNotices = data.data || [];
+        setNotices(newNotices);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(key, JSON.stringify(newNotices));
+        }
       }
     } catch (error) {
       console.error("Error fetching notices:", error);

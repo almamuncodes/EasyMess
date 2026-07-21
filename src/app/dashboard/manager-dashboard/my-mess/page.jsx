@@ -30,6 +30,10 @@ export default function MyMess() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
+  const user = GetUser();
+  const userId = user?.user?.id;
+  const router = useRouter();
+
   const PAPER = isDark ? "#020617" : "#f2f4f1";
   const INK = isDark ? "#f8fafc" : "#22301F";
   const LEDGER = isDark ? "#94a3b8" : "#3C5A45";
@@ -37,9 +41,25 @@ export default function MyMess() {
   const TURMERIC = isDark ? "#fbbf24" : "#C4901B";
   const STAMP_RED = isDark ? "#ef4444" : "#9C4A34";
 
-  const [mess, setMess] = useState(null);
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [mess, setMess] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`my_mess_info_${userId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [members, setMembers] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`my_mess_members_${userId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => !mess);
   const [loadError, setLoadError] = useState("");
 
   const [editing, setEditing] = useState(false);
@@ -53,10 +73,6 @@ export default function MyMess() {
   const [spinning, setSpinning] = useState(false);
   const [toast, setToast] = useState(null);
   const fileInputRef = useRef(null);
-  const user = GetUser();
-  const userId = user?.user?.id;
-  const router = useRouter();
-  
 
   function flashToast(text) {
     setToast(text);
@@ -85,7 +101,19 @@ export default function MyMess() {
   // ---- load mess + members --------------------------------------------------
   const loadAll = useCallback(async () => {
     if (!userId) return;
-    setLoading(true);
+
+    if (typeof window !== "undefined") {
+      const cachedMess = sessionStorage.getItem(`my_mess_info_${userId}`);
+      const cachedMembers = sessionStorage.getItem(`my_mess_members_${userId}`);
+      if (cachedMess) {
+        try { setMess(JSON.parse(cachedMess)); } catch (e) {}
+      }
+      if (cachedMembers) {
+        try { setMembers(JSON.parse(cachedMembers)); } catch (e) {}
+      }
+      if (!cachedMess && !mess) setLoading(true);
+    }
+
     setLoadError("");
 
     const [messRes, membersRes] = await Promise.all([
@@ -94,13 +122,20 @@ export default function MyMess() {
     ]);
 
     if (!messRes.success) {
-      setLoadError(messRes.message || "Couldn't load your mess");
+      if (!mess) setLoadError(messRes.message || "Couldn't load your mess");
       setLoading(false);
       return;
     }
 
     setMess(messRes);
-    setMembers(membersRes.success ? membersRes.data : []);
+    const newMembers = membersRes.success ? membersRes.data : [];
+    setMembers(newMembers);
+
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(`my_mess_info_${userId}`, JSON.stringify(messRes));
+      sessionStorage.setItem(`my_mess_members_${userId}`, JSON.stringify(newMembers));
+    }
+
     setLoading(false);
   }, [userId, callApi]);
 
@@ -658,7 +693,7 @@ export default function MyMess() {
       {/* ---- Confirm modal ---- */}
       {confirmAction && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 pb-20 sm:pb-4"
           style={{ background: "rgba(34,48,31,0.45)" }}
         >
           <div className="paper-card rounded-2xl w-full max-w-sm p-6">
@@ -727,7 +762,7 @@ export default function MyMess() {
       {/* ---- Toast ---- */}
       {toast && (
         <div
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 ff-body text-sm text-white px-4 py-2.5 rounded-full shadow-lg z-50"
+          className="fixed bottom-20 md:bottom-5 left-1/2 -translate-x-1/2 ff-body text-sm text-white px-4 py-2.5 rounded-full shadow-lg z-[70]"
           style={{ background: "#ff6900" }}
         >
           {toast}

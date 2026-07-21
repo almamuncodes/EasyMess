@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, Sun, Moon, Bell, Settings } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { trackEvent } from "@/lib/analytics";
@@ -15,6 +15,7 @@ import { useSocket } from "@/components/providers/SocketProvider";
 
 export default function Navbar() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,6 +31,21 @@ export default function Navbar() {
 
   const pathname = usePathname();
 
+  const [dashboardHref, setDashboardHref] = useState("/dashboard");
+
+  useEffect(() => {
+    if (session?.user?.id && typeof window !== "undefined") {
+      const cachedRole = sessionStorage.getItem(`user_role_${session.user.id}`);
+      if (cachedRole === "manager") {
+        setDashboardHref("/dashboard/manager-dashboard/overview");
+      } else if (cachedRole === "member") {
+        setDashboardHref("/dashboard/user-dashboard/overview");
+      } else if (cachedRole === "admin") {
+        setDashboardHref("/dashboard/admin-dashboard/overview");
+      }
+    }
+  }, [session]);
+
   const publicMenu = [
     { name: t("home"), href: "/" },
     { name: t("features"), href: "/features" },
@@ -40,7 +56,7 @@ export default function Navbar() {
   const loggedInMenu = [
     { name: t("home"), href: "/" },
     { name: t("notice"), href: "/notice" },
-    { name: t("dashboard"), href: "/dashboard" },
+    { name: t("dashboard"), href: dashboardHref },
   ];
 
   const navLinks = isLoggedIn ? loggedInMenu : publicMenu;
@@ -238,7 +254,7 @@ export default function Navbar() {
                                       await markAsRead(notif._id);
                                     }
                                     setShowNotifications(false);
-                                    window.location.href = "/notice";
+                                    router.push("/notice");
                                   }}
                                   className="flex flex-1 gap-3 min-w-0"
                                 >
@@ -379,7 +395,7 @@ export default function Navbar() {
                                 await markAsRead(notif._id);
                               }
                               setShowNotifications(false);
-                              window.location.href = "/notice";
+                              router.push("/notice");
                             }}
                             className="flex flex-1 gap-3 min-w-0"
                           >

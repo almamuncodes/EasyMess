@@ -44,21 +44,61 @@ export default function ManagerBazaarPage() {
   const currentMonth = String(now.getMonth() + 1);
   const currentYear = String(now.getFullYear());
 
-  const [bazaars, setBazaars] = useState([]);
-  const [grandTotal, setGrandTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
-
   // ডিফল্ট ফিল্টার = চলতি মাস, চলতি বছর
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
+
+  const cacheKey = `manager_bazaar_${managerId}_${month}_${year}`;
+
+  const [bazaars, setBazaars] = useState(() => {
+    if (typeof window !== "undefined" && managerId) {
+      const cached = sessionStorage.getItem(`manager_bazaar_${managerId}_${currentMonth}_${currentYear}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.bazaars || [];
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const [grandTotal, setGrandTotal] = useState(() => {
+    if (typeof window !== "undefined" && managerId) {
+      const cached = sessionStorage.getItem(`manager_bazaar_${managerId}_${currentMonth}_${currentYear}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.grandTotal || 0;
+        } catch (e) {}
+      }
+    }
+    return 0;
+  });
+
+  const [loading, setLoading] = useState(() => bazaars.length === 0);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   const load = useCallback(async () => {
     if (!managerId) return;
-    setLoading(true);
+
+    const key = `manager_bazaar_${managerId}_${month}_${year}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(key);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setBazaars(parsed.bazaars || []);
+          setGrandTotal(parsed.grandTotal || 0);
+        } catch (e) {}
+      } else {
+        if (bazaars.length === 0) setLoading(true);
+      }
+    }
+
     setErrorMsg("");
     try {
       const params = new URLSearchParams({ managerId });
@@ -69,10 +109,17 @@ export default function ManagerBazaarPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Failed to load");
 
-      setBazaars(data.data || []);
-      setGrandTotal(data.grandTotal || 0);
+      const newBazaars = data.data || [];
+      const newGrandTotal = data.grandTotal || 0;
+
+      setBazaars(newBazaars);
+      setGrandTotal(newGrandTotal);
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(key, JSON.stringify({ bazaars: newBazaars, grandTotal: newGrandTotal }));
+      }
     } catch (err) {
-      setErrorMsg(err.message || "Something went wrong");
+      if (bazaars.length === 0) setErrorMsg(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -454,7 +501,7 @@ function BazaarHistoryCard({ bazaar, onEdit, onDelete }) {
 function ConfirmDialog({ onCancel, onConfirm }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4 bg-black/40"
       onClick={onCancel}
     >
       <div

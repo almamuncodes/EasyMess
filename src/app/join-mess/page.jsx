@@ -191,7 +191,7 @@ function JoinMessContent() {
 
       {/* Dynamic Modal */}
       {modal.show && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm z-50 p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-sm z-[70] p-4 pb-20 md:pb-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl max-w-xs w-full text-center border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
             <div className="flex justify-center mb-4">
               {modal.type === "success" ? (

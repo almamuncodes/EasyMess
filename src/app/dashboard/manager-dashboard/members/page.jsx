@@ -15,18 +15,39 @@ function getLocalDateString() {
 const ManagerMealDashboard = () => {
   const user = GetUser();
   const userId = user?.user?.id;
-  const [data, setData] = useState({
-    summary: { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 },
-    members: [],
-  });
   const [date, setDate] = useState(getLocalDateString());
+
+  const [data, setData] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`manager_meals_${userId}_${date}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return {
+      summary: { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 },
+      members: [],
+    };
+  });
+
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
 
   const fetchData = async () => {
     if (!userId) return;
-    setLoading(true);
+    if (data.members.length === 0) setLoading(true);
+
+    const cacheKey = `manager_meals_${userId}_${date}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          setData(JSON.parse(cached));
+        } catch (e) {}
+      }
+    }
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/manager/meals?userId=${userId}&date=${date}`,
@@ -37,7 +58,6 @@ const ManagerMealDashboard = () => {
         const selectedDate = new Date(date);
         selectedDate.setUTCHours(0, 0, 0, 0);
 
-        
         const totalBreakfast = result.members.reduce((sum, m) => {
           const joinDate = new Date(m.createdAt);
           joinDate.setUTCHours(0, 0, 0, 0);
@@ -62,7 +82,7 @@ const ManagerMealDashboard = () => {
           return joinDate <= selectedDate ? sum + (m.guestBreakfast + m.guestLunch + m.guestDinner) : sum;
         }, 0);
 
-        setData({
+        const updatedData = {
           summary: {
             breakfast: totalBreakfast,
             lunch: totalLunch,
@@ -70,7 +90,12 @@ const ManagerMealDashboard = () => {
             guestMeal: totalGuest,
           },
           members: result.members,
-        });
+        };
+
+        setData(updatedData);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(cacheKey, JSON.stringify(updatedData));
+        }
       }
     } catch (err) {
       toast.error("Error fetching data");
@@ -187,7 +212,7 @@ const ManagerMealDashboard = () => {
       )}
 {/* modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4">
           <div className="bg-white p-6 rounded-lg w-full max-w-xs">
             <h2 className="font-bold mb-4">Edit {editingMember.name}</h2>
             {["guestBreakfast", "guestLunch", "guestDinner"].map((type) => (
