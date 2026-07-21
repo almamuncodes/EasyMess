@@ -1,21 +1,25 @@
 {
-  "name": "Easy Mess  ",
-  "short_name": "EasyMess ",
+  "name": "EasyMess",
+  "short_name": "EasyMess",
+  "description": "Smart meal management platform for hostels, messes, and shared living.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff6900",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
-  ],
-  "theme_color": "#f9cca2",
-  "background_color": "#ff6900",
-  "display": "standalone"
+  ]
 }

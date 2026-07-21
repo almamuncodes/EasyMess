@@ -37,14 +37,25 @@ export default function QRScannerComponent({ onScan, isProcessing }) {
     return cleanText;
   }, []);
 
+  const lastScannedTimeRef = useRef(0);
+  const lastScannedCodeRef = useRef("");
+
   const handleSuccessfulScan = useCallback(
     (decodedText) => {
+      if (isProcessing) return;
       const code = extractCode(decodedText);
+      const now = Date.now();
+
       if (code) {
+        if (lastScannedCodeRef.current === code && now - lastScannedTimeRef.current < 4000) {
+          return; // Prevent repeating scan for same code within 4s window
+        }
+        lastScannedCodeRef.current = code;
+        lastScannedTimeRef.current = now;
         onScan(code);
       }
     },
-    [extractCode, onScan]
+    [extractCode, onScan, isProcessing]
   );
 
   // Start Camera Scanning

@@ -124,9 +124,7 @@ export default function SocketProvider({ children }) {
     if (!uId || typeof window === "undefined" || !("Notification" in window)) return;
 
     try {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted" && messaging) {
-        // Register the service worker manually to prevent default sw resolution errors
+      if (Notification.permission === "granted" && messaging) {
         const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
         
         const fcmToken = await getToken(messaging, {

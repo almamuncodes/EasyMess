@@ -118,14 +118,15 @@ export default function Navbar() {
         scrolled ? "shadow-md border-b border-transparent dark:border-slate-800" : "border-b dark:border-slate-800"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center shrink-0">
           <Image
             src="/image/easymess.png"
             alt="EasyMess"
-            width={150}
+            width={140}
             height={40}
-            className="dark:brightness-0 dark:invert transition-all duration-200"
+            priority
+            className="w-[110px] md:w-[140px] h-auto dark:brightness-0 dark:invert transition-all duration-200"
           />
         </Link>
 
@@ -168,19 +169,9 @@ export default function Navbar() {
           {/* Language Toggle */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer mr-2"
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-bold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer mr-2"
           >
-            {lang === "en" ? (
-              <>
-                <span className="text-sm">🇬🇧</span>
-                <span>EN</span>
-              </>
-            ) : (
-              <>
-                <span className="text-sm">🇧🇩</span>
-                <span>BD</span>
-              </>
-            )}
+            {lang === "en" ? "EN" : "বাং"}
           </button>
 
           {!isPending && (
@@ -496,26 +487,16 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* Language Toggle */}
+               {/* Language Toggle */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-600 dark:text-slate-300">
                   {lang === "en" ? "Language" : "ভাষা"}
                 </span>
                 <button
                   onClick={toggleLanguage}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-250 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-semibold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-205 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer"
+                  className="flex items-center justify-center w-12 h-10 rounded-xl border border-gray-250 dark:border-slate-700 hover:border-orange-500 dark:hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-slate-800 transition-all font-bold text-xs tracking-wider shadow-sm text-gray-700 dark:text-gray-205 hover:text-orange-600 dark:hover:text-orange-400 hover:cursor-pointer"
                 >
-                  {lang === "en" ? (
-                    <>
-                      <span className="text-sm">🇬🇧</span>
-                      <span>EN</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-sm">🇧🇩</span>
-                      <span>BD</span>
-                    </>
-                  )}
+                  {lang === "en" ? "EN" : "বাং"}
                 </button>
               </div>
             </div>

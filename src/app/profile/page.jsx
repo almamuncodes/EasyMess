@@ -5,8 +5,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
-import ImageCropModal from "@/components/ui/ImageCropModal";
+import dynamic from "next/dynamic";
 import PageLoader from "@/components/ui/PageLoader";
+
+const ImageCropModal = dynamic(
+  () => import("@/components/ui/ImageCropModal"),
+  { ssr: false }
+);
 
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 2MB

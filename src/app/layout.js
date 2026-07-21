@@ -1,6 +1,6 @@
 import dns from "node:dns/promises";
  dns.setServers(["1.1.1.1", "8.8.8.8"]);
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -9,6 +9,8 @@ import Footer from "@/components/Fotter/Footer";
 import BottomNav from "@/components/navigation/BottomNav";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import SocketProvider from "@/components/providers/SocketProvider";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import OfflineGameModal from "@/components/OfflineGameModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,10 +24,24 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 // app/layout.jsx
 
 export const metadata = {
   metadataBase: new URL("https://easymess.vercel.app"),
+  manifest: "/manifest.json",
 
   title: {
     default: "EasyMess",
@@ -93,7 +109,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
@@ -143,6 +159,8 @@ export default function RootLayout({ children }) {
             </div>
             <Footer/>
             <BottomNav />
+            <PWAInstallPrompt />
+            <OfflineGameModal />
           </SocketProvider>
         </ThemeProvider>
       </body>

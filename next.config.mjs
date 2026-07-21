@@ -31,8 +31,10 @@ const nextConfig = {
     ];
   },
 
+  poweredByHeader: false,
   reactCompiler: true,
   experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "date-fns", "framer-motion"],
     staleTimes: {
       dynamic: 30,
       static: 180,

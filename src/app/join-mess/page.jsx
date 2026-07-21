@@ -5,8 +5,21 @@ import React, { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
-import QRScannerComponent from "@/components/mess/QRScannerComponent";
+import dynamic from "next/dynamic";
 import { QrCode, KeyRound, Sparkles, CheckCircle2, Info } from "lucide-react";
+
+const QRScannerComponent = dynamic(
+  () => import("@/components/mess/QRScannerComponent"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center p-12 bg-slate-900 rounded-2xl">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-2" />
+        <span className="text-xs text-gray-300">Loading scanner...</span>
+      </div>
+    ),
+  }
+);
 
 function JoinMessContent() {
   const searchParams = useSearchParams();
@@ -95,11 +108,20 @@ function JoinMessContent() {
     }
   }, [initialCode]);
 
+  const lastSubmittedRef = React.useRef({ code: "", time: 0 });
+
   // Handle scanned QR code auto submission
   const handleQRScan = (scannedCode) => {
-    if (!scannedCode || loading) return;
+    if (!scannedCode || loading || modal.show) return;
+    const now = Date.now();
+    if (
+      lastSubmittedRef.current.code === scannedCode &&
+      now - lastSubmittedRef.current.time < 5000
+    ) {
+      return; // 5-second cooldown per code to prevent infinite submission loop
+    }
+    lastSubmittedRef.current = { code: scannedCode, time: now };
     setInviteCode(scannedCode);
-    toast.success(`Scanned code: ${scannedCode}`);
     handleJoinRequest(scannedCode);
   };
 
