@@ -14,11 +14,13 @@ import {
   ChevronRight,
   AlertTriangle,
   Loader2,
+  QrCode,
 } from "lucide-react";
 import { GetUser } from "@/components/action/action";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import ImageCropModal from "@/components/ui/ImageCropModal";
+import MessQRCodeModal from "@/components/mess/MessQRCodeModal";
 
 
 
@@ -45,6 +47,7 @@ export default function MyMess() {
   const [saving, setSaving] = useState(false);
 
   const [showMembers, setShowMembers] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null); // { type, member }
   const [actionBusy, setActionBusy] = useState(false);
   const [spinning, setSpinning] = useState(false);
@@ -534,17 +537,28 @@ export default function MyMess() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={generateInviteCode}
-              disabled={spinning}
-              className="ff-body inline-flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 disabled:opacity-60"
-              style={{ background: "#FF6900" }}
-            >
-              <RefreshCw size={15} className={spinning ? "animate-spin" : ""} />
-              Generate new code
-            </button>
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+              <button
+                onClick={() => setShowQrModal(true)}
+                className="ff-body inline-flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 cursor-pointer"
+                  style={{ background: "#ea580c" }}
+                >
+                <QrCode size={16} />
+                View Mess QR
+                </button>
+
+                <button
+                  onClick={generateInviteCode}
+                  disabled={spinning}
+                className="ff-body inline-flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
+                  style={{ background: "#334155" }}
+                >
+                <RefreshCw size={15} className={spinning ? "animate-spin" : ""} />
+                  New Code
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
         {/* ---- Members management ---- */}
         <div className="paper-card rounded-2xl p-5 sm:p-7">
@@ -714,11 +728,28 @@ export default function MyMess() {
       {toast && (
         <div
           className="fixed bottom-5 left-1/2 -translate-x-1/2 ff-body text-sm text-white px-4 py-2.5 rounded-full shadow-lg z-50"
-          style={{ background:' #ff6900' }}
+          style={{ background: "#ff6900" }}
         >
           {toast}
         </div>
       )}
+
+      {/* Mess QR Code Modal */}
+      <MessQRCodeModal
+        isOpen={showQrModal}
+        onClose={() => setShowQrModal(false)}
+        messInfo={
+          mess
+            ? {
+                ...mess,
+                messName: mess.messName,
+                messImage: mess.messImage,
+                inviteCode: mess.inviteCode,
+                managerName: manager?.name || user?.user?.name,
+              }
+            : null
+        }
+      />
     </div>
   );
 }
