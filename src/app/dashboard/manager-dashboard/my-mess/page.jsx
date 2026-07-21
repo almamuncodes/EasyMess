@@ -537,26 +537,26 @@ export default function MyMess() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+            <div className="flex flex-row items-center gap-2">
+              <button
+                onClick={generateInviteCode}
+                disabled={spinning}
+                className="ff-body inline-flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
+                style={{ background: "#334155" }}
+              >
+                <RefreshCw size={15} className={spinning ? "animate-spin" : ""} />
+                New Code
+              </button>
+
               <button
                 onClick={() => setShowQrModal(true)}
-                className="ff-body inline-flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 cursor-pointer"
-                  style={{ background: "#ea580c" }}
-                >
+                className="ff-body inline-flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 cursor-pointer"
+                style={{ background: "#ea580c" }}
+              >
                 <QrCode size={16} />
                 View Mess QR
-                </button>
-
-                <button
-                  onClick={generateInviteCode}
-                  disabled={spinning}
-                className="ff-body inline-flex items-center justify-center gap-2 text-sm font-medium px-4 py-2.5 rounded-lg text-white shrink-0 transition-opacity hover:opacity-90 disabled:opacity-60 cursor-pointer"
-                  style={{ background: "#334155" }}
-                >
-                <RefreshCw size={15} className={spinning ? "animate-spin" : ""} />
-                  New Code
-                </button>
-              </div>
+              </button>
+            </div>
             </div>
           </div>
 
