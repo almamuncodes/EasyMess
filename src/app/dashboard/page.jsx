@@ -15,13 +15,8 @@ const Page = () => {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const [role, setRole] = useState(() => {
-    if (typeof window !== "undefined" && userId) {
-      return sessionStorage.getItem(`user_role_${userId}`);
-    }
-    return null;
-  });
-  const [loading, setLoading] = useState(() => !role);
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const redirectByRole = (r) => {
     if (r === "member") {

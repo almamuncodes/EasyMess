@@ -1,14 +1,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 
-
 const MealCalendar = () => {
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
 
@@ -51,18 +50,47 @@ const MealCalendar = () => {
 
   useEffect(() => {
     if (!userId) return;
+    const cachedKey = `user_messid_${userId}`;
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(cachedKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setMessId(parsed.messId);
+          if (parsed.createdAt) setJoiningDate(new Date(parsed.createdAt));
+        } catch (e) {}
+      }
+    }
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/messid/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setMessId(data.messId);
-        if (data.createdAt) setJoiningDate(new Date(data.createdAt));
-      });
+        if (data.createdAt) {
+          const dateObj = new Date(data.createdAt);
+          setJoiningDate(dateObj);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(cachedKey, JSON.stringify({ messId: data.messId, createdAt: data.createdAt }));
+          }
+        }
+      })
+      .catch((err) => console.error("Error fetching messId:", err));
   }, [userId]);
 
   useEffect(() => { fetchMeals(); }, [userId, month, year]);
 
-
-  
+  const mealsByDay = React.useMemo(() => {
+    const map = {};
+    if (Array.isArray(meals)) {
+      meals.forEach((m) => {
+        if (m && m.date) {
+          const dayNum = new Date(m.date).getDate();
+          map[dayNum] = m;
+        }
+      });
+    }
+    return map;
+  }, [meals]);
 
   const handleUpdate = async (day, type, currentStatus) => {
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -80,16 +108,13 @@ const MealCalendar = () => {
     }
   };
 
-  console.log( userId, messId,    )
-  
-
   return (
-    <div className="p-5 bg-[#F2F4F1] rounded-xl shadow max-w-xl mx-auto border">
+    <div className="p-5 bg-[#F2F4F1] dark:bg-slate-900 rounded-xl shadow max-w-xl mx-auto border dark:border-slate-800 text-neutral-900 dark:text-slate-100">
   
       <div className="flex justify-between mb-5">
-        <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 rounded">←</button>
+        <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded">←</button>
         <h2 className="font-bold text-xl">{month}/{year}</h2>
-        <button onClick={() => setMonth(m => m === 12 ? 1 : m + 1)} className="px-4 py-2 bg-gray-200 rounded">→</button>
+        <button onClick={() => setMonth(m => m === 12 ? 1 : m + 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded">→</button>
       </div>
 
       <div className="grid grid-cols-4 font-bold mb-4 text-center">
@@ -105,7 +130,7 @@ const MealCalendar = () => {
         // জয়েনিং লজিক
         const isBeforeJoining = joiningDate && dateObj < new Date(joiningDate.getFullYear(), joiningDate.getMonth(), joiningDate.getDate());
 
-        const meal = meals.find((m) => new Date(m.date).getDate() === day) || {};
+        const meal = mealsByDay[day] || {};
 
         return (
           <div key={day} className="grid grid-cols-4 gap-2 mb-2 text-center items-center">

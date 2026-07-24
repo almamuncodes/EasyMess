@@ -16,7 +16,7 @@ const layout = ({ children }) => {
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
 
       {/* Sidebar */}
-      <aside className="w-full md:w-72 border-r dark:border-slate-800 bg-white dark:bg-slate-900">
+      <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900">
         <Sidebar/>
       </aside>
 

@@ -17,7 +17,7 @@ export default function BazaarAnalysisRedirect() {
       return;
     }
 
-    const cachedRole = sessionStorage.getItem(`user_role_${session.user.id}`);
+    const cachedRole = typeof window !== "undefined" ? sessionStorage.getItem(`user_role_${session.user.id}`) : null;
     if (cachedRole === "manager" || cachedRole === "admin") {
       router.replace("/dashboard/manager-dashboard/bazaar-analysis");
     } else {

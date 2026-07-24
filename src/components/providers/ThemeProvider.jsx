@@ -8,6 +8,8 @@ export default function ThemeProvider({ children, ...props }) {
       attribute="class"
       defaultTheme="light"
       enableSystem={true}
+      enableColorScheme={false}
+      scriptProps={{ suppressHydrationWarning: true }}
       {...props}
     >
       {children}

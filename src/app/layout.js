@@ -10,7 +10,6 @@ import BottomNav from "@/components/navigation/BottomNav";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import SocketProvider from "@/components/providers/SocketProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
-import OfflineGameModal from "@/components/OfflineGameModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -101,6 +100,11 @@ export const metadata = {
   },
 };
 
+import dynamic from "next/dynamic";
+import QueryProvider from "@/components/providers/QueryProvider";
+
+const OfflineGameModal = dynamic(() => import("@/components/OfflineGameModal"));
+
 export default function RootLayout({ children }) {
   const isProd = process.env.NODE_ENV === "production";
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -112,7 +116,7 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <head>
         {isProd && gaId && (
           <>
             <Script
@@ -150,18 +154,22 @@ export default function RootLayout({ children }) {
             }}
           />
         )}
+      </head>
+      <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <SocketProvider>
-            <Navbar/>
-            <Toaster  position="top-left" />
-            <div className="flex-1 pb-16 md:pb-0">
-              {children}
-            </div>
-            <Footer/>
-            <BottomNav />
-            <PWAInstallPrompt />
-            <OfflineGameModal />
-          </SocketProvider>
+          <QueryProvider>
+            <SocketProvider>
+              <Navbar/>
+              <Toaster  position="top-left" />
+              <div className="flex-1 pb-16 md:pb-0">
+                {children}
+              </div>
+              <Footer/>
+              <BottomNav />
+              <PWAInstallPrompt />
+              <OfflineGameModal />
+            </SocketProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

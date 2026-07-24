@@ -15,13 +15,13 @@ import {
   UserCog,
   ClipboardClock,
 } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/lib/useTranslation";
+import { authClient } from "@/lib/auth-client";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [role, setRole] = useState("");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -29,37 +29,38 @@ export default function Sidebar() {
   }, []);
 
   const { t, lang } = useTranslation();
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
-  useEffect(() => {
-    const loadSessionAndRole = async () => {
-      try {
-        const sessionRes = await authClient.getSession();
-        const userId = sessionRes?.data?.user?.id;
-        if (!userId) return;
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
-        const data = await res.json();
-        setRole(data.role);
-      } catch (error) {
-        console.error("Error loading session/role:", error);
+  const { data: queryRole } = useQuery({
+    queryKey: ["member-role", userId],
+    queryFn: async () => {
+      if (!userId) return "";
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
+      const data = await res.json();
+      if (data.role && typeof window !== "undefined") {
+        sessionStorage.setItem(`user_role_${userId}`, data.role);
+        sessionStorage.setItem("user_role", data.role);
       }
-    };
+      return data.role || "";
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 10,
+  });
 
-    if (mounted) {
-      loadSessionAndRole();
-    }
-  }, [mounted]);
+  const role = queryRole || (typeof window !== "undefined" ? sessionStorage.getItem(`user_role_${userId}`) || sessionStorage.getItem("user_role") : "") || "";
 
-  if (!mounted) {
+  if (!mounted || !role) {
     return (
-      <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white border-r border-gray-100 p-6 animate-pulse">
+      <aside className="w-full md:w-64 flex flex-col min-h-screen bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 p-6 animate-pulse">
         <div className="mb-10">
-          <div className="h-4 bg-gray-100 rounded w-20 px-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-slate-800 rounded w-28"></div>
         </div>
         <div className="flex flex-col gap-3">
-          <div className="h-10 bg-gray-50 rounded-xl"></div>
-          <div className="h-10 bg-gray-50 rounded-xl"></div>
-          <div className="h-10 bg-gray-50 rounded-xl"></div>
+          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
         </div>
       </aside>
     );

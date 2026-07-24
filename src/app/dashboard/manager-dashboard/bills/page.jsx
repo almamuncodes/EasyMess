@@ -1,19 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Inter, Hind_Siliguri } from "next/font/google";
-import { GetUser } from "@/components/action/action";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
-});
-const hindSiliguri = Hind_Siliguri({
-  subsets: ["bengali"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body-bn",
-});
+import { useEffect, useState, useCallback, memo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -30,83 +19,31 @@ function formatDate(d) {
 }
 
 export default function MyDepositsPage() {
-  const user = GetUser();
-  const userId = user?.user?.id;
-
-  const [history, setHistory] = useState(() => {
-    if (typeof window !== "undefined" && userId) {
-      const cached = sessionStorage.getItem(`user_deposits_${userId}`);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          return parsed.history || [];
-        } catch (e) {}
-      }
-    }
-    return [];
-  });
-  const [total, setTotal] = useState(() => {
-    if (typeof window !== "undefined" && userId) {
-      const cached = sessionStorage.getItem(`user_deposits_${userId}`);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          return parsed.total || 0;
-        } catch (e) {}
-      }
-    }
-    return 0;
-  });
-  const [loading, setLoading] = useState(() => history.length === 0);
-  const [errorMsg, setErrorMsg] = useState("");
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const [selectedNote, setSelectedNote] = useState(null);
 
-  const load = useCallback(async () => {
-    if (!userId) return;
-
-    const key = `user_deposits_${userId}`;
-    if (typeof window !== "undefined") {
-      const cached = sessionStorage.getItem(key);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setHistory(parsed.history || []);
-          setTotal(parsed.total || 0);
-        } catch (e) {}
-      } else {
-        if (history.length === 0) setLoading(true);
-      }
-    }
-
-    setErrorMsg("");
-    try {
+  const { data: depositsData, isLoading: queryLoading, isError, error: queryError } = useQuery({
+    queryKey: ["user-deposits", userId],
+    queryFn: async () => {
+      if (!userId) return { data: [], total: 0 };
       const res = await fetch(`${API_BASE}/api/deposits/user/${userId}`);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "cannot load");
+      return data;
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
+  });
 
-      const newHistory = data.data || [];
-      const newTotal = data.total || 0;
-
-      setHistory(newHistory);
-      setTotal(newTotal);
-
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(key, JSON.stringify({ history: newHistory, total: newTotal }));
-      }
-    } catch (err) {
-      if (history.length === 0) setErrorMsg(err.message || "something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const history = depositsData?.data || [];
+  const total = depositsData?.total || 0;
+  const loading = queryLoading && history.length === 0;
+  const errorMsg = isError ? (queryError?.message || "Something went wrong") : "";
 
   return (
     <div
-      className={`${inter.variable} ${hindSiliguri.variable} rounded-2xl border-none min-h-screen bg-[#f2f4f1] dark:bg-slate-950 text-neutral-900 dark:text-slate-100 font-sans`}
+      className="rounded-2xl border-none min-h-screen bg-[#f2f4f1] dark:bg-slate-950 text-neutral-900 dark:text-slate-100 font-sans"
     >
       <div className="max-w-2xl mx-auto px-6 py-10 md:py-14">
         <h1 className="text-2xl font-semibold mb-8">My Deposits</h1>
@@ -181,7 +118,7 @@ function TotalCard({ total, count }) {
   );
 }
 
-function DepositRow({ deposit, onClick }) {
+const DepositRow = memo(function DepositRow({ deposit, onClick }) {
   const noteText = deposit.note
     ? `${formatDate(deposit.date)} · ${deposit.note}`
     : formatDate(deposit.date);
@@ -200,7 +137,7 @@ function DepositRow({ deposit, onClick }) {
       <PaymentBadge method={deposit.paymentMethod} />
     </div>
   );
-}
+});
 
 function PaymentBadge({ method }) {
   return (

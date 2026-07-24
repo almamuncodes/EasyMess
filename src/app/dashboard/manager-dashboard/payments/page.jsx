@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, memo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Fraunces,
   Inter,
   Noto_Serif_Bengali,
   Hind_Siliguri,
 } from "next/font/google";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import { trackEvent } from "@/lib/analytics";
 
@@ -56,92 +57,45 @@ function formatDate(d) {
 }
 
 export default function ManagerDepositsPage() {
-  const user = GetUser();
-  const id = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const managerId = session?.user?.id;
+  const queryClient = useQueryClient();
 
-  const managerId = id;
-
-  const [members, setMembers] = useState(() => {
-    if (typeof window !== "undefined" && managerId) {
-      const cached = sessionStorage.getItem(`manager_deposits_${managerId}`);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          return parsed.members || [];
-        } catch (e) {}
-      }
-    }
-    return [];
-  });
-  const [grandTotal, setGrandTotal] = useState(() => {
-    if (typeof window !== "undefined" && managerId) {
-      const cached = sessionStorage.getItem(`manager_deposits_${managerId}`);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          return parsed.grandTotal || 0;
-        } catch (e) {}
-      }
-    }
-    return 0;
-  });
-  const [loading, setLoading] = useState(() => members.length === 0);
-  const [errorMsg, setErrorMsg] = useState("");
   const [month, setMonth] = useState("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [modalState, setModalState] = useState(null); // { mode: "add" | "edit", memberId, deposit? }
   const [deletingId, setDeletingId] = useState(null);
-
-  const loadDeposits = useCallback(async () => {
-    if (!managerId) return;
-
-    const key = `manager_deposits_${managerId}_${month}_${search}`;
-    if (typeof window !== "undefined") {
-      const cached = sessionStorage.getItem(key);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setMembers(parsed.members || []);
-          setGrandTotal(parsed.grandTotal || 0);
-        } catch (e) {}
-      } else {
-        if (members.length === 0) setLoading(true);
-      }
-    }
-
-    setErrorMsg("");
-    try {
-      const params = new URLSearchParams({ managerId });
-      if (month) params.set("month", month);
-      if (search) params.set("search", search);
-
-      const res = await fetch(
-        `${API_BASE}/api/manager/deposits?${params.toString()}`,
-      );
-      const data = await res.json();
-
-      if (!data.success) throw new Error(data.message || "cannot load");
-
-      const newMembers = data.data || [];
-      const newGrandTotal = data.grandTotal || 0;
-
-      setMembers(newMembers);
-      setGrandTotal(newGrandTotal);
-
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(key, JSON.stringify({ members: newMembers, grandTotal: newGrandTotal }));
-      }
-    } catch (err) {
-      setErrorMsg(err.message || "something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }, [managerId, month, search]);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
-    loadDeposits();
-  }, [loadDeposits]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: depositsResult, isLoading: queryLoading } = useQuery({
+    queryKey: ["manager-deposits", managerId, month, debouncedSearch],
+    queryFn: async () => {
+      if (!managerId) return { data: [], grandTotal: 0 };
+      const params = new URLSearchParams({ managerId });
+      if (month) params.set("month", month);
+      if (debouncedSearch) params.set("search", debouncedSearch);
+
+      const res = await fetch(`${API_BASE}/api/manager/deposits?${params.toString()}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "cannot load");
+      return data;
+    },
+    enabled: !!managerId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const members = depositsResult?.data || [];
+  const grandTotal = depositsResult?.grandTotal || 0;
+  const loading = queryLoading && members.length === 0;
 
   const handleSave = async (formValues) => {
     const isEdit = modalState.mode === "edit";
@@ -169,7 +123,7 @@ export default function ManagerDepositsPage() {
     });
 
     setModalState(null);
-    loadDeposits();
+    queryClient.invalidateQueries({ queryKey: ["manager-deposits"] });
 
   };
 
@@ -183,7 +137,7 @@ export default function ManagerDepositsPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       setDeletingId(null);
-      loadDeposits();
+      queryClient.invalidateQueries({ queryKey: ["manager-deposits"] });
     } catch (err) {
       setErrorMsg(err.message);
       setDeletingId(null);
@@ -322,7 +276,7 @@ export default function ManagerDepositsPage() {
 /* ============================================================
    একটা মেম্বারের লেজার রো
    ============================================================ */
-function MemberLedgerRow({
+const MemberLedgerRow = memo(function MemberLedgerRow({
   member,
   expanded,
   onToggle,
@@ -452,7 +406,7 @@ function MemberLedgerRow({
       )}
     </div>
   );
-}
+});
 
 /* ============================================================
    এড / এডিট মোডাল
