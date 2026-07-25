@@ -187,6 +187,9 @@ export default function SocketProvider({ children }) {
 
     newSocket.on("connect", () => {
       console.log("Socket connected client-side:", newSocket.id);
+      if (userId) {
+        newSocket.emit("join-user", userId);
+      }
       if (messId) {
         newSocket.emit("join-mess", messId);
       }
@@ -198,12 +201,13 @@ export default function SocketProvider({ children }) {
     };
   }, [userId, messId, API_BASE]);
 
-  // Emit join room when messId updates after connection
+  // Emit join room when messId or userId updates after connection
   useEffect(() => {
-    if (socket && messId) {
-      socket.emit("join-mess", messId);
+    if (socket) {
+      if (userId) socket.emit("join-user", userId);
+      if (messId) socket.emit("join-mess", messId);
     }
-  }, [socket, messId]);
+  }, [socket, userId, messId]);
 
   // Listen to new-notice event
   useEffect(() => {
@@ -246,6 +250,77 @@ export default function SocketProvider({ children }) {
       socket.off("new-notice", handleNewNotice);
     };
   }, [socket, userId, messId]);
+
+  // Listen to new-notification event (meal updates, deposits, bazaar, etc.)
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    const handleNewNotification = (data) => {
+      const { notification, targetUserId } = data || {};
+
+      // If targetUserId is specified and it's not meant for this user, ignore
+      if (targetUserId && targetUserId !== userId) return;
+
+      if (notification) {
+        setNotifications((prev) => {
+          if (notification._id && prev.some((n) => n._id === notification._id)) {
+            return prev;
+          }
+          return [notification, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
+
+        if (notification.type === "join_approved") {
+          if (typeof window !== "undefined") {
+            sessionStorage.removeItem(`user_role_${userId}`);
+            sessionStorage.removeItem("user_role");
+          }
+          if (userId) {
+            fetch(`${API_BASE}/api/member/messid/${userId}`)
+              .then((res) => res.json())
+              .then((data) => {
+                if (data.messId) setMessId(data.messId);
+              })
+              .catch((err) => console.error(err));
+          }
+        }
+
+        const targetLink = notification.link
+          ? notification.link
+          : notification.type === "join_approved"
+          ? "/dashboard/user-dashboard/overview"
+          : notification.type?.startsWith("bazaar")
+          ? "/dashboard/user-dashboard/bazaar-analysis"
+          : notification.type?.startsWith("deposit")
+          ? "/dashboard/user-dashboard/bills"
+          : "/dashboard/user-dashboard/meals";
+
+        const icon = notification.type === "join_approved"
+          ? "🎉"
+          : notification.type?.startsWith("bazaar")
+          ? "🛒"
+          : notification.type?.startsWith("deposit")
+          ? "💰"
+          : "🍽️";
+
+        toast.info(`${icon} ${notification.title || "Notification"}`, {
+          description: notification.message,
+          action: {
+            label: "View",
+            onClick: () => {
+              window.location.href = targetLink;
+            },
+          },
+        });
+      }
+    };
+
+    socket.on("new-notification", handleNewNotification);
+
+    return () => {
+      socket.off("new-notification", handleNewNotification);
+    };
+  }, [socket, userId]);
 
   return (
     <SocketContext.Provider

@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
+import MealCountdownTimer from "@/components/ui/MealCountdownTimer";
 
 const MealCalendar = () => {
   const { data: session } = authClient.useSession();
@@ -109,8 +110,11 @@ const MealCalendar = () => {
   };
 
   return (
-    <div className="p-5 bg-[#F2F4F1] dark:bg-slate-900 rounded-xl shadow max-w-xl mx-auto border dark:border-slate-800 text-neutral-900 dark:text-slate-100">
-  
+    <div className="p-5 bg-[#F2F4F1] dark:bg-slate-900 rounded-xl shadow max-w-xl mx-auto border dark:border-slate-800 text-neutral-900 dark:text-slate-100 space-y-4">
+      
+      {/* ⏳ Smart Next-Meal Lock Countdown Timer */}
+      <MealCountdownTimer userId={userId} />
+
       <div className="flex justify-between mb-5">
         <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded">←</button>
         <h2 className="font-bold text-xl">{month}/{year}</h2>

@@ -245,7 +245,16 @@ export default function Navbar() {
                                       await markAsRead(notif._id);
                                     }
                                     setShowNotifications(false);
-                                    router.push("/notice");
+                                    const targetPath = notif.link
+                                      ? notif.link
+                                      : notif.type === "meal_update"
+                                      ? "/dashboard/user-dashboard/meals"
+                                      : notif.type?.startsWith("deposit")
+                                      ? "/dashboard/user-dashboard/bills"
+                                      : notif.type?.startsWith("bazaar")
+                                      ? "/dashboard/user-dashboard/bazaar-analysis"
+                                      : "/notice";
+                                    router.push(targetPath);
                                   }}
                                   className="flex flex-1 gap-3 min-w-0"
                                 >
@@ -386,7 +395,16 @@ export default function Navbar() {
                                 await markAsRead(notif._id);
                               }
                               setShowNotifications(false);
-                              router.push("/notice");
+                              const targetPath = notif.link
+                                ? notif.link
+                                : notif.type === "meal_update"
+                                ? "/dashboard/user-dashboard/meals"
+                                : notif.type?.startsWith("deposit")
+                                ? "/dashboard/user-dashboard/bills"
+                                : notif.type?.startsWith("bazaar")
+                                ? "/dashboard/user-dashboard/bazaar-analysis"
+                                : "/notice";
+                              router.push(targetPath);
                             }}
                             className="flex flex-1 gap-3 min-w-0"
                           >

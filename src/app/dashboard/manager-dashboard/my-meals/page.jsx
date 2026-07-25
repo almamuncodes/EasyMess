@@ -4,6 +4,7 @@ import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
+import MealCountdownTimer from "@/components/ui/MealCountdownTimer";
 
 
 const MealCalendar = () => {
@@ -83,8 +84,11 @@ const MealCalendar = () => {
   
 
   return (
-    <div className="p-5 bg-[#f2f4f1] rounded-xl shadow max-w-lg mx-auto">
-  
+    <div className="p-5 bg-[#f2f4f1] dark:bg-slate-900 rounded-xl shadow max-w-lg mx-auto border dark:border-slate-800 space-y-4">
+      
+      {/* ⏳ Smart Next-Meal Lock Countdown Timer */}
+      <MealCountdownTimer userId={userId} />
+
       <div className="flex justify-between mb-5">
         <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 rounded">←</button>
         <h2 className="font-bold text-xl">{month}/{year}</h2>

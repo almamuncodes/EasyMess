@@ -32,6 +32,14 @@ function renderBazaarSummaryTitle(b) {
   return "Bazaar Log";
 }
 
+function newSetOfEditedBazaars(list = []) {
+  const set = new Set();
+  list.forEach((b, idx) => {
+    if (b.isEdited) set.add(b._id || String(idx));
+  });
+  return set;
+}
+
 export default function UserBazaarAnalysisPage() {
   const { t, lang } = useTranslation();
   const isBn = lang === "bn";
@@ -103,6 +111,12 @@ export default function UserBazaarAnalysisPage() {
 
       setBazaars(newBazaars);
       setGrandTotal(newGrandTotal);
+
+      // Auto-expand any edited bazaar entries so user sees the details immediately
+      const editedIds = newSetOfEditedBazaars(newBazaars);
+      if (editedIds.size > 0) {
+        setExpandedIds((prev) => new Set([...prev, ...editedIds]));
+      }
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem(cacheKey, JSON.stringify({ bazaars: newBazaars, grandTotal: newGrandTotal }));
@@ -380,6 +394,11 @@ export default function UserBazaarAnalysisPage() {
                                 {itemCount} {isBn ? "টি আইটেম" : "items"}
                               </span>
                             )}
+                            {b.isEdited && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/40 text-[9px] sm:text-[10px] font-bold whitespace-nowrap flex items-center gap-1">
+                                <span>✏️</span> {isBn ? "সম্পাদিত" : "Edited"}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5 truncate">
                             {renderBazaarSummaryTitle(b)} · By <strong className="text-gray-700 dark:text-slate-300">{typeof b.bazaarBy === "string" ? b.bazaarBy : "Member"}</strong>
@@ -403,6 +422,12 @@ export default function UserBazaarAnalysisPage() {
                     {/* Accordion Itemized Price List */}
                     {isExpanded && (
                       <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-1 border-t border-gray-100 dark:border-slate-800 space-y-2 bg-white dark:bg-slate-900">
+                        {b.isEdited && (
+                          <div className="mt-2 text-xs text-red-600 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-950/40 p-2.5 rounded-xl border border-red-100 dark:border-red-900/40 flex items-center gap-2">
+                            <span>✏️</span>
+                            <span>{isBn ? "এই বাজারের হিসাবটি সম্প্রতি সম্পাদনা (Edit) করা হয়েছে।" : "This bazaar entry has been edited by manager."}</span>
+                          </div>
+                        )}
                         <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-400 pt-2 mb-2">
                           {isBn ? "পণ্যের মূল্য তালিকা:" : "Item Price List:"}
                         </p>

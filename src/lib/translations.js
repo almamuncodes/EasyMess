@@ -38,6 +38,7 @@ export const translations = {
     overview: "Overview",
     myMess: "My Mess",
     myMeals: "My Meals",
+    mealManagement: "Meal Management",
     mealsSidebar: "Meals",
     billsSidebar: "Bills",
     membersSidebar: "Members",
@@ -49,6 +50,8 @@ export const translations = {
     managersSidebar: "Managers",
     usersSidebar: "Users",
     analyticsSidebar: "Analytics",
+    bazaarSchedule: "Bazaar Schedule",
+    activityLog: "Activity Log",
     settingsSidebar: "Settings",
 
     // Under Construction (About, Features, Pricing pages)
@@ -167,6 +170,7 @@ export const translations = {
     overview: "ওভারভিউ",
     myMess: "আমার মেস",
     myMeals: "আমার মিল",
+    mealManagement: "মিল ম্যানেজমেন্ট",
     mealsSidebar: "মিলসমূহ",
     billsSidebar: "বিলসমূহ",
     membersSidebar: "সদস্যগণ",
@@ -178,6 +182,8 @@ export const translations = {
     managersSidebar: "ম্যানেজারবৃন্দ",
     usersSidebar: "ব্যবহারকারীগণ",
     analyticsSidebar: "অ্যানালিটিক্স",
+    bazaarSchedule: "বাজার রুটিন",
+    activityLog: "অ্যাক্টিভিটি লগ",
     settingsSidebar: "সেটিংস",
     offlineNotice: "আপনি অফলাইনে আছেন — ক্যাশড ডাটা দেখানো হচ্ছে",
     playMiniGame: "মিনি গেম খেলুন 🎮",

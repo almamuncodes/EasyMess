@@ -8,25 +8,10 @@ export const metadata = {
 };
 
 import React from "react";
-import Sidebar, { Navigation } from "./DashboardSideBar";
-
+import DashboardGuard from "./DashboardGuard";
 
 const layout = ({ children }) => {
-  return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
-
-      {/* Sidebar */}
-      <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900">
-        <Sidebar/>
-      </aside>
-
-      {/* Content */}
-      <main className="flex-1 p-4 md:p-6 bg-gray-50 dark:bg-slate-950">
-        {children}
-      </main>
-
-    </div>
-  );
+  return <DashboardGuard>{children}</DashboardGuard>;
 };
 
 export default layout;

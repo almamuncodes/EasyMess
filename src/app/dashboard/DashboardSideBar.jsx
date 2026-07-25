@@ -6,6 +6,7 @@ import {
   Home,
   Users,
   Utensils,
+  UtensilsCrossed,
   Receipt,
   Wallet,
   Settings,
@@ -14,6 +15,8 @@ import {
   BarChart3,
   UserCog,
   ClipboardClock,
+  Calendar,
+  History,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -98,6 +101,12 @@ export default function Sidebar() {
       roles: [ "manager"],
     },
     {
+      name: t("mealManagement"),
+      href: "/dashboard/manager-dashboard/meal-management",
+      icon: UtensilsCrossed,
+      roles: [ "manager"],
+    },
+    {
       name: t("myMess"),
       href: "/dashboard/user-dashboard/my-mess",
       icon: Home,
@@ -121,36 +130,21 @@ export default function Sidebar() {
       icon: Receipt,
       roles: ["member"],
     },
-    { name: t("membersSidebar"), href: "/dashboard/manager-dashboard/members", icon: Users, roles: ["manager"] },
     { name: t("bazaarSidebar"), href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
     { name: t("bazaarAnalysis"), href: "/dashboard/manager-dashboard/bazaar-analysis", icon: BarChart3, roles: ["manager"] },
-    { name: t("bazaarAnalysis"), href: "/dashboard/user-dashboard/bazaar-analysis", icon: BarChart3, roles: ["member"] },
-    { name: t("paymentsSidebar"), href: "/dashboard/manager-dashboard/payments", icon: Wallet, roles: ["manager"] },
-    { name: t("pendingRequestsSidebar"), href: "/dashboard/manager-dashboard/pending-requests", icon:  ClipboardClock, roles: ["manager"] },
-    {
-      name: t("allMessesSidebar"),
-      href: "/dashboard/admin-dashboard/messes",
-      icon: Building,
-      roles: ["admin"],
-    },
-    {
-      name: t("managersSidebar"),
-      href: "/admin/managers",
-      icon: UserCog,
-      roles: ["admin"],
-    },
-    { name: t("usersSidebar"), href: "/admin/users", icon: Users, roles: ["admin"] },
-    {
-      name: t("analyticsSidebar"),
-      href: "/admin/analytics",
-      icon: BarChart3,
-      roles: ["admin"],
-    },
+    { name: t("bazaarSchedule"), href: "/dashboard/manager-dashboard/bazaar-schedule", icon: Calendar, roles: ["manager"] },
+    { name: t("bazaarSchedule"), href: "/dashboard/user-dashboard/bazaar-schedule", icon: Calendar, roles: ["member"] },
     {
       name: t("settingsSidebar"),
       href: "/settings",
       icon: Settings,
       roles: ["pore thik korbo ata "],
+    },
+    {
+      name: t("activityLog"),
+      href: "/dashboard/activity-log",
+      icon: History,
+      roles: ["manager", "member"],
     },
     {
       name: t("settingsSidebar"),
