@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { GetUser } from "@/components/action/action";
 import { ChevronDown } from "lucide-react";
 
+import { getBDNow, getBDDateStr, getBDMonthYear } from "@/lib/date-utils";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 function taka(n) {
@@ -23,16 +25,16 @@ function emptyItem() {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return getBDDateStr();
 }
 
 // শুধুমাত্র চলতি মাসের এন্ট্রি এডিট/ডিলিট করা যাবে
 function isEditable(bazaar) {
-  const now = new Date();
-  const bazaarDate = new Date(bazaar.date);
+  const bdNow = getBDMonthYear();
+  const bazaarMonthYear = getBDMonthYear(bazaar.date);
   return (
-    bazaarDate.getMonth() === now.getMonth() &&
-    bazaarDate.getFullYear() === now.getFullYear()
+    bazaarMonthYear.month === bdNow.month &&
+    bazaarMonthYear.year === bdNow.year
   );
 }
 
@@ -40,9 +42,9 @@ export default function ManagerBazaarPage() {
   const user = GetUser();
   const managerId = user?.user?.id;
 
-  const now = new Date();
-  const currentMonth = String(now.getMonth() + 1);
-  const currentYear = String(now.getFullYear());
+  const bdNow = getBDNow();
+  const currentMonth = String(bdNow.month);
+  const currentYear = String(bdNow.year);
 
   // ডিফল্ট ফিল্টার = চলতি মাস, চলতি বছর
   const [month, setMonth] = useState(currentMonth);
@@ -268,9 +270,7 @@ export default function ManagerBazaarPage() {
           onSave (function), onCancelEdit (function)
    ============================================================ */
 function BazaarForm({ initial, isEditing, onSave, onCancelEdit }) {
-  const [date, setDate] = useState(
-    initial?.date ? new Date(initial.date).toISOString().slice(0, 10) : todayISO()
-  );
+  const [date, setDate] = useState(() => getBDDateStr(initial?.date));
   const [note, setNote] = useState(initial?.note ?? "");
   const [items, setItems] = useState(
     initial?.items?.length ? initial.items.map((i) => ({ title: i.title, amount: String(i.amount) })) : [emptyItem()]

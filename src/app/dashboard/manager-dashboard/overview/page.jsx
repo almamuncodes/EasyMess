@@ -5,7 +5,8 @@ import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
-import { MessageCircle, Sparkles, X, Copy, Calculator } from "lucide-react";
+import { Sparkles, X, Copy, Calculator } from "lucide-react";
+import { getBDNow } from "@/lib/date-utils";
 // import { fetchOverview } from "@/lib/api";
 
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
@@ -78,9 +79,8 @@ function LeaderRow({ left, right }) {
 export default function OverviewDashboard({ role }) {
   const { t, lang } = useTranslation();
   const isBn = lang === "bn";
-  const today = new Date();
-  const [month, setMonth] = useState(today.getMonth() + 1);
-  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(() => getBDNow().month);
+  const [year, setYear] = useState(() => getBDNow().year);
   const [showPredictor, setShowPredictor] = useState(false);
 
   const user = GetUser();
@@ -99,77 +99,7 @@ export default function OverviewDashboard({ role }) {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
 
-  const handleMessengerShare = async () => {
-    if (!data) return;
-    const mName = data?.messName || "EasyMess";
-    const mLabel = monthLabel(month, year);
-    const totalMeal = data.summary?.totalMeal ?? 0;
-    const totalBazaar = data.summary?.totalBazaar ?? 0;
-    const mealRate = data.summary?.mealRate ?? 0;
-    const totalDeposit = data.summary?.totalDeposit ?? 0;
 
-    let summaryText = `📌 ${mName} - ${mLabel} (Monthly Ledger)\n\n📊 Mess Summary:\n• Total Meals: ${totalMeal}\n• Total Bazaar: ৳ ${taka(totalBazaar)}\n• Meal Rate: ৳ ${taka(mealRate)}\n• Total Deposit: ৳ ${taka(totalDeposit)}`;
-
-    if (Array.isArray(data.members) && data.members.length > 0) {
-      const memberLines = data.members
-        .map((m, idx) => {
-          const balStr = m.balance >= 0 ? `+৳${taka(m.balance)} (Advance)` : `-৳${taka(Math.abs(m.balance))} (Due)`;
-          return `${idx + 1}. ${m.userName}: ${m.totalMeal} Meals | Deposit: ৳${taka(m.deposit)} | Bill: ৳${taka(m.bill)} | Balance: ${balStr}`;
-        })
-        .join("\n");
-
-      summaryText += `\n\n👥 Member Details:\n${memberLines}`;
-
-      const dueMembers = data.members.filter((m) => m.balance < 0);
-      const advanceMembers = data.members.filter((m) => m.balance > 0);
-
-      summaryText += `\n\n💰 হিসাব সমাপনী (Clearance List):`;
-
-      if (dueMembers.length > 0) {
-        const dueLines = dueMembers.map((m) => `• ${m.userName}: ৳ ${taka(Math.abs(m.balance))} (দিতে হবে)`).join("\n");
-        summaryText += `\n\n🔴 টাকা দিতে হবে (Due):\n${dueLines}`;
-      }
-
-      if (advanceMembers.length > 0) {
-        const advLines = advanceMembers.map((m) => `• ${m.userName}: ৳ ${taka(m.balance)} (ফেরত পাবে)`).join("\n");
-        summaryText += `\n\n🟢 টাকা ফেরত পাবে (Advance):\n${advLines}`;
-      }
-    }
-
-    summaryText += `\n\nGenerated via EasyMess App`;
-
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: `${mName} Monthly Summary`,
-          text: summaryText,
-        });
-        toast.success(t("summaryCopied") || "Full ledger shared!");
-        return;
-      } catch (err) { }
-    }
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(summaryText);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = summaryText;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        document.execCommand("copy");
-        textArea.remove();
-      }
-      toast.success(t("summaryCopied") || "Full ledger copied to clipboard!");
-    } catch (err) {
-      toast.error("Could not copy text automatically.");
-    }
-
-    window.open("https://m.me/", "_blank", "noopener,noreferrer");
-  };
 
   useEffect(() => {
     if (!userId) return;
@@ -221,9 +151,9 @@ export default function OverviewDashboard({ role }) {
   }, []);
 
   const yearOptions = useMemo(() => {
-    const y = today.getFullYear();
+    const y = getBDNow().year;
     return [y - 1, y, y + 1];
-  }, [today]);
+  }, []);
 
   async function handleDownloadPdf() {
     if (!data) return;
@@ -354,14 +284,6 @@ export default function OverviewDashboard({ role }) {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={handleMessengerShare}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 shadow-sm cursor-pointer"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  {t("shareToMessenger")}
-                </button>
-
                 <button
                   onClick={handleDownloadPdf}
                   disabled={exporting}

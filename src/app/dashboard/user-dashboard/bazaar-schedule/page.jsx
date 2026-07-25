@@ -5,6 +5,7 @@ import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
 import { Calendar as CalendarIcon, Clock, AlertCircle, ShoppingBag, Sparkles, Users } from "lucide-react";
 import PageLoader from "@/components/ui/PageLoader";
+import { getBDDateStr } from "@/lib/date-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -41,7 +42,7 @@ export default function UserBazaarSchedulePage() {
     loadSchedules();
   }, [loadSchedules]);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getBDDateStr();
 
   // Find next assigned bazaar duty for logged-in user
   const nextDuty = schedules.find((s) => {

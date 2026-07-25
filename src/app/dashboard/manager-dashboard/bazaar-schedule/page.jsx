@@ -23,6 +23,8 @@ import PageLoader from "@/components/ui/PageLoader";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
+import { getBDDateStr } from "@/lib/date-utils";
+
 export default function ManagerBazaarSchedulePage() {
   const { t, lang } = useTranslation();
   const isBn = lang === "bn";
@@ -30,7 +32,7 @@ export default function ManagerBazaarSchedulePage() {
   const user = GetUser();
   const managerId = user?.user?.id;
 
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => getBDDateStr());
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [note, setNote] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -361,7 +363,7 @@ export default function ManagerBazaarSchedulePage() {
                   day: "numeric",
                   year: "numeric",
                 });
-                const isToday = sch.dateStr === new Date().toISOString().slice(0, 10);
+                const isToday = sch.dateStr === getBDDateStr();
 
                 const assignedList = Array.isArray(sch.assignedMembers) && sch.assignedMembers.length > 0
                   ? sch.assignedMembers.map((m) => m.name).join(", ")

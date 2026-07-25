@@ -5,13 +5,14 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 import MealCountdownTimer from "@/components/ui/MealCountdownTimer";
+import { getBDNow, getUTCDayFromMongoDate, getBDDateStr } from "@/lib/date-utils";
 
 
 const MealCalendar = () => {
   const user = GetUser();
   const userId = user?.user?.id;
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(() => getBDNow().month);
+  const [year, setYear] = useState(() => getBDNow().year);
 
   const [meals, setMeals] = useState(() => {
     if (typeof window !== "undefined" && userId) {
@@ -80,8 +81,8 @@ const MealCalendar = () => {
       toast.warning(data.message);
     }
   };
-  console.log( userId, messId,    )
-  
+  const bdTodayStr = getBDNow().dateStr;
+  const joiningDateStr = joiningDate ? getBDDateStr(joiningDate) : null;
 
   return (
     <div className="p-5 bg-[#f2f4f1] dark:bg-slate-900 rounded-xl shadow max-w-lg mx-auto border dark:border-slate-800 space-y-4">
@@ -101,14 +102,13 @@ const MealCalendar = () => {
 
       {[...Array(daysInMonth)].map((_, i) => {
         const day = i + 1;
-        const dateObj = new Date(year, month - 1, day);
-        const today = new Date();
-        const isPast = dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const isPast = dateStr < bdTodayStr;
         
         // জয়েনিং লজিক
-        const isBeforeJoining = joiningDate && dateObj < new Date(joiningDate.getFullYear(), joiningDate.getMonth(), joiningDate.getDate());
+        const isBeforeJoining = joiningDateStr && dateStr < joiningDateStr;
 
-        const meal = meals.find((m) => new Date(m.date).getDate() === day) || {};
+        const meal = meals.find((m) => getUTCDayFromMongoDate(m.date) === day) || {};
 
         return (
           <div key={day} className="grid grid-cols-4 gap-2 mb-2 text-center items-center">

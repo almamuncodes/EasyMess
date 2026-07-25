@@ -11,6 +11,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import { trackEvent } from "@/lib/analytics";
+import { getBDDateStr } from "@/lib/date-utils";
 
 
 const fraunces = Fraunces({
@@ -417,11 +418,7 @@ function DepositModal({ mode, initial, onClose, onSave }) {
     initial?.paymentMethod ?? "Cash",
   );
   const [note, setNote] = useState(initial?.note ?? "");
-  const [date, setDate] = useState(
-    initial?.date
-      ? new Date(initial.date).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10),
-  );
+  const [date, setDate] = useState(() => getBDDateStr(initial?.date));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 

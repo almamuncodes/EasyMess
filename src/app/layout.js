@@ -103,8 +103,6 @@ export const metadata = {
 import dynamic from "next/dynamic";
 import QueryProvider from "@/components/providers/QueryProvider";
 
-const OfflineGameModal = dynamic(() => import("@/components/OfflineGameModal"));
-
 export default function RootLayout({ children }) {
   const isProd = process.env.NODE_ENV === "production";
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -167,7 +165,6 @@ export default function RootLayout({ children }) {
               <Footer/>
               <BottomNav />
               <PWAInstallPrompt />
-              <OfflineGameModal />
             </SocketProvider>
           </QueryProvider>
         </ThemeProvider>

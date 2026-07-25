@@ -18,20 +18,14 @@ import {
   Users,
 } from "lucide-react";
 import { useTranslation } from "@/lib/useTranslation";
-
-function getLocalDateString(d = new Date()) {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+import { getBDDateStr } from "@/lib/date-utils";
 
 export default function MealManagementPage() {
   const user = GetUser();
   const userId = user?.user?.id;
   const { t, lang } = useTranslation();
 
-  const [date, setDate] = useState(getLocalDateString());
+  const [date, setDate] = useState(() => getBDDateStr());
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);

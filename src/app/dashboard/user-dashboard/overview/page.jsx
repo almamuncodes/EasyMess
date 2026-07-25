@@ -5,8 +5,9 @@ import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
-import { MessageCircle, Sparkles, X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { getBDNow } from "@/lib/date-utils";
 
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
@@ -62,9 +63,8 @@ export default function UserOverviewPage() {
   const userId = user?.user?.id;
   const role = user?.user?.role || "member";
 
-  const today = useMemo(() => new Date(), []);
-  const [month, setMonth] = useState(() => today.getMonth() + 1);
-  const [year, setYear] = useState(() => today.getFullYear());
+  const [month, setMonth] = useState(() => getBDNow().month);
+  const [year, setYear] = useState(() => getBDNow().year);
   const [showPredictor, setShowPredictor] = useState(false);
 
   const [data, setData] = useState(() => {
@@ -82,48 +82,7 @@ export default function UserOverviewPage() {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
 
-  const handleMessengerShare = async () => {
-    if (!data) return;
-    const mName = data?.messName || "EasyMess";
-    const mLabel = monthLabel(month, year);
-    const totalMeal = data.summary?.totalMeal ?? 0;
-    const totalBazaar = data.summary?.totalBazaar ?? 0;
-    const mealRate = data.summary?.mealRate ?? 0;
-    const totalDeposit = data.summary?.totalDeposit ?? 0;
 
-    let summaryText = `📌 ${mName} - ${mLabel} (Monthly Ledger)\n\n📊 Mess Summary:\n• Total Meals: ${totalMeal}\n• Total Bazaar: ৳ ${taka(totalBazaar)}\n• Meal Rate: ৳ ${taka(mealRate)}\n• Total Deposit: ৳ ${taka(totalDeposit)}`;
-
-    if (Array.isArray(data.members) && data.members.length > 0) {
-      const memberLines = data.members
-        .map((m, idx) => {
-          const balStr = m.balance >= 0 ? `+৳${taka(m.balance)} (Advance)` : `-৳${taka(Math.abs(m.balance))} (Due)`;
-          return `${idx + 1}. ${m.userName}: ${m.totalMeal} Meals | Deposit: ৳${taka(m.deposit)} | Bill: ৳${taka(m.bill)} | Balance: ${balStr}`;
-        })
-        .join("\n");
-
-      summaryText += `\n\n👥 Member Details:\n${memberLines}`;
-    }
-
-    summaryText += `\n\nGenerated via EasyMess App`;
-
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: `${mName} Monthly Summary`,
-          text: summaryText,
-        });
-        toast.success(t("summaryCopied") || "Full ledger shared!");
-        return;
-      } catch (err) {}
-    }
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(summaryText);
-      }
-      toast.success(t("summaryCopied") || "Full ledger copied!");
-    } catch (err) {}
-  };
 
   useEffect(() => {
     if (!userId) return;
@@ -174,9 +133,9 @@ export default function UserOverviewPage() {
   }, []);
 
   const yearOptions = useMemo(() => {
-    const y = today.getFullYear();
+    const y = getBDNow().year;
     return [y - 1, y, y + 1];
-  }, [today]);
+  }, []);
 
   async function handleDownloadPdf() {
     if (!data) return;
@@ -280,13 +239,6 @@ export default function UserOverviewPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
               <p className="font-[family-name:var(--font-display)] text-lg font-semibold">Member Summary</p>
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={handleMessengerShare}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 shadow-sm cursor-pointer"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  {t("shareToMessenger")}
-                </button>
                 <button
                   onClick={handleDownloadPdf}
                   disabled={exporting}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Clock, AlertTriangle, Sun, Moon, Coffee } from "lucide-react";
 import { useTranslation } from "@/lib/useTranslation";
 import { useUser } from "@/components/action/action";
+import { getBDNow } from "@/lib/date-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -85,8 +86,8 @@ export default function MealCountdownTimer({ userId: customUserId }) {
     if (!mounted) return;
 
     function updateTimer() {
-      const now = new Date();
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const bdNow = getBDNow();
+      const currentMinutes = bdNow.hours * 60 + bdNow.minutes;
 
       const parseTime = (tStr) => {
         const [h, m] = (tStr || "00:00").split(":").map(Number);
@@ -97,39 +98,40 @@ export default function MealCountdownTimer({ userId: customUserId }) {
       const lTime = parseTime(deadlines.lunch);
       const dTime = parseTime(deadlines.dinner);
 
-      let targetDate = new Date(now);
+      // Construct target BD date object
+      let targetBDDate = new Date(bdNow.bdDateObj);
       let mealNameBn = "";
       let mealNameEn = "";
       let MealIcon = Sun;
 
       if (currentMinutes < bTime.totalMinutes) {
         // Next: Breakfast Today
-        targetDate.setHours(bTime.hours, bTime.minutes, 0, 0);
+        targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
         mealNameBn = "আজকের সকালের মিল";
         mealNameEn = "Today's Breakfast";
         MealIcon = Coffee;
       } else if (currentMinutes < lTime.totalMinutes) {
         // Next: Lunch Today
-        targetDate.setHours(lTime.hours, lTime.minutes, 0, 0);
+        targetBDDate.setUTCHours(lTime.hours, lTime.minutes, 0, 0);
         mealNameBn = "আজকের দুপুরের মিল";
         mealNameEn = "Today's Lunch";
         MealIcon = Sun;
       } else if (currentMinutes < dTime.totalMinutes) {
         // Next: Dinner Today
-        targetDate.setHours(dTime.hours, dTime.minutes, 0, 0);
+        targetBDDate.setUTCHours(dTime.hours, dTime.minutes, 0, 0);
         mealNameBn = "আজকের রাতের মিল";
         mealNameEn = "Today's Dinner";
         MealIcon = Moon;
       } else {
         // Next: Tomorrow's Breakfast
-        targetDate.setDate(targetDate.getDate() + 1);
-        targetDate.setHours(bTime.hours, bTime.minutes, 0, 0);
+        targetBDDate.setUTCDate(targetBDDate.getUTCDate() + 1);
+        targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
         mealNameBn = "আগামীকাল সকালের মিল";
         mealNameEn = "Tomorrow's Breakfast";
         MealIcon = Coffee;
       }
 
-      const diffMs = targetDate.getTime() - now.getTime();
+      const diffMs = targetBDDate.getTime() - bdNow.bdDateObj.getTime();
       const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
 
       const hours = Math.floor(diffSecs / 3600);

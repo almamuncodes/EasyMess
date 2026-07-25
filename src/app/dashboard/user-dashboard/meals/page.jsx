@@ -5,12 +5,13 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 import MealCountdownTimer from "@/components/ui/MealCountdownTimer";
+import { getBDNow, getUTCDayFromMongoDate, getBDDateStr } from "@/lib/date-utils";
 
 const MealCalendar = () => {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(() => getBDNow().month);
+  const [year, setYear] = useState(() => getBDNow().year);
 
   const [meals, setMeals] = useState(() => {
     if (typeof window !== "undefined" && userId) {
@@ -85,13 +86,16 @@ const MealCalendar = () => {
     if (Array.isArray(meals)) {
       meals.forEach((m) => {
         if (m && m.date) {
-          const dayNum = new Date(m.date).getDate();
-          map[dayNum] = m;
+          const dayNum = getUTCDayFromMongoDate(m.date);
+          if (dayNum) map[dayNum] = m;
         }
       });
     }
     return map;
   }, [meals]);
+
+  const bdTodayStr = getBDNow().dateStr;
+  const joiningDateStr = joiningDate ? getBDDateStr(joiningDate) : null;
 
   const handleUpdate = async (day, type, currentStatus) => {
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -127,12 +131,11 @@ const MealCalendar = () => {
 
       {[...Array(daysInMonth)].map((_, i) => {
         const day = i + 1;
-        const dateObj = new Date(year, month - 1, day);
-        const today = new Date();
-        const isPast = dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const isPast = dateStr < bdTodayStr;
         
         // জয়েনিং লজিক
-        const isBeforeJoining = joiningDate && dateObj < new Date(joiningDate.getFullYear(), joiningDate.getMonth(), joiningDate.getDate());
+        const isBeforeJoining = joiningDateStr && dateStr < joiningDateStr;
 
         const meal = mealsByDay[day] || {};
 
