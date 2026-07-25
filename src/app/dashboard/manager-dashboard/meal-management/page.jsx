@@ -339,141 +339,249 @@ export default function MealManagementPage() {
             No members found for this query.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[650px]">
-              <thead>
-                <tr className="bg-gray-50/70 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  <th className="py-4 px-6">Member</th>
-                  <th className="py-4 px-4 text-center">Breakfast</th>
-                  <th className="py-4 px-4 text-center">Lunch</th>
-                  <th className="py-4 px-4 text-center">Dinner</th>
-                  <th className="py-4 px-4 text-center">Guest Meals</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                {filteredMembers.map((m) => {
-                  const joinDate = new Date(m.createdAt);
-                  joinDate.setUTCHours(0, 0, 0, 0);
-                  const currentDate = new Date(date);
-                  currentDate.setUTCHours(0, 0, 0, 0);
-                  const isBeforeJoining = joinDate > currentDate;
+          <div>
+            {/* Mobile View: Rendered on small screens */}
+            <div className="block md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+              {filteredMembers.map((m) => {
+                const joinDate = new Date(m.createdAt);
+                joinDate.setUTCHours(0, 0, 0, 0);
+                const currentDate = new Date(date);
+                currentDate.setUTCHours(0, 0, 0, 0);
+                const isBeforeJoining = joinDate > currentDate;
 
-                  const totalGuestForMember =
-                    (m.guestBreakfast || 0) +
-                    (m.guestLunch || 0) +
-                    (m.guestDinner || 0);
+                const totalGuestForMember =
+                  (m.guestBreakfast || 0) +
+                  (m.guestLunch || 0) +
+                  (m.guestDinner || 0);
 
-                  return (
-                    <tr
-                      key={m.userId}
-                      className="hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition"
-                    >
-                      {/* Member Info */}
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          {m.image ? (
-                            <img
-                              src={m.image}
-                              alt={m.name}
-                              className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm">
-                              {m.name?.[0]?.toUpperCase() || <User size={18} />}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                              {m.name}
-                            </p>
-                            {isBeforeJoining && (
-                              <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                                Joined after this date
-                              </span>
-                            )}
+                return (
+                  <div key={m.userId} className="p-4 space-y-3">
+                    {/* Top row: Avatar & name + guest trigger */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {m.image ? (
+                          <img
+                            src={m.image}
+                            alt={m.name}
+                            className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm">
+                            {m.name?.[0]?.toUpperCase() || <User size={18} />}
                           </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                            {m.name}
+                          </p>
+                          {isBeforeJoining && (
+                            <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                              Joined after this date
+                            </span>
+                          )}
                         </div>
-                      </td>
+                      </div>
 
-                      {/* Breakfast Toggle */}
-                      <td className="py-4 px-4 text-center">
-                        {isBeforeJoining ? (
-                          <span className="text-xs text-gray-400">N/A</span>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleMeal(m, "breakfast")}
-                            disabled={savingId === `${m.userId}-breakfast`}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto ${
-                              m.breakfast
-                                ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-600"
-                                : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
-                            }`}
-                          >
-                            {m.breakfast ? <Check size={14} /> : <X size={14} />}
-                            {m.breakfast ? "ON" : "OFF"}
-                          </button>
-                        )}
-                      </td>
+                      {/* Guest Trigger Button */}
+                      {!isBeforeJoining && (
+                        <button
+                          onClick={() => openGuestModal(m)}
+                          className="px-2.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/45 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 text-[11px] font-bold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus size={11} />
+                          <span>Guest: {totalGuestForMember}</span>
+                        </button>
+                      )}
+                    </div>
 
-                      {/* Lunch Toggle */}
-                      <td className="py-4 px-4 text-center">
-                        {isBeforeJoining ? (
-                          <span className="text-xs text-gray-400">N/A</span>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleMeal(m, "lunch")}
-                            disabled={savingId === `${m.userId}-lunch`}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto ${
-                              m.lunch
-                                ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 hover:bg-orange-600"
-                                : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
-                            }`}
-                          >
-                            {m.lunch ? <Check size={14} /> : <X size={14} />}
-                            {m.lunch ? "ON" : "OFF"}
-                          </button>
-                        )}
-                      </td>
+                    {/* Meal Toggles (3 Columns) */}
+                    {!isBeforeJoining && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {/* Breakfast Toggle */}
+                        <button
+                          onClick={() => handleToggleMeal(m, "breakfast")}
+                          disabled={savingId === `${m.userId}-breakfast`}
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border cursor-pointer ${
+                            m.breakfast
+                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          <Sun size={14} className={m.breakfast ? "text-white" : "text-gray-400"} />
+                          <span>BF: {m.breakfast ? "ON" : "OFF"}</span>
+                        </button>
 
-                      {/* Dinner Toggle */}
-                      <td className="py-4 px-4 text-center">
-                        {isBeforeJoining ? (
-                          <span className="text-xs text-gray-400">N/A</span>
-                        ) : (
-                          <button
-                            onClick={() => handleToggleMeal(m, "dinner")}
-                            disabled={savingId === `${m.userId}-dinner`}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto ${
-                              m.dinner
-                                ? "bg-indigo-500 text-white shadow-sm shadow-indigo-500/20 hover:bg-indigo-600"
-                                : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
-                            }`}
-                          >
-                            {m.dinner ? <Check size={14} /> : <X size={14} />}
-                            {m.dinner ? "ON" : "OFF"}
-                          </button>
-                        )}
-                      </td>
+                        {/* Lunch Toggle */}
+                        <button
+                          onClick={() => handleToggleMeal(m, "lunch")}
+                          disabled={savingId === `${m.userId}-lunch`}
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border cursor-pointer ${
+                            m.lunch
+                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          <Sunset size={14} className={m.lunch ? "text-white" : "text-gray-400"} />
+                          <span>Lunch: {m.lunch ? "ON" : "OFF"}</span>
+                        </button>
 
-                      {/* Guest Meal Control */}
-                      <td className="py-4 px-4 text-center">
-                        {isBeforeJoining ? (
-                          <span className="text-xs text-gray-400">N/A</span>
-                        ) : (
-                          <button
-                            onClick={() => openGuestModal(m)}
-                            className="px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition inline-flex items-center gap-1.5"
-                          >
-                            <span>Guest: {totalGuestForMember}</span>
-                            <Plus size={12} />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        {/* Dinner Toggle */}
+                        <button
+                          onClick={() => handleToggleMeal(m, "dinner")}
+                          disabled={savingId === `${m.userId}-dinner`}
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border cursor-pointer ${
+                            m.dinner
+                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          <Moon size={14} className={m.dinner ? "text-white" : "text-gray-400"} />
+                          <span>Dinner: {m.dinner ? "ON" : "OFF"}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop View: Rendered on md and larger screens */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="bg-gray-50/70 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th className="py-4 px-6">Member</th>
+                    <th className="py-4 px-4 text-center">Breakfast</th>
+                    <th className="py-4 px-4 text-center">Lunch</th>
+                    <th className="py-4 px-4 text-center">Dinner</th>
+                    <th className="py-4 px-4 text-center">Guest Meals</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+                  {filteredMembers.map((m) => {
+                    const joinDate = new Date(m.createdAt);
+                    joinDate.setUTCHours(0, 0, 0, 0);
+                    const currentDate = new Date(date);
+                    currentDate.setUTCHours(0, 0, 0, 0);
+                    const isBeforeJoining = joinDate > currentDate;
+
+                    const totalGuestForMember =
+                      (m.guestBreakfast || 0) +
+                      (m.guestLunch || 0) +
+                      (m.guestDinner || 0);
+
+                    return (
+                      <tr
+                        key={m.userId}
+                        className="hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition"
+                      >
+                        {/* Member Info */}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-3">
+                            {m.image ? (
+                              <img
+                                src={m.image}
+                                alt={m.name}
+                                className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold text-sm">
+                                {m.name?.[0]?.toUpperCase() || <User size={18} />}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                                {m.name}
+                              </p>
+                              {isBeforeJoining && (
+                                <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                                  Joined after this date
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Breakfast Toggle */}
+                        <td className="py-4 px-4 text-center">
+                          {isBeforeJoining ? (
+                            <span className="text-xs text-gray-400">N/A</span>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleMeal(m, "breakfast")}
+                              disabled={savingId === `${m.userId}-breakfast`}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto cursor-pointer ${
+                                m.breakfast
+                                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 hover:bg-orange-600"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              {m.breakfast ? <Check size={14} /> : <X size={14} />}
+                              {m.breakfast ? "ON" : "OFF"}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Lunch Toggle */}
+                        <td className="py-4 px-4 text-center">
+                          {isBeforeJoining ? (
+                            <span className="text-xs text-gray-400">N/A</span>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleMeal(m, "lunch")}
+                              disabled={savingId === `${m.userId}-lunch`}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto cursor-pointer ${
+                                m.lunch
+                                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 hover:bg-orange-600"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              {m.lunch ? <Check size={14} /> : <X size={14} />}
+                              {m.lunch ? "ON" : "OFF"}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Dinner Toggle */}
+                        <td className="py-4 px-4 text-center">
+                          {isBeforeJoining ? (
+                            <span className="text-xs text-gray-400">N/A</span>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleMeal(m, "dinner")}
+                              disabled={savingId === `${m.userId}-dinner`}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto cursor-pointer ${
+                                m.dinner
+                                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 hover:bg-orange-600"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700"
+                              }`}
+                            >
+                              {m.dinner ? <Check size={14} /> : <X size={14} />}
+                              {m.dinner ? "ON" : "OFF"}
+                            </button>
+                          )}
+                        </td>
+
+                        {/* Guest Meal Control */}
+                        <td className="py-4 px-4 text-center">
+                          {isBeforeJoining ? (
+                            <span className="text-xs text-gray-400">N/A</span>
+                          ) : (
+                            <button
+                              onClick={() => openGuestModal(m)}
+                              className="px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition inline-flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <span>Guest: {totalGuestForMember}</span>
+                              <Plus size={12} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

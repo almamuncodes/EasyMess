@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
 import { ShoppingBag, TrendingUp, Calendar, Award, BarChart3, ChevronDown, AlertCircle, ShoppingCart } from "lucide-react";
+import { getBDNow } from "@/lib/date-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -136,25 +137,61 @@ export default function ManagerBazaarAnalysisPage() {
 
   // Real data analytics
   const stats = useMemo(() => {
-    const count = bazaars.length;
     const calcTotal = grandTotal || bazaars.reduce((acc, b) => acc + getBazaarAmount(b), 0);
-    const avgAmount = count > 0 ? calcTotal / count : 0;
+    const bdNow = getBDNow();
+    const isCurrentMonthYear = String(month) === String(bdNow.month) && String(year) === String(bdNow.year);
+    const totalDays = isCurrentMonthYear 
+      ? bdNow.day 
+      : new Date(Number(year), Number(month), 0).getDate();
+
+    const avgAmount = totalDays > 0 ? calcTotal / totalDays : 0;
 
     let maxBazaar = null;
-
     bazaars.forEach((b) => {
       const amt = getBazaarAmount(b);
       if (!maxBazaar || amt > getBazaarAmount(maxBazaar)) maxBazaar = b;
     });
 
-    return { totalAmount: calcTotal, count, avgAmount, maxBazaar };
-  }, [bazaars, grandTotal]);
+    return { totalAmount: calcTotal, count: bazaars.length, avgAmount, maxBazaar };
+  }, [bazaars, grandTotal, month, year]);
+
+  const chartDays = useMemo(() => {
+    const bdNow = getBDNow();
+    const isCurrentMonthYear = String(month) === String(bdNow.month) && String(year) === String(bdNow.year);
+    const totalDays = isCurrentMonthYear 
+      ? bdNow.day 
+      : new Date(Number(year), Number(month), 0).getDate();
+
+    const dailyBazaars = {};
+    bazaars.forEach((b) => {
+      if (b && b.date) {
+        const d = new Date(new Date(b.date).getTime() + (6 * 60 * 60 * 1000));
+        const dNum = d.getUTCDate();
+        if (!dailyBazaars[dNum]) {
+          dailyBazaars[dNum] = [];
+        }
+        dailyBazaars[dNum].push(b);
+      }
+    });
+
+    const list = [];
+    for (let d = 1; d <= totalDays; d++) {
+      const dayBazaars = dailyBazaars[d] || [];
+      const totalAmount = dayBazaars.reduce((sum, b) => sum + getBazaarAmount(b), 0);
+      list.push({
+        day: d,
+        amount: totalAmount,
+        entries: dayBazaars,
+      });
+    }
+    return list;
+  }, [bazaars, month, year]);
 
   const maxDailyAmount = useMemo(() => {
-    if (bazaars.length === 0) return 1000;
-    const maxVal = Math.max(...bazaars.map((b) => getBazaarAmount(b)));
+    if (chartDays.length === 0) return 1000;
+    const maxVal = Math.max(...chartDays.map((d) => d.amount));
     return maxVal > 0 ? maxVal : 1000;
-  }, [bazaars]);
+  }, [chartDays]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 text-gray-900 dark:text-slate-100">
@@ -288,51 +325,53 @@ export default function ManagerBazaarAnalysisPage() {
             <div className="h-56 flex items-center justify-center text-xs text-gray-400 animate-pulse">
               {isBn ? "গ্রাফ চার্ট লোড হচ্ছে..." : "Loading graph..."}
             </div>
-          ) : bazaars.length === 0 ? (
+          ) : chartDays.length === 0 ? (
             <div className="h-40 flex flex-col items-center justify-center text-xs text-gray-400 gap-2">
               <AlertCircle className="w-6 h-6 text-gray-300" />
               {isBn ? "এই মাসে কোনো বাজার রেকর্ড নেই" : "No bazaar records for this month"}
             </div>
           ) : (
-            <div className="relative pt-4 pb-1">
-              <div className="h-56 flex items-end gap-2.5 sm:gap-3 overflow-x-auto pb-3 px-2 border-b border-gray-100 dark:border-slate-800">
-                {bazaars.map((b, i) => {
-                  const amt = getBazaarAmount(b);
-                  const pct = Math.max(15, Math.min(100, (amt / maxDailyAmount) * 100));
-                  const dateObj = b.date ? new Date(b.date) : null;
-                  const dateNum = dateObj ? dateObj.getDate() : i + 1;
-                  const isMax = stats.maxBazaar && stats.maxBazaar._id === b._id;
+            <div className="relative pt-6 pb-1">
+              <div className="h-56 flex items-end gap-1.5 sm:gap-2 overflow-x-auto pb-4 px-2 border-b border-gray-100 dark:border-slate-800 scrollbar-thin">
+                {chartDays.map((dayData) => {
+                  const amt = dayData.amount;
+                  const pct = amt > 0 ? Math.max(10, Math.min(100, (amt / maxDailyAmount) * 100)) : 0;
+                  const isMax = stats.maxBazaar && dayData.entries.some((e) => e._id === stats.maxBazaar._id);
 
-                  let barGradient = "bg-gradient-to-t from-emerald-500 to-teal-400 border border-emerald-400/40";
-                  let badgeColor = "text-emerald-600 dark:text-emerald-400 font-bold";
-
-                  if (isMax || amt >= maxDailyAmount * 0.8) {
-                    barGradient = "bg-gradient-to-t from-red-600 via-rose-500 to-orange-400 border border-red-500/60 shadow-md shadow-red-500/20";
-                    badgeColor = "text-red-600 dark:text-red-400 font-black";
+                  let barColor = "bg-gradient-to-t from-emerald-500 to-teal-400 border border-emerald-400/20";
+                  
+                  if (amt === 0) {
+                    barColor = "bg-gray-100 dark:bg-slate-800 border-transparent";
+                  } else if (isMax || amt >= maxDailyAmount * 0.8) {
+                    barColor = "bg-gradient-to-t from-red-600 via-rose-500 to-orange-400 border border-red-500/30 shadow-md shadow-red-500/10";
                   } else if (amt >= stats.avgAmount) {
-                    barGradient = "bg-gradient-to-t from-amber-500 to-yellow-400 border border-amber-400/50";
-                    badgeColor = "text-amber-600 dark:text-amber-400 font-bold";
+                    barColor = "bg-gradient-to-t from-amber-500 to-yellow-400 border border-amber-400/25";
                   }
 
                   return (
                     <div
-                      key={b._id || i}
-                      onClick={() => b._id && toggleExpand(b._id)}
-                      className="flex-1 min-w-[44px] max-w-[60px] flex flex-col items-center gap-1.5 group cursor-pointer"
+                      key={dayData.day}
+                      onClick={() => dayData.entries.length > 0 && toggleExpand(dayData.entries[0]._id)}
+                      className="flex-1 min-w-[14px] sm:min-w-[20px] max-w-[28px] flex flex-col items-center gap-1 group relative cursor-pointer"
                     >
-                      <span className={`text-[10px] sm:text-[11px] font-mono transition-transform group-hover:-translate-y-0.5 ${badgeColor}`}>
-                        ৳{taka(amt)}
-                      </span>
-
-                      <div className="w-full h-36 bg-gray-100 dark:bg-slate-800/80 rounded-xl flex items-end p-1 border border-gray-200/50 dark:border-slate-800 shadow-inner">
-                        <div
-                          className={`w-full rounded-lg transition-all duration-300 group-hover:brightness-110 shadow-sm ${barGradient}`}
-                          style={{ height: `${pct}%` }}
-                        />
+                      {/* Tooltip on Hover */}
+                      <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950 dark:bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded-lg shadow-md pointer-events-none whitespace-nowrap z-30 font-mono border border-gray-800/20">
+                        {amt > 0 ? `৳${taka(amt)}` : (isBn ? "কোনো বাজার নেই" : "No bazaar")}
                       </div>
 
-                      <span className="text-[10px] font-mono text-gray-500 dark:text-slate-400 font-medium">
-                        {dateNum} {dateObj ? dateObj.toLocaleString("default", { month: "short" }) : ""}
+                      <div className="w-full h-36 flex items-end p-0 shadow-none">
+                        {amt > 0 ? (
+                          <div
+                            className={`w-full rounded-t-[3px] sm:rounded-t-md transition-all duration-200 group-hover:brightness-110 shadow-sm ${barColor}`}
+                            style={{ height: `${pct}%` }}
+                          />
+                        ) : (
+                          <div className={`w-full h-[4px] rounded-full transition-all duration-200 group-hover:bg-orange-500/40 ${barColor}`} />
+                        )}
+                      </div>
+
+                      <span className="text-[9px] font-mono font-bold text-gray-400 dark:text-slate-500 mt-1">
+                        {dayData.day}
                       </span>
                     </div>
                   );

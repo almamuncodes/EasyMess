@@ -41,11 +41,11 @@ function Perforation({ className = "" }) {
 
 function SummaryCard({ label, value, mono: useMono = true }) {
   return (
-    <div className="rounded-2xl bg-[#FFF7ED] dark:bg-slate-900 border border-[#FFEEDD] dark:border-slate-800 p-5 shadow-sm">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#EA580C] dark:text-orange-400">
+    <div className="rounded-2xl bg-[#FFF7ED] dark:bg-slate-900 border border-[#FFEEDD] dark:border-slate-800 p-3 min-[375px]:p-4 sm:p-5 shadow-sm">
+      <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400">
         {label}
       </p>
-      <p className={`mt-1 text-2xl font-bold text-gray-950 dark:text-slate-100 ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
+      <p className={`mt-1 text-sm min-[375px]:text-base sm:text-xl md:text-2xl font-bold text-gray-950 dark:text-slate-100 whitespace-nowrap ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
         {value}
       </p>
     </div>
@@ -166,21 +166,28 @@ export default function OverviewDashboard({ role }) {
 
       const doc = new jsPDF();
 
+      // Title & Month info
       doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
       doc.text(data.messName || "EasyMess", 14, 18);
       doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
       doc.text(`Month: ${monthLabel(data.month, data.year)}`, 14, 25);
       doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
 
+      // Summary details row with Cash in Hand
       doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      const cashInHand = data.summary.totalDeposit - data.summary.totalBazaar;
       doc.text(
         `Total Deposit: ${taka(data.summary.totalDeposit)}    Total Bazaar: ${taka(
           data.summary.totalBazaar
-        )}    Total Meal: ${data.summary.totalMeal}    Meal Rate: ${taka(data.summary.mealRate)}`,
+        )}    Cash in Hand: ${taka(cashInHand)}    Total Meal: ${data.summary.totalMeal}    Meal Rate: ${taka(data.summary.mealRate)}`,
         14,
         40
       );
 
+      // Main Table
       autoTable(doc, {
         startY: 46,
         head: [["Name", "Meal", "Deposit", "Bill", "Balance", "Status"]],
@@ -189,14 +196,103 @@ export default function OverviewDashboard({ role }) {
           m.totalMeal,
           taka(m.deposit),
           taka(m.bill),
-          taka(m.balance),
+          (m.balance >= 0 ? "+" : "") + taka(m.balance),
           m.status === "advance" ? "Advance" : "Due",
         ]),
         headStyles: { fillColor: [27, 42, 38] },
         styles: { fontSize: 9 },
+        didParseCell: function (cellData) {
+          if (cellData.section === "body") {
+            // Style Status column (index 5)
+            if (cellData.column.index === 5) {
+              const status = cellData.cell.raw;
+              if (status === "Advance") {
+                cellData.cell.styles.textColor = [63, 125, 92]; // Green
+                cellData.cell.styles.fontStyle = "bold";
+              } else if (status === "Due") {
+                cellData.cell.styles.textColor = [181, 83, 60]; // Red
+                cellData.cell.styles.fontStyle = "bold";
+              }
+            }
+            // Style Balance column (index 4)
+            if (cellData.column.index === 4) {
+              const balVal = cellData.cell.raw;
+              if (String(balVal).startsWith("+")) {
+                cellData.cell.styles.textColor = [63, 125, 92]; // Green
+              } else if (String(balVal).startsWith("-")) {
+                cellData.cell.styles.textColor = [181, 83, 60]; // Red
+              }
+            }
+          }
+        }
+      });
+
+      // Prepare side-by-side Clearance Summary Table (English text to prevent garbled PDF font)
+      const receiveMembers = data.members.filter((m) => m.balance > 0);
+      const payMembers = data.members.filter((m) => m.balance < 0);
+
+      const totalReceive = receiveMembers.reduce((sum, m) => sum + m.balance, 0);
+      const totalPay = payMembers.reduce((sum, m) => sum + Math.abs(m.balance), 0);
+
+      const maxRows = Math.max(receiveMembers.length, payMembers.length);
+      const summaryRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        const rec = receiveMembers[i];
+        const pay = payMembers[i];
+        summaryRows.push([
+          rec ? rec.userName : "",
+          rec ? `Tk ${taka(rec.balance)}` : "",
+          "",
+          pay ? pay.userName : "",
+          pay ? `Tk ${taka(Math.abs(pay.balance))}` : "",
+        ]);
+      }
+      // Add footer row for totals
+      summaryRows.push([
+        "Total To Receive",
+        `Tk ${taka(totalReceive)}`,
+        "",
+        "Total To Pay",
+        `Tk ${taka(totalPay)}`,
+      ]);
+
+      // Draw Clearance Summary title
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Clearance Summary", 14, doc.lastAutoTable.finalY + 12);
+
+      // Draw Clearance Summary Table
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 16,
+        head: [["To Receive (Refund)", "Amount", "", "To Pay (Due)", "Amount"]],
+        body: summaryRows,
+        headStyles: { fillColor: [63, 125, 92] },
+        styles: { fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 55 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 10, fillColor: [255, 255, 255] }, // Separator
+          3: { cellWidth: 55 },
+          4: { cellWidth: 30 }
+        },
+        didParseCell: function (cellData) {
+          if (cellData.column.index === 2) {
+            cellData.cell.styles.lineWidth = 0;
+            cellData.cell.styles.cellPadding = 0;
+          }
+          if (cellData.row.index === maxRows) {
+            cellData.cell.styles.fontStyle = "bold";
+            if (cellData.column.index < 2) {
+              cellData.cell.styles.textColor = [63, 125, 92]; // Green
+            } else if (cellData.column.index > 2) {
+              cellData.cell.styles.textColor = [181, 83, 60]; // Red
+            }
+          }
+        }
       });
 
       doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
       doc.text("Generated By EasyMess", 14, doc.lastAutoTable.finalY + 10);
 
       doc.save(`${(data.messName || "easymess").replace(/\s+/g, "_")}_${data.month}_${data.year}.pdf`);
@@ -312,10 +408,22 @@ export default function OverviewDashboard({ role }) {
                   </div>
 
                   {(() => {
-                    const now = new Date();
-                    const daysInMonth = new Date(year, month, 0).getDate();
-                    const currentDay = Math.min(now.getDate(), daysInMonth);
-                    const remainingDays = daysInMonth - currentDay;
+                    const bdNow = getBDNow();
+                    const isCurrentMonthYear = String(month) === String(bdNow.month) && String(year) === String(bdNow.year);
+                    const isPastMonthYear = Number(year) < bdNow.year || (Number(year) === bdNow.year && Number(month) < bdNow.month);
+                    
+                    const daysInMonth = new Date(Number(year), Number(month), 0).getDate();
+                    
+                    let currentDay = bdNow.day;
+                    let remainingDays = daysInMonth - currentDay;
+                    
+                    if (isPastMonthYear) {
+                      currentDay = daysInMonth;
+                      remainingDays = 0;
+                    } else if (!isCurrentMonthYear) {
+                      currentDay = 0;
+                      remainingDays = daysInMonth;
+                    }
 
                     const totalBazaar = data.summary?.totalBazaar || 0;
                     const totalMeals = data.summary?.totalMeal || 0;
@@ -326,23 +434,43 @@ export default function OverviewDashboard({ role }) {
 
                     // Daily averages
                     const avgMealsPerDay = totalMeals / Math.max(1, currentDay);
+                    
+                    let estimatedRemainingBazaar = 0;
+                    let estimatedRemainingMeals = 0;
+                    let confidence = 100;
+                    let errorMarginPercent = 0;
 
-                    // Bulk purchase decay modeling: assuming 40% of early-month spending is fixed bulk (rice, oil, gas)
-                    // and only 60% is variable daily expenditure.
-                    const variableBazaarFraction = currentDay <= 10 ? 0.6 : 0.8;
-                    const avgDailyVariableBazaar = (totalBazaar * variableBazaarFraction) / Math.max(1, currentDay);
-
-                    const estimatedRemainingBazaar = remainingDays * avgDailyVariableBazaar;
-                    const estimatedRemainingMeals = Math.round(remainingDays * avgMealsPerDay);
+                    if (isPastMonthYear) {
+                      estimatedRemainingBazaar = 0;
+                      estimatedRemainingMeals = 0;
+                      confidence = 100;
+                      errorMarginPercent = 0;
+                    } else if (isCurrentMonthYear) {
+                      const avgBazaarPerMeal = totalMeals > 0 ? totalBazaar / totalMeals : 0;
+                      const variableRateCap = 30; // ৳30 max variable cost per meal for daily estimation
+                      const bulkBazaar = currentDay <= 7 && avgBazaarPerMeal > variableRateCap
+                        ? Math.max(0, totalBazaar - (totalMeals * variableRateCap))
+                        : 0;
+                      
+                      const variableBazaar = totalBazaar - bulkBazaar;
+                      const avgDailyVariableBazaar = variableBazaar / Math.max(1, currentDay);
+                      
+                      estimatedRemainingBazaar = remainingDays * avgDailyVariableBazaar;
+                      estimatedRemainingMeals = Math.round(remainingDays * avgMealsPerDay);
+                      
+                      confidence = Math.min(99, Math.round(50 + (currentDay / daysInMonth) * 49));
+                      errorMarginPercent = (1 - currentDay / daysInMonth) * 0.08;
+                    } else {
+                      estimatedRemainingBazaar = 0;
+                      estimatedRemainingMeals = 0;
+                      confidence = 0;
+                      errorMarginPercent = 0;
+                    }
 
                     const projectedTotalBazaar = totalBazaar + estimatedRemainingBazaar;
                     const projectedTotalMeals = totalMeals + estimatedRemainingMeals;
 
                     const projectedRate = projectedTotalMeals > 0 ? projectedTotalBazaar / projectedTotalMeals : currentRate;
-
-                    // Confidence and range calculations
-                    const confidence = Math.min(99, Math.round(50 + (currentDay / daysInMonth) * 49));
-                    const errorMarginPercent = (1 - currentDay / daysInMonth) * 0.08; // error margin shrinks as month ends
                     const projectedRateMin = projectedRate * (1 - errorMarginPercent);
                     const projectedRateMax = projectedRate * (1 + errorMarginPercent);
 

@@ -125,13 +125,21 @@ export default function Sidebar() {
       roles: [ "manager"],
     },
     {
+      name: t("paymentsSidebar"),
+      href: "/dashboard/manager-dashboard/payments",
+      icon: Wallet,
+      roles: [ "manager"],
+    },
+    {
       name: t("billsSidebar"),
       href: "/dashboard/user-dashboard/bills",
       icon: Receipt,
       roles: ["member"],
     },
     { name: t("bazaarSidebar"), href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
+    { name: t("bazaarSidebar"), href: "/dashboard/user-dashboard/bazaar", icon: Store, roles: ["member"] },
     { name: t("bazaarAnalysis"), href: "/dashboard/manager-dashboard/bazaar-analysis", icon: BarChart3, roles: ["manager"] },
+    { name: t("bazaarAnalysis"), href: "/dashboard/user-dashboard/bazaar-analysis", icon: BarChart3, roles: ["member"] },
     { name: t("bazaarSchedule"), href: "/dashboard/manager-dashboard/bazaar-schedule", icon: Calendar, roles: ["manager"] },
     { name: t("bazaarSchedule"), href: "/dashboard/user-dashboard/bazaar-schedule", icon: Calendar, roles: ["member"] },
     {

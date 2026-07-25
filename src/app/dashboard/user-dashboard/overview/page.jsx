@@ -22,11 +22,11 @@ function monthLabel(month, year) {
 
 function SummaryCard({ label, value, mono: useMono = true, icon = "📊" }) {
   return (
-    <div className="rounded-2xl bg-[#FFF7ED] dark:bg-slate-900 border border-[#FFEEDD] dark:border-slate-800 p-5 shadow-sm">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#EA580C] dark:text-orange-400 flex items-center gap-1">
-        <span>{icon}</span> {label}
+    <div className="rounded-2xl bg-[#FFF7ED] dark:bg-slate-900 border border-[#FFEEDD] dark:border-slate-800 p-3 min-[375px]:p-4 sm:p-5 shadow-sm">
+      <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400 flex items-center gap-1">
+        <span>{icon}</span> <span>{label}</span>
       </p>
-      <p className={`mt-1 text-xl sm:text-2xl font-bold text-gray-950 dark:text-slate-100 ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
+      <p className={`mt-1 text-sm min-[375px]:text-base sm:text-xl md:text-2xl font-bold text-gray-950 dark:text-slate-100 whitespace-nowrap ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
         {value}
       </p>
     </div>
@@ -139,30 +139,143 @@ export default function UserOverviewPage() {
 
   async function handleDownloadPdf() {
     if (!data) return;
+
     setExporting(true);
+
     try {
       const { default: jsPDF } = await import("jspdf");
       const autoTable = (await import("jspdf-autotable")).default;
 
       const doc = new jsPDF();
+
+      // Title & Month info
       doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
       doc.text(data.messName || "EasyMess", 14, 18);
       doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
       doc.text(`Month: ${monthLabel(data.month, data.year)}`, 14, 25);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
 
+      // Summary details row with Cash in Hand
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      const cashInHand = data.summary.totalDeposit - data.summary.totalBazaar;
+      doc.text(
+        `Total Deposit: ${taka(data.summary.totalDeposit)}    Total Bazaar: ${taka(
+          data.summary.totalBazaar
+        )}    Cash in Hand: ${taka(cashInHand)}    Total Meal: ${data.summary.totalMeal}    Meal Rate: ${taka(data.summary.mealRate)}`,
+        14,
+        40
+      );
+
+      // Main Table
       autoTable(doc, {
-        startY: 35,
+        startY: 46,
         head: [["Name", "Meal", "Deposit", "Bill", "Balance", "Status"]],
         body: data.members.map((m) => [
           m.userName,
           m.totalMeal,
           taka(m.deposit),
           taka(m.bill),
-          taka(m.balance),
+          (m.balance >= 0 ? "+" : "") + taka(m.balance),
           m.status === "advance" ? "Advance" : "Due",
         ]),
         headStyles: { fillColor: [27, 42, 38] },
+        styles: { fontSize: 9 },
+        didParseCell: function (cellData) {
+          if (cellData.section === "body") {
+            // Style Status column (index 5)
+            if (cellData.column.index === 5) {
+              const status = cellData.cell.raw;
+              if (status === "Advance") {
+                cellData.cell.styles.textColor = [63, 125, 92]; // Green
+                cellData.cell.styles.fontStyle = "bold";
+              } else if (status === "Due") {
+                cellData.cell.styles.textColor = [181, 83, 60]; // Red
+                cellData.cell.styles.fontStyle = "bold";
+              }
+            }
+            // Style Balance column (index 4)
+            if (cellData.column.index === 4) {
+              const balVal = cellData.cell.raw;
+              if (String(balVal).startsWith("+")) {
+                cellData.cell.styles.textColor = [63, 125, 92]; // Green
+              } else if (String(balVal).startsWith("-")) {
+                cellData.cell.styles.textColor = [181, 83, 60]; // Red
+              }
+            }
+          }
+        }
       });
+
+      // Prepare side-by-side Clearance Summary Table (English text to prevent garbled PDF font)
+      const receiveMembers = data.members.filter((m) => m.balance > 0);
+      const payMembers = data.members.filter((m) => m.balance < 0);
+
+      const totalReceive = receiveMembers.reduce((sum, m) => sum + m.balance, 0);
+      const totalPay = payMembers.reduce((sum, m) => sum + Math.abs(m.balance), 0);
+
+      const maxRows = Math.max(receiveMembers.length, payMembers.length);
+      const summaryRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        const rec = receiveMembers[i];
+        const pay = payMembers[i];
+        summaryRows.push([
+          rec ? rec.userName : "",
+          rec ? `Tk ${taka(rec.balance)}` : "",
+          "",
+          pay ? pay.userName : "",
+          pay ? `Tk ${taka(Math.abs(pay.balance))}` : "",
+        ]);
+      }
+      // Add footer row for totals
+      summaryRows.push([
+        "Total To Receive",
+        `Tk ${taka(totalReceive)}`,
+        "",
+        "Total To Pay",
+        `Tk ${taka(totalPay)}`,
+      ]);
+
+      // Draw Clearance Summary title
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Clearance Summary", 14, doc.lastAutoTable.finalY + 12);
+
+      // Draw Clearance Summary Table
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 16,
+        head: [["To Receive (Refund)", "Amount", "", "To Pay (Due)", "Amount"]],
+        body: summaryRows,
+        headStyles: { fillColor: [63, 125, 92] },
+        styles: { fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 55 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 10, fillColor: [255, 255, 255] }, // Separator
+          3: { cellWidth: 55 },
+          4: { cellWidth: 30 }
+        },
+        didParseCell: function (cellData) {
+          if (cellData.column.index === 2) {
+            cellData.cell.styles.lineWidth = 0;
+            cellData.cell.styles.cellPadding = 0;
+          }
+          if (cellData.row.index === maxRows) {
+            cellData.cell.styles.fontStyle = "bold";
+            if (cellData.column.index < 2) {
+              cellData.cell.styles.textColor = [63, 125, 92]; // Green
+            } else if (cellData.column.index > 2) {
+              cellData.cell.styles.textColor = [181, 83, 60]; // Red
+            }
+          }
+        }
+      });
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("Generated By EasyMess", 14, doc.lastAutoTable.finalY + 10);
 
       doc.save(`${(data.messName || "easymess").replace(/\s+/g, "_")}_${data.month}_${data.year}.pdf`);
     } finally {

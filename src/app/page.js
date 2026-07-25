@@ -735,29 +735,29 @@ export default function LandingPage() {
         )}
 
         {/* This month's rate & bill — read-only, straight from the ledger */}
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-            <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="rounded-2xl bg-white p-2.5 sm:p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
+            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-[#9a9691] truncate">
               {t("mealRate")}
             </p>
-            <p className="font-display mt-1 text-xl font-bold text-[#16181D]">
+            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-bold text-[#16181D]">
               {monthSummary ? `৳${monthSummary.mealRate}` : "—"}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-            <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+          <div className="rounded-2xl bg-white p-2.5 sm:p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
+            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-[#9a9691] truncate">
               {t("yourBill")}
             </p>
-            <p className="font-display mt-1 text-xl font-bold text-[#16181D]">
+            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-bold text-[#16181D]">
               {monthSummary ? `৳${monthSummary.bill}` : "—"}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-            <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+          <div className="rounded-2xl bg-white p-2.5 sm:p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
+            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-[#9a9691] truncate">
               {monthSummary?.status === "due" ? t("youOwe") : t("advance")}
             </p>
             <p
-              className={`font-display mt-1 text-xl font-bold ${
+              className={`font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-bold ${
                 monthSummary?.status === "due"
                   ? "text-[#D4453A]"
                   : "text-[#16181D]"

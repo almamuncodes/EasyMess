@@ -15,8 +15,6 @@ import {
   Search,
   AlertTriangle,
   X,
-  CheckSquare,
-  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 import PageLoader from "@/components/ui/PageLoader";
@@ -253,32 +251,13 @@ export default function ManagerBazaarSchedulePage() {
 
             {/* Multi-Member Selection Checklist */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">
-                  {isBn ? "বাজারের জন্য মেম্বার নির্বাচন করুন (একাধিক সিলেক্ট করুন):" : "Select Members for Bazaar (Multi-Select):"}
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-slate-400 truncate">
+                  {isBn ? "মেম্বার নির্বাচন করুন (একাধিক সিলেক্ট করুন):" : "Select Members (Multi-Select):"}
                 </label>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSelectAll}
-                    className="text-[11px] font-bold text-orange-500 hover:text-orange-600 flex items-center gap-1 cursor-pointer"
-                  >
-                    {selectedMembers.length === members.length ? (
-                      <>
-                        <Square className="w-3.5 h-3.5" />
-                        {isBn ? "আনসিলেক্ট অল" : "Deselect All"}
-                      </>
-                    ) : (
-                      <>
-                        <CheckSquare className="w-3.5 h-3.5" />
-                        {isBn ? "সবাইকে সিলেক্ট করুন" : "Select All"}
-                      </>
-                    )}
-                  </button>
-                  <span className="text-orange-500 font-mono font-bold text-xs bg-orange-500/10 px-2 py-0.5 rounded-full">
-                    {selectedMembers.length} {isBn ? "জন নির্বাচিত" : "selected"}
-                  </span>
-                </div>
+                <span className="text-orange-500 font-mono font-bold text-[10px] sm:text-xs bg-orange-500/10 px-2 py-0.5 rounded-full shrink-0">
+                  {selectedMembers.length} {isBn ? "জন নির্বাচিত" : "selected"}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-800">

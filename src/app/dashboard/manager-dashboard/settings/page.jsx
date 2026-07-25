@@ -161,7 +161,7 @@ export default function ManagerSettingsPage() {
             {messData?.messName}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Loacation: {messData?.messLocation || "Location not set"}
+            Location: {messData?.messLocation || "Location not set"}
           </p>
           <p className="mt-2 text-xs text-gray-400">
             Created{" "}
@@ -199,8 +199,8 @@ export default function ManagerSettingsPage() {
             const period = hourVal >= 12 ? "PM" : "AM";
 
             return (
-              <div key={key} className="flex flex-col gap-1">
-                <label className="text-sm font-medium capitalize text-gray-600">
+              <div key={key} className="flex flex-col gap-1 mb-4">
+                <label className="text-sm font-medium capitalize text-gray-700 dark:text-slate-300">
                   {key.replace(/([A-Z])/g, " $1")}
                 </label>
 
