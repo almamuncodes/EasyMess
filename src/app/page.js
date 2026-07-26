@@ -221,6 +221,7 @@ export default function LandingPage() {
 
     let ignore = false;
     const cacheKey = `user_has_mess_${session.user.id}`;
+    const controller = new AbortController();
 
     // Instant cache read
     if (typeof window !== "undefined") {
@@ -238,6 +239,7 @@ export default function LandingPage() {
       try {
         const res = await fetch(
           `${API_URL}/api/member/messid/${session.user.id}`,
+          { signal: controller.signal }
         );
 
         if (ignore) return;
@@ -258,6 +260,7 @@ export default function LandingPage() {
           }
         }
       } catch (err) {
+        if (err.name === "AbortError") return;
         console.error("Failed to check mess membership:", err);
         if (!ignore && hasMess === null) setHasMess(false);
       } finally {
@@ -269,6 +272,7 @@ export default function LandingPage() {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, isPending]);
@@ -283,6 +287,7 @@ export default function LandingPage() {
     }
 
     let ignore = false;
+    const controller = new AbortController();
 
     async function loadTodayMeals() {
       try {
@@ -291,6 +296,7 @@ export default function LandingPage() {
 
         const res = await fetch(
           `${API_URL}/api/mess/meals?userId=${session.user.id}&date=${today}`,
+          { signal: controller.signal }
         );
 
         if (ignore) return;
@@ -306,6 +312,7 @@ export default function LandingPage() {
           sessionStorage.setItem("cached_today_meals", JSON.stringify(data));
         }
       } catch (err) {
+        if (err.name === "AbortError") return;
         console.error("Failed to load today's meals:", err);
         if (!ignore && !todayMeals) setMealError("Could not load today's meals.");
       } finally {
@@ -317,6 +324,7 @@ export default function LandingPage() {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMess, session, today]);
@@ -331,6 +339,7 @@ export default function LandingPage() {
     }
 
     let ignore = false;
+    const controller = new AbortController();
 
     async function loadOverview() {
       try {
@@ -341,9 +350,10 @@ export default function LandingPage() {
         const year = now.getFullYear();
 
         const [messRes, summaryRes] = await Promise.all([
-          fetch(`${API_URL}/api/user/my-mess/${session.user.id}`),
+          fetch(`${API_URL}/api/user/my-mess/${session.user.id}`, { signal: controller.signal }),
           fetch(
             `${API_URL}/api/user/month-summary/${session.user.id}?month=${month}&year=${year}`,
+            { signal: controller.signal }
           ),
         ]);
 
@@ -364,6 +374,7 @@ export default function LandingPage() {
           }
         }
       } catch (err) {
+        if (err.name === "AbortError") return;
         console.error("Failed to load mess overview:", err);
       } finally {
         if (!ignore) setOverviewLoading(false);
@@ -374,6 +385,7 @@ export default function LandingPage() {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMess, session]);
