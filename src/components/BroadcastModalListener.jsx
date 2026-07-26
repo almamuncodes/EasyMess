@@ -51,14 +51,49 @@ export default function BroadcastModalListener() {
   }, []);
 
   const fetchActiveBroadcast = useCallback(async () => {
+    const now = Date.now();
+    const lastCheck = typeof window !== "undefined" ? sessionStorage.getItem("last_broadcast_check") : null;
+    const cachedBStr = typeof window !== "undefined" ? sessionStorage.getItem("cached_active_broadcast") : null;
+
+    if (lastCheck && (now - Number(lastCheck) < 60000)) {
+      if (cachedBStr) {
+        try {
+          const b = JSON.parse(cachedBStr);
+          if (!checkDismissed(b)) {
+            setBroadcast(b);
+            setOpen(true);
+          }
+        } catch (e) {}
+      }
+      return;
+    }
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/system/active-broadcast`);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("last_broadcast_check", String(now));
+      }
+
+      if (res.status === 404) {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("cached_active_broadcast", "");
+        }
+        return;
+      }
+
       const data = await res.json();
       if (res.ok && data.success && data.data) {
         const b = data.data;
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("cached_active_broadcast", JSON.stringify(b));
+        }
         if (!checkDismissed(b)) {
           setBroadcast(b);
           setOpen(true);
+        }
+      } else {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("cached_active_broadcast", "");
         }
       }
     } catch (err) {

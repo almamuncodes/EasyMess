@@ -44,12 +44,28 @@ export default function DashboardGuard({ children }) {
       // Check sessionStorage cache
       const cachedRole = sessionStorage.getItem(`user_role_${userId}`) || sessionStorage.getItem("user_role");
       if (cachedRole && isSubscribed) {
+        if (cachedRole === "none") {
+          setRole(null);
+          setLoading(false);
+          return; // Skip fetch since we cached that this user has no mess
+        }
         setRole(cachedRole);
         setLoading(false);
       }
 
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
+        
+        if (res.status === 404) {
+          if (isSubscribed) {
+            setRole(null);
+            sessionStorage.setItem(`user_role_${userId}`, "none");
+            sessionStorage.setItem("user_role", "none");
+            document.cookie = "em_user_role=; path=/; max-age=0";
+          }
+          return;
+        }
+
         const data = await res.json();
         
         if (isSubscribed) {
@@ -61,8 +77,8 @@ export default function DashboardGuard({ children }) {
             document.cookie = `em_user_role=${data.role}; path=/; SameSite=Strict`;
           } else {
             setRole(null);
-            sessionStorage.removeItem(`user_role_${userId}`);
-            sessionStorage.removeItem("user_role");
+            sessionStorage.setItem(`user_role_${userId}`, "none");
+            sessionStorage.setItem("user_role", "none");
             document.cookie = "em_user_role=; path=/; max-age=0";
           }
         }
