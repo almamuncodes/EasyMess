@@ -43,7 +43,7 @@ export default function Sidebar() {
     queryKey: ["member-role", userId],
     queryFn: async () => {
       if (!userId) return "";
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
       const res = await fetch(`${apiBase}/api/member/role/${userId}`);
       const data = await res.json();
       if (data.role && typeof window !== "undefined") {

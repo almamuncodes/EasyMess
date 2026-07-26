@@ -54,7 +54,7 @@ export default function DashboardGuard({ children }) {
       }
 
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
         const res = await fetch(`${apiBase}/api/member/role/${userId}`);
         
         if (res.status === 404) {
