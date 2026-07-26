@@ -126,7 +126,8 @@ export default function Navbar() {
             width={140}
             height={40}
             priority
-            className="w-[110px] md:w-[140px] h-auto dark:brightness-0 dark:invert transition-all duration-200"
+            style={{ height: "auto" }}
+            className="w-[110px] md:w-[140px] dark:brightness-0 dark:invert transition-all duration-200"
           />
         </Link>
 

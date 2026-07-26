@@ -16,6 +16,139 @@ function todayDateString() {
   return getBDDateStr();
 }
 
+function MessSimulator({ isBn }) {
+  const [calcBazaar, setCalcBazaar] = useState(6000);
+  const [calcMeals, setCalcMeals] = useState(120);
+  const [calcMyMeals, setCalcMyMeals] = useState(30);
+  const [calcDeposit, setCalcDeposit] = useState(2000);
+
+  const simulatedMealRate = calcMeals > 0 ? (calcBazaar / calcMeals).toFixed(2) : "0.00";
+  const simulatedMyBill = calcMeals > 0 ? ((calcBazaar / calcMeals) * calcMyMeals).toFixed(0) : "0";
+  const simulatedBalance = calcDeposit - Number(simulatedMyBill);
+
+  return (
+    <div className="w-full rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800/60 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/30 dark:bg-orange-950/20 rounded-full blur-xl pointer-events-none" />
+
+      {/* Widget Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800/60 mb-5">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📊</span>
+          <h3 className="font-display font-bold text-sm text-gray-900 dark:text-slate-100">
+            {isBn ? "লাইভ হিসাব ক্যালকুলেটর" : "Live Bill Simulator"}
+          </h3>
+        </div>
+        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
+          Interactive
+        </span>
+      </div>
+
+      {/* Input Slider 1: Total Bazaar */}
+      <div className="mb-4">
+        <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
+          <span>{isBn ? "মোট বাজার খরচ" : "Total Bazaar Cost"}</span>
+          <span className="text-orange-500 font-mono">৳{calcBazaar}</span>
+        </div>
+        <input
+          type="range"
+          min="1000"
+          max="20000"
+          step="500"
+          value={calcBazaar}
+          onChange={(e) => setCalcBazaar(Number(e.target.value))}
+          className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
+        />
+      </div>
+
+      {/* Input Slider 2: Total Meals */}
+      <div className="mb-4">
+        <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
+          <span>{isBn ? "মোট মিল সংখ্যা" : "Total Mess Meals"}</span>
+          <span className="text-orange-500 font-mono">{calcMeals}</span>
+        </div>
+        <input
+          type="range"
+          min="20"
+          max="500"
+          step="10"
+          value={calcMeals}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            setCalcMeals(val);
+            if (calcMyMeals > val) setCalcMyMeals(val);
+          }}
+          className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
+        />
+      </div>
+
+      {/* Input Slider 3: My Meals */}
+      <div className="mb-4">
+        <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
+          <span>{isBn ? "আপনার মিল সংখ্যা" : "Your Meals"}</span>
+          <span className="text-orange-500 font-mono">{calcMyMeals}</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max={calcMeals}
+          step="1"
+          value={calcMyMeals}
+          onChange={(e) => setCalcMyMeals(Number(e.target.value))}
+          className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
+        />
+      </div>
+
+      {/* Input Slider 4: Deposit */}
+      <div className="mb-5">
+        <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
+          <span>{isBn ? "আপনার জমা টাকা" : "Your Deposit"}</span>
+          <span className="text-orange-500 font-mono">৳{calcDeposit}</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="5000"
+          step="100"
+          value={calcDeposit}
+          onChange={(e) => setCalcDeposit(Number(e.target.value))}
+          className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
+        />
+      </div>
+
+      {/* Simulated Results Section */}
+      <div className="bg-orange-50/50 dark:bg-orange-950/20 rounded-2xl p-4 border border-orange-100/50 dark:border-orange-900/30 grid grid-cols-2 gap-3 text-center">
+        <div className="border-r border-orange-100/50 dark:border-orange-900/20">
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">
+            {isBn ? "মিল রেট" : "Meal Rate"}
+          </p>
+          <p className="text-lg font-black text-gray-900 dark:text-slate-100 mt-0.5">
+            ৳{simulatedMealRate}
+          </p>
+        </div>
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">
+            {isBn ? "আপনার বিল" : "Your Bill"}
+          </p>
+          <p className="text-lg font-black text-gray-900 dark:text-slate-100 mt-0.5">
+            ৳{simulatedMyBill}
+          </p>
+        </div>
+        <div className="col-span-2 pt-3 border-t border-orange-100/50 dark:border-orange-900/20 flex items-center justify-between px-2">
+          <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
+            {simulatedBalance >= 0
+              ? (isBn ? "ফেরত পাবেন (অগ্রিম)" : "Refund (Advance)")
+              : (isBn ? "দিতে হবে (বাকি)" : "Due (Owe)")
+            }
+          </span>
+          <span className={`text-base font-black ${simulatedBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-[#D4453A]"}`}>
+            ৳{Math.abs(simulatedBalance)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const { data: session, isPending } = authClient.useSession();
   const { t, lang } = useTranslation();
@@ -73,18 +206,16 @@ export default function LandingPage() {
 
   const [selectedMember, setSelectedMember] = useState(null);
 
-  // Simulator states for interactive calculator
-  const [calcBazaar, setCalcBazaar] = useState(6000);
-  const [calcMeals, setCalcMeals] = useState(120);
-  const [calcMyMeals, setCalcMyMeals] = useState(30);
-  const [calcDeposit, setCalcDeposit] = useState(2000);
-
   const today = todayDateString();
 
   // ১. ইউজার কোনো mess-এর member কিনা চেক করা (উইথ sessionStorage ক্যাশিং)
   useEffect(() => {
     if (!session?.user?.id) {
-      if (!isPending) setCheckingMess(false);
+      if (!isPending) {
+        setTimeout(() => {
+          setCheckingMess(false);
+        }, 0);
+      }
       return;
     }
 
@@ -95,8 +226,11 @@ export default function LandingPage() {
     if (typeof window !== "undefined") {
       const cached = sessionStorage.getItem(cacheKey) || sessionStorage.getItem("user_has_mess");
       if (cached !== null) {
-        setHasMess(cached === "true");
-        setCheckingMess(false);
+        const isMember = cached === "true";
+        setTimeout(() => {
+          setHasMess(isMember);
+          setCheckingMess(false);
+        }, 0);
       }
     }
 
@@ -136,12 +270,14 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [session, isPending]);
+  }, [session, isPending, hasMess]);
 
   // ২. Mess পাওয়া গেলে আজকের meal status আনা (এইটা যেকোনো member এর জন্য কাজ করে, শুধু manager না)
   useEffect(() => {
     if (!hasMess || !session?.user?.id) {
-      setMealsLoading(false);
+      setTimeout(() => {
+        setMealsLoading(false);
+      }, 0);
       return;
     }
 
@@ -181,12 +317,14 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [hasMess, session, today]);
+  }, [hasMess, session, today, todayMeals]);
 
   // ৩. Mess-এর নাম/manager/member সংখ্যা আর এই মাসের meal rate/bill — সব read-only
   useEffect(() => {
     if (!hasMess || !session?.user?.id) {
-      setOverviewLoading(false);
+      setTimeout(() => {
+        setOverviewLoading(false);
+      }, 0);
       return;
     }
 
@@ -235,7 +373,7 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [hasMess, session]);
+  }, [hasMess, session, messInfo]);
 
   const fonts = (
     <style jsx global>{`
@@ -279,14 +417,11 @@ export default function LandingPage() {
   );
 
   // সেশন লোড হচ্ছে, বা লগইন থাকলে mess membership চেক হচ্ছে — flash এড়াতে skeleton (ক্যাশ থাকলে সরাসরি পেজ রেন্ডার হবে)
-  if (isPending && checkingMess) {
+  if (isPending || checkingMess) {
     return <PageLoader text={lang === "en" ? "Loading EasyMess..." : "EasyMess লোড হচ্ছে..."} />;
   }
 
   const isBn = lang === "bn";
-  const simulatedMealRate = calcMeals > 0 ? (calcBazaar / calcMeals).toFixed(2) : "0.00";
-  const simulatedMyBill = calcMeals > 0 ? ((calcBazaar / calcMeals) * calcMyMeals).toFixed(0) : "0";
-  const simulatedBalance = calcDeposit - Number(simulatedMyBill);
 
   // ================= State 1: Logged out — marketing landing ================= //
   if (!session) {
@@ -386,125 +521,7 @@ export default function LandingPage() {
               className="lg:col-span-5 fade-in-up w-full"
               style={{ animationDelay: "0.32s" }}
             >
-              <div className="w-full rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800/60 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/30 dark:bg-orange-950/20 rounded-full blur-xl pointer-events-none" />
-
-                {/* Widget Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800/60 mb-5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">📊</span>
-                    <h3 className="font-display font-bold text-sm text-gray-900 dark:text-slate-100">
-                      {isBn ? "লাইভ হিসাব ক্যালকুলেটর" : "Live Bill Simulator"}
-                    </h3>
-                  </div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
-                    Interactive
-                  </span>
-                </div>
-
-                {/* Input Slider 1: Total Bazaar */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
-                    <span>{isBn ? "মোট বাজার খরচ" : "Total Bazaar Cost"}</span>
-                    <span className="text-orange-500 font-mono">৳{calcBazaar}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1000"
-                    max="20000"
-                    step="500"
-                    value={calcBazaar}
-                    onChange={(e) => setCalcBazaar(Number(e.target.value))}
-                    className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
-                  />
-                </div>
-
-                {/* Input Slider 2: Total Meals */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
-                    <span>{isBn ? "মোট মিল সংখ্যা" : "Total Mess Meals"}</span>
-                    <span className="text-orange-500 font-mono">{calcMeals}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="20"
-                    max="500"
-                    step="10"
-                    value={calcMeals}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setCalcMeals(val);
-                      if (calcMyMeals > val) setCalcMyMeals(val);
-                    }}
-                    className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
-                  />
-                </div>
-
-                {/* Input Slider 3: My Meals */}
-                <div className="mb-4">
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
-                    <span>{isBn ? "আপনার মিল সংখ্যা" : "Your Meals"}</span>
-                    <span className="text-orange-500 font-mono">{calcMyMeals}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={calcMeals}
-                    step="1"
-                    value={calcMyMeals}
-                    onChange={(e) => setCalcMyMeals(Number(e.target.value))}
-                    className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
-                  />
-                </div>
-
-                {/* Input Slider 4: Deposit */}
-                <div className="mb-5">
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">
-                    <span>{isBn ? "আপনার জমা টাকা" : "Your Deposit"}</span>
-                    <span className="text-orange-500 font-mono">৳{calcDeposit}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5000"
-                    step="100"
-                    value={calcDeposit}
-                    onChange={(e) => setCalcDeposit(Number(e.target.value))}
-                    className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none"
-                  />
-                </div>
-
-                {/* Simulated Results Section */}
-                <div className="bg-orange-50/50 dark:bg-orange-950/20 rounded-2xl p-4 border border-orange-100/50 dark:border-orange-900/30 grid grid-cols-2 gap-3 text-center">
-                  <div className="border-r border-orange-100/50 dark:border-orange-900/20">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">
-                      {isBn ? "মিল রেট" : "Meal Rate"}
-                    </p>
-                    <p className="text-lg font-black text-gray-900 dark:text-slate-100 mt-0.5">
-                      ৳{simulatedMealRate}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">
-                      {isBn ? "আপনার বিল" : "Your Bill"}
-                    </p>
-                    <p className="text-lg font-black text-gray-900 dark:text-slate-100 mt-0.5">
-                      ৳{simulatedMyBill}
-                    </p>
-                  </div>
-                  <div className="col-span-2 pt-3 border-t border-orange-100/50 dark:border-orange-900/20 flex items-center justify-between px-2">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
-                      {simulatedBalance >= 0
-                        ? (isBn ? "ফেরত পাবেন (অগ্রিম)" : "Refund (Advance)")
-                        : (isBn ? "দিতে হবে (বাকি)" : "Due (Owe)")
-                      }
-                    </span>
-                    <span className={`text-base font-black ${simulatedBalance >= 0 ? "text-green-600 dark:text-green-400" : "text-[#D4453A]"}`}>
-                      ৳{Math.abs(simulatedBalance)}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <MessSimulator isBn={isBn} />
             </div>
           </div>
         </section>
@@ -721,7 +738,10 @@ export default function LandingPage() {
         </p>
 
         {overviewLoading ? (
-          <div className="mt-2 h-9 w-48 animate-pulse rounded-lg bg-[#E7E5E1]" />
+          <div className="mt-2 space-y-2 animate-pulse">
+            <div className="h-9 w-48 rounded-lg bg-[#E7E5E1]" />
+            <div className="h-4 w-60 rounded bg-[#E7E5E1]" />
+          </div>
         ) : (
           <>
             <h1 className="font-display mt-2 text-3xl font-bold text-[#16181D]">
@@ -780,9 +800,16 @@ export default function LandingPage() {
         </p>
 
         {mealsLoading ? (
-          <div className="mt-6 flex items-center gap-3 font-meta text-xs uppercase tracking-[0.2em] text-[#9a9691]">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#FF6900]" />
-            {t("loadingTodayMeals")}
+          <div className="mt-6 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[#EAE7E0] animate-pulse">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-full bg-[#E7E5E1]" />
+                  <div className="h-4 w-28 rounded bg-[#E7E5E1]" />
+                </div>
+                <div className="h-4 w-12 rounded bg-[#E7E5E1]" />
+              </div>
+            ))}
           </div>
         ) : !todayMeals ? (
           <p className="mt-6 font-meta text-xs text-[#D4453A]">
