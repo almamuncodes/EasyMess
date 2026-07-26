@@ -17,6 +17,8 @@ import {
   ClipboardClock,
   Calendar,
   History,
+  Megaphone,
+  Activity,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -28,7 +30,9 @@ export default function Sidebar() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    Promise.resolve().then(() => {
+      setMounted(true);
+    });
   }, []);
 
   const { t, lang } = useTranslation();
@@ -86,7 +90,37 @@ export default function Sidebar() {
       name: t("overview"),
       href: "/dashboard/admin-dashboard/overview",
       icon: LayoutDashboard,
-      roles: [ "admin"],
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "ইউজার ম্যানেজমেন্ট" : "User Management",
+      href: "/dashboard/admin-dashboard/users",
+      icon: Users,
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "মেস ম্যানেজমেন্ট" : "All Messes",
+      href: "/dashboard/admin-dashboard/messes",
+      icon: Building,
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "সিস্টেম এনালিটিক্স" : "Analytics",
+      href: "/dashboard/admin-dashboard/analytics",
+      icon: BarChart3,
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "ব্রডকাস্ট নোটিশ" : "Broadcasts",
+      href: "/dashboard/admin-dashboard/announcements",
+      icon: Megaphone,
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "সিস্টেম অডিট লগ" : "Audit Logs",
+      href: "/dashboard/admin-dashboard/logs",
+      icon: Activity,
+      roles: ["admin"],
     },
     {
       name: t("myMess"),
@@ -162,7 +196,7 @@ export default function Sidebar() {
     },
     {
       name: t("settingsSidebar"),
-      href: "/settings",
+      href: "/dashboard/admin-dashboard/settings",
       icon: Settings,
       roles: [ "admin"],
     },

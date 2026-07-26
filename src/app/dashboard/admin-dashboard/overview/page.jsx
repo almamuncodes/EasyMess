@@ -71,10 +71,13 @@ export default function AdminOverviewPage() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   useEffect(() => {
-    loadOverview();
+    Promise.resolve().then(() => {
+      loadOverview();
+    });
   }, [loadOverview]);
 
   // ---------- Loading ----------

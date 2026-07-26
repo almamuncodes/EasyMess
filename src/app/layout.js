@@ -10,6 +10,7 @@ import BottomNav from "@/components/navigation/BottomNav";
 import ThemeProvider from "@/components/providers/ThemeProvider";
 import SocketProvider from "@/components/providers/SocketProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import BroadcastModalListener from "@/components/BroadcastModalListener";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -165,6 +166,7 @@ export default function RootLayout({ children }) {
               <Footer/>
               <BottomNav />
               <PWAInstallPrompt />
+              <BroadcastModalListener />
             </SocketProvider>
           </QueryProvider>
         </ThemeProvider>

@@ -22,6 +22,17 @@ export async function POST(req) {
 
     const db = await getDb();
 
+    // Check if new registrations are disabled by administrator
+    if (type === "signup") {
+      const settings = await db.collection("systemSettings").findOne({ key: "global_config" });
+      if (settings && settings.allowSignups === false) {
+        return Response.json(
+          { success: false, message: "নতুন ইউজার রেজিস্ট্রেশন সাময়িকভাবে বন্ধ আছে।" },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check resend cooldown (60 seconds)
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
     const recentOtp = await db.collection("otps").findOne({

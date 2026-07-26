@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 import dynamic from "next/dynamic";
 import PageLoader from "@/components/ui/PageLoader";
+import { useTranslation } from "@/lib/useTranslation";
 
 const ImageCropModal = dynamic(
   () => import("@/components/ui/ImageCropModal"),
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const [showImageModal, setShowImageModal] = useState(false); // ছবিতে ক্লিক করলে বড় করে দেখানো
 
   // Edit profile state
+  const { lang } = useTranslation();
   const [name, setName] = useState("");
   const [imagePreview, setImagePreview] = useState(""); // দেখানোর জন্য
   const [imageFile, setImageFile] = useState(null); // upload করার জন্য
@@ -36,7 +38,6 @@ export default function ProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
   const [cropImageSrc, setCropImageSrc] = useState(null); // image crop editor for selected file
-
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

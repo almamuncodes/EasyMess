@@ -8,6 +8,7 @@ import Sidebar from "./DashboardSideBar";
 import { useTranslation } from "@/lib/useTranslation";
 import { authClient } from "@/lib/auth-client";
 import PageLoader from "@/components/ui/PageLoader";
+import BroadcastModalListener from "@/components/BroadcastModalListener";
 
 export default function DashboardGuard({ children }) {
   const pathname = usePathname();
@@ -56,10 +57,13 @@ export default function DashboardGuard({ children }) {
             setRole(data.role);
             sessionStorage.setItem(`user_role_${userId}`, data.role);
             sessionStorage.setItem("user_role", data.role);
+            // Set cookie so proxy middleware can identify role
+            document.cookie = `em_user_role=${data.role}; path=/; SameSite=Strict`;
           } else {
             setRole(null);
             sessionStorage.removeItem(`user_role_${userId}`);
             sessionStorage.removeItem("user_role");
+            document.cookie = "em_user_role=; path=/; max-age=0";
           }
         }
       } catch (err) {
@@ -76,12 +80,32 @@ export default function DashboardGuard({ children }) {
     };
   }, [userId, isSessionLoading]);
 
-  // Handle role-based sub-route authorization
+  // Handle role-based sub-route authorization + maintenance mode check
   useEffect(() => {
     if (!role) return;
 
     if (role === "member" && pathname.startsWith("/dashboard/manager-dashboard")) {
       router.replace("/dashboard/user-dashboard/overview");
+    }
+
+    if (role !== "admin" && pathname.startsWith("/dashboard/admin-dashboard")) {
+      if (role === "manager") {
+        router.replace("/dashboard/manager-dashboard/overview");
+      } else {
+        router.replace("/dashboard/user-dashboard/overview");
+      }
+    }
+
+    // Maintenance mode check for non-admins inside the dashboard
+    if (role !== "admin") {
+      fetch("/api/maintenance-status")
+        .then((r) => r.json())
+        .then(({ maintenanceMode }) => {
+          if (maintenanceMode) {
+            router.replace("/maintenance");
+          }
+        })
+        .catch(() => {});
     }
   }, [role, pathname, router]);
 
@@ -136,6 +160,9 @@ export default function DashboardGuard({ children }) {
       <main className="flex-1 p-4 md:p-6 bg-gray-50 dark:bg-slate-950">
         {children}
       </main>
+
+      {/* Global System Broadcast Popup Modal */}
+      <BroadcastModalListener />
     </div>
   );
 }

@@ -156,8 +156,8 @@ export default function ImageCropModal({ imageSrc, onApply, onCancel, cropShape 
     const ctx = exportCanvas.getContext("2d");
 
     if (isOriginalSize) {
-      // Preserve original ratio with max dimension 800px
-      const maxDim = 800;
+      // Preserve original ratio with max dimension 500px
+      const maxDim = 500;
       const aspect = imgElement.width / imgElement.height;
       let exportW, exportH;
       if (imgElement.width >= imgElement.height) {
@@ -199,7 +199,7 @@ export default function ImageCropModal({ imageSrc, onApply, onCancel, cropShape 
         onApply({ file, previewUrl });
       },
       "image/jpeg",
-      0.85
+      0.6
     );
   };
 

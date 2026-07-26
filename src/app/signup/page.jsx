@@ -72,8 +72,28 @@ export default function SignupForm() {
   // Cooldown state
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // System settings check
+  const [allowSignups, setAllowSignups] = useState(true);
+  const [settings, setSettings] = useState(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+
   // Inputs Ref for 6-digit OTP
   const otpRefs = useRef([]);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/system/settings`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && data?.data) {
+          setSettings(data.data);
+          setAllowSignups(data.data.allowSignups !== false);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setSettingsLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -82,11 +102,12 @@ export default function SignupForm() {
     }
   }, [resendCooldown]);
 
-  // Clean OTP when switching modes
-  useEffect(() => {
+  // Clear OTP and switch back to signup
+  const handleBackToSignup = () => {
     setOtpArray(new Array(6).fill(""));
     setOtpCode("");
-  }, [mode]);
+    setMode("signup");
+  };
 
   const triggerSendOtp = async (targetEmail) => {
     if (resendCooldown > 0) return;
@@ -136,6 +157,9 @@ export default function SignupForm() {
         trackEvent("sign_up", { method: "email" });
         await authClient.signOut();
         
+        // Clear OTP state before showing verification mode
+        setOtpArray(new Array(6).fill(""));
+        setOtpCode("");
         setMode("verify");
         await triggerSendOtp(email.trim());
         toast.success(lang === "bn" ? "অ্যাকাউন্ট তৈরি হয়েছে। অনুগ্রহ করে ওটিপি দিয়ে ভেরিফাই করুন।" : "Account created successfully. Please verify your email.");
@@ -211,6 +235,54 @@ export default function SignupForm() {
     }
     e.preventDefault();
   };
+
+  if (settingsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 p-4">
+        <Loader2 className="animate-spin text-orange-500" size={32} />
+      </div>
+    );
+  }
+
+  if (!allowSignups) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950 p-4">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-lg border border-red-100 dark:border-red-950/30 text-center space-y-6">
+          <div className="w-16 h-16 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+            {lang === "bn" ? "রেজিস্ট্রেশন সাময়িকভাবে বন্ধ আছে" : "Registrations Temporarily Closed"}
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            {lang === "bn"
+              ? "সিস্টেম অ্যাডমিনিস্ট্রেটর সাময়িকভাবে নতুন ইউজার রেজিস্ট্রেশন বন্ধ রেখেছেন। বিস্তারিত জানতে যোগাযোগ করুন।"
+              : "The system administrator has temporarily disabled new user registrations. Please contact support for assistance."}
+          </p>
+          {settings && (
+            <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-4 text-left text-sm space-y-2">
+              {settings.helplineNumber && (
+                <p className="text-gray-600 dark:text-gray-300">
+                  <strong>{lang === "bn" ? "হেল্পলাইন:" : "Helpline:"}</strong> {settings.helplineNumber}
+                </p>
+              )}
+              {settings.supportEmail && (
+                <p className="text-gray-600 dark:text-gray-300">
+                  <strong>{lang === "bn" ? "ইমেল:" : "Email:"}</strong> {settings.supportEmail}
+                </p>
+              )}
+            </div>
+          )}
+          <Link
+            href="/"
+            className="block w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold text-center transition"
+          >
+            {lang === "bn" ? "হোমপেজে ফিরে যান" : "Back to Home"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-955 p-4 pb-20 md:pb-4">
@@ -348,7 +420,7 @@ export default function SignupForm() {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => setMode("signup")}
+              onClick={handleBackToSignup}
               className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mb-4 cursor-pointer"
             >
               <ArrowLeft size={16} /> {t("backToSignup")}

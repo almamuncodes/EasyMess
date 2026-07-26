@@ -6,11 +6,13 @@ import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
+import { compressImage } from "@/lib/image-utils";
 
 
 export default function CreateMessForm() {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null); // stores the compressed file
   const user = GetUser();
   const userId = user?.user?.id;
   const creaotrName = user?.user?.name;
@@ -22,13 +24,12 @@ const handleSubmit = async (e) => {
 
   const formData = new FormData(e.currentTarget);
   const data = Object.fromEntries(formData.entries());
-  const imageFile = formData.get("image");
 
   try {
     // 1. Image upload — শুধু ছবি থাকলেই চেষ্টা করবে, fail হলেও mess creation আটকাবে না
     let imageUrl = ""; // fallback default image url দিতে পারো এখানে
 
-    if (imageFile && imageFile.size > 0) {
+    if (imageFile) {
       try {
         const imgData = new FormData();
         imgData.append("file", imageFile);
@@ -88,9 +89,21 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) setPreview(URL.createObjectURL(file));
+    if (file) {
+      try {
+        // Compress image client side to ~20-30kb
+        const compressed = await compressImage(file, { maxWidth: 400, maxHeight: 400, quality: 0.6 });
+        setImageFile(compressed);
+        setPreview(URL.createObjectURL(compressed));
+      } catch (err) {
+        console.error("Image compression error:", err);
+        // Fallback to original if compression fails
+        setImageFile(file);
+        setPreview(URL.createObjectURL(file));
+      }
+    }
   };
 
   return (

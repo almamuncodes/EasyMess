@@ -343,6 +343,7 @@ export default function AdminMessRegistry() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminId]);
 
   useEffect(() => {
