@@ -298,7 +298,7 @@ export default function AdminAnnouncementsPage() {
                           {isBn ? "ছবি আপলোড করতে ক্লিক করুন" : "Click to select banner image"}
                         </p>
                         <p className="text-[10px] text-gray-400">
-                          PNG, JPG, WEBP (Max 5MB) - Direct Cloudinary Upload
+                          {isBn ? "PNG, JPG, WEBP - অটো অপ্টিমাইজড ক্লাউড আপলোড" : "PNG, JPG, WEBP - Auto Optimized Cloud Upload"}
                         </p>
                       </>
                     )}
