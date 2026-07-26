@@ -5,7 +5,7 @@ import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
-import { Sparkles, X } from "lucide-react";
+import { Sparkles, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { getBDNow } from "@/lib/date-utils";
 
@@ -81,6 +81,14 @@ export default function UserOverviewPage() {
   const [loading, setLoading] = useState(() => !data);
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredMembers = useMemo(() => {
+    if (!data?.members) return [];
+    return data.members.filter((m) =>
+      m.userName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [data?.members, searchQuery]);
 
 
 
@@ -362,68 +370,93 @@ export default function UserOverviewPage() {
               </div>
             </div>
 
-            {/* Desktop Table */}
-            <div className="hidden overflow-hidden rounded-2xl border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 sm:block shadow-sm">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[#1B2A26]/10 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50 dark:text-slate-400">
-                    <th className="px-4 py-3 font-medium">Member</th>
-                    <th className="px-4 py-3 font-medium">Meal</th>
-                    <th className="px-4 py-3 font-medium">Deposit</th>
-                    <th className="px-4 py-3 font-medium">Bill</th>
-                    <th className="px-4 py-3 font-medium">Balance</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.members.map((m, idx) => (
-                    <tr
-                      key={m.userId}
-                      className={`border-b border-[#1B2A26]/5 dark:border-slate-800/50 last:border-0 ${
-                        idx % 2 === 1 ? "bg-[#1B2A26]/[0.02] dark:bg-slate-800/20" : ""
-                      }`}
-                    >
-                      <td className="px-4 py-3 font-semibold">{m.userName}</td>
-                      <td className="px-4 py-3 font-mono">{m.totalMeal}</td>
-                      <td className="px-4 py-3 font-mono">৳ {taka(m.deposit)}</td>
-                      <td className="px-4 py-3 font-mono">৳ {taka(m.bill)}</td>
-                      <td
-                        className={`px-4 py-3 font-mono font-bold ${
-                          m.balance >= 0 ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-400"
-                        }`}
-                      >
-                        {m.balance >= 0 ? "+" : ""}
-                        {taka(m.balance)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={m.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Search Bar */}
+            <div className="mt-6 flex items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-[#1B2A26]/10 dark:border-slate-800 shadow-sm">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder={lang === "bn" ? "মেম্বার খুঁজুন..." : "Search member..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                />
+              </div>
+              <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
+                {filteredMembers.length} {lang === "bn" ? "মেম্বার" : filteredMembers.length === 1 ? "Member" : "Members"}
+              </span>
             </div>
 
-            {/* Mobile Cards */}
-            <div className="space-y-3 sm:hidden">
-              {data.members.map((m) => (
-                <div key={m.userId} className="rounded-2xl border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm text-gray-900 dark:text-white">{m.userName}</p>
-                    <StatusBadge status={m.status} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <LeaderRow left="Meal" right={m.totalMeal} />
-                    <LeaderRow left="Deposit" right={`৳ ${taka(m.deposit)}`} />
-                    <LeaderRow left="Bill" right={`৳ ${taka(m.bill)}`} />
-                    <LeaderRow
-                      left="Balance"
-                      right={`${m.balance >= 0 ? "+" : ""}৳ ${taka(m.balance)}`}
-                    />
-                  </div>
+            {filteredMembers.length === 0 ? (
+              <div className="mt-4 p-8 text-center text-gray-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-md border border-[#1B2A26]/10 dark:border-slate-800">
+                {lang === "bn" ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
+              </div>
+            ) : (
+              <>
+                {/* Desktop Table */}
+                <div className="mt-4 hidden overflow-hidden rounded-2xl border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 sm:block shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-[#1B2A26]/10 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50 dark:text-slate-400">
+                        <th className="px-4 py-3 font-medium">Member</th>
+                        <th className="px-4 py-3 font-medium">Meal</th>
+                        <th className="px-4 py-3 font-medium">Deposit</th>
+                        <th className="px-4 py-3 font-medium">Bill</th>
+                        <th className="px-4 py-3 font-medium">Balance</th>
+                        <th className="px-4 py-3 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredMembers.map((m, idx) => (
+                        <tr
+                          key={m.userId}
+                          className={`border-b border-[#1B2A26]/5 dark:border-slate-800/50 last:border-0 ${
+                            idx % 2 === 1 ? "bg-[#1B2A26]/[0.02] dark:bg-slate-800/20" : ""
+                          }`}
+                        >
+                          <td className="px-4 py-3 font-semibold">{m.userName}</td>
+                          <td className="px-4 py-3 font-mono">{m.totalMeal}</td>
+                          <td className="px-4 py-3 font-mono">৳ {taka(m.deposit)}</td>
+                          <td className="px-4 py-3 font-mono">৳ {taka(m.bill)}</td>
+                          <td
+                            className={`px-4 py-3 font-mono font-bold ${
+                              m.balance >= 0 ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
+                            }`}
+                          >
+                            {m.balance >= 0 ? "+" : ""}
+                            {taka(m.balance)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <StatusBadge status={m.status} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-            </div>
+
+                {/* Mobile Cards */}
+                <div className="mt-4 space-y-3 sm:hidden">
+                  {filteredMembers.map((m) => (
+                    <div key={m.userId} className="rounded-2xl border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white">{m.userName}</p>
+                        <StatusBadge status={m.status} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <LeaderRow left="Meal" right={m.totalMeal} />
+                        <LeaderRow left="Deposit" right={`৳ ${taka(m.deposit)}`} />
+                        <LeaderRow left="Bill" right={`৳ ${taka(m.bill)}`} />
+                        <LeaderRow
+                          left="Balance"
+                          right={`${m.balance >= 0 ? "+" : ""}৳ ${taka(m.balance)}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         ) : null}
       </div>

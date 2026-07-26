@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import {
@@ -342,7 +343,7 @@ export default function MealManagementPage() {
           <div>
             {/* Mobile View: Rendered on small screens */}
             <div className="block md:hidden divide-y divide-gray-100 dark:divide-slate-800">
-              {filteredMembers.map((m) => {
+              {filteredMembers.map((m, idx) => {
                 const joinDate = new Date(m.createdAt);
                 joinDate.setUTCHours(0, 0, 0, 0);
                 const currentDate = new Date(date);
@@ -354,15 +355,21 @@ export default function MealManagementPage() {
                   (m.guestLunch || 0) +
                   (m.guestDinner || 0);
 
+                const isEven = idx % 2 === 0;
+                const cardBg = isEven ? "bg-white dark:bg-slate-900" : "bg-orange-50/50 dark:bg-orange-950/15";
+
                 return (
-                  <div key={m.userId} className="p-4 space-y-3">
+                  <div key={m.userId} className={`p-4 space-y-3 ${cardBg}`}>
                     {/* Top row: Avatar & name + guest trigger */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {m.image ? (
-                          <img
+                          <Image
                             src={m.image}
                             alt={m.name}
+                            width={40}
+                            height={40}
+                            quality={40}
                             className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
                           />
                         ) : (
@@ -458,7 +465,7 @@ export default function MealManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                  {filteredMembers.map((m) => {
+                  {filteredMembers.map((m, idx) => {
                     const joinDate = new Date(m.createdAt);
                     joinDate.setUTCHours(0, 0, 0, 0);
                     const currentDate = new Date(date);
@@ -470,18 +477,24 @@ export default function MealManagementPage() {
                       (m.guestLunch || 0) +
                       (m.guestDinner || 0);
 
+                    const isEven = idx % 2 === 0;
+                    const rowBg = isEven ? "bg-white dark:bg-slate-900" : "bg-orange-50/30 dark:bg-orange-950/10";
+
                     return (
                       <tr
                         key={m.userId}
-                        className="hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition"
+                        className={`${rowBg} hover:bg-gray-50/50 dark:hover:bg-slate-800/40 transition`}
                       >
                         {/* Member Info */}
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-3">
                             {m.image ? (
-                              <img
+                              <Image
                                 src={m.image}
                                 alt={m.name}
+                                width={40}
+                                height={40}
+                                quality={40}
                                 className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
                               />
                             ) : (

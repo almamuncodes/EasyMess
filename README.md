@@ -33,6 +33,7 @@ Managing a mess manually with group-chat calculations or paper charts is time-co
 * **Flexible Deadlines:** Cutoff times for meals enforced strictly per mess settings.
 * **Manager Override:** Managers can update meal states on behalf of members.
 * **Joining Date Lock:** Prevents meal changes before a member's official joining date.
+* **Member Avatars & Custom Styling:** High-performance Next.js `<Image>` avatars and custom alternating white/soft-orange backgrounds for clear visual layout.
 
 ### 💰 Expense & Deposit Ledger
 * **Daily Bazaar Log:** Detailed grocery list recording with items and exact pricing.
@@ -43,6 +44,7 @@ Managing a mess manually with group-chat calculations or paper charts is time-co
 ### 📊 Real-time Calculations & Reports
 * **Automatic Split-Billing:** Dynamic calculations of meal rate, total mess bill, and refund/due balances.
 * **Monthly Summary Overview:** A rich summary of the mess's state.
+* **Interactive Member Search & Filters:** Real-time search filters with live member counts and empty states inside both Manager and Member Overview dashboards.
 * **PDF Export:** Quick, ready-to-share PDF receipt and reports download.
 
 ### 📋 Interactive Notice Board & Reactions
@@ -51,13 +53,22 @@ Managing a mess manually with group-chat calculations or paper charts is time-co
 * **Modals & Comments:** Modern, non-blocking confirmation dialogs and threaded comments.
 
 ### 🔔 Real-time Notifications
-* **In-app alerts:** Powering real-time actions via **Socket.io**.
+* **In-app alerts:** Powering real-time actions via **Socket.io** with optimized permission checks to prevent browser blockages.
 * **Push Notifications:** Firebase Cloud Messaging integration for background alerts.
 
 ### 🎨 Premium UI/UX
 * **Full Bilingual Support:** Instant toggle between **English** and **বাংলা** (English/Bengali) across all views.
 * **Universal Dark Mode:** Tailored slate/dark theme saved automatically to user preferences.
 * **Stunning Responsive View:** Mobile-first dashboard layout optimized for smartphones, tablets, and desktops.
+
+---
+
+## 🛠️ Recent Updates
+* 🔍 **Real-time Member Search:** Added live search bars on both manager and user overview dashboard summaries.
+* 🖼️ **Avatar Image Optimization:** Integrated backend image mapping with Next.js optimized `<Image>` tag with automatic client-side caching.
+* 🎨 **Zebra Branding Layout:** Alternating soft-orange card backgrounds for meal management.
+* 🔗 **Sidebar Optimization:** Restored approvals dashboard routing path positioned near Settings.
+* 🔌 **Safe WebSocket Transport:** Prevented browser permission blocks to ensure 100% active Socket.io notification updates.
 
 ---
 

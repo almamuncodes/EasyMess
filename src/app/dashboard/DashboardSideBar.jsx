@@ -143,16 +143,16 @@ export default function Sidebar() {
     { name: t("bazaarSchedule"), href: "/dashboard/manager-dashboard/bazaar-schedule", icon: Calendar, roles: ["manager"] },
     { name: t("bazaarSchedule"), href: "/dashboard/user-dashboard/bazaar-schedule", icon: Calendar, roles: ["member"] },
     {
-      name: t("settingsSidebar"),
-      href: "/settings",
-      icon: Settings,
-      roles: ["pore thik korbo ata "],
-    },
-    {
       name: t("activityLog"),
       href: "/dashboard/activity-log",
       icon: History,
       roles: ["manager", "member"],
+    },
+    {
+      name: t("pendingRequestsSidebar"),
+      href: "/dashboard/manager-dashboard/pending-requests",
+      icon: UserCog,
+      roles: ["manager"],
     },
     {
       name: t("settingsSidebar"),
