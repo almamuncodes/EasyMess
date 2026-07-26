@@ -270,7 +270,8 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [session, isPending, hasMess]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, isPending]);
 
   // ২. Mess পাওয়া গেলে আজকের meal status আনা (এইটা যেকোনো member এর জন্য কাজ করে, শুধু manager না)
   useEffect(() => {
@@ -317,7 +318,8 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [hasMess, session, today, todayMeals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMess, session, today]);
 
   // ৩. Mess-এর নাম/manager/member সংখ্যা আর এই মাসের meal rate/bill — সব read-only
   useEffect(() => {
@@ -373,7 +375,8 @@ export default function LandingPage() {
     return () => {
       ignore = true;
     };
-  }, [hasMess, session, messInfo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMess, session]);
 
   const fonts = (
     <style jsx global>{`
