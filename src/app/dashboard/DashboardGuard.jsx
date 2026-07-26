@@ -96,16 +96,31 @@ export default function DashboardGuard({ children }) {
       }
     }
 
-    // Maintenance mode check for non-admins inside the dashboard
+    // Maintenance mode check for non-admins inside the dashboard (cached for 60s to avoid spamming the endpoint)
     if (role !== "admin") {
-      fetch("/api/maintenance-status")
-        .then((r) => r.json())
-        .then(({ maintenanceMode }) => {
-          if (maintenanceMode) {
-            router.replace("/maintenance");
-          }
-        })
-        .catch(() => {});
+      const now = Date.now();
+      const cachedTimeStr = typeof window !== "undefined" ? sessionStorage.getItem("cached_maintenance_time") : null;
+      const cachedStatus = typeof window !== "undefined" ? sessionStorage.getItem("cached_maintenance_status") : null;
+      const cachedTime = cachedTimeStr ? Number(cachedTimeStr) : 0;
+
+      if (cachedStatus && (now - cachedTime < 60000)) {
+        if (cachedStatus === "true") {
+          router.replace("/maintenance");
+        }
+      } else {
+        fetch("/api/maintenance-status")
+          .then((r) => r.json())
+          .then(({ maintenanceMode }) => {
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("cached_maintenance_time", String(now));
+              sessionStorage.setItem("cached_maintenance_status", String(maintenanceMode));
+            }
+            if (maintenanceMode) {
+              router.replace("/maintenance");
+            }
+          })
+          .catch(() => {});
+      }
     }
   }, [role, pathname, router]);
 
