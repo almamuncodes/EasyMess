@@ -4,6 +4,7 @@ import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
 import { toast } from "sonner";
 import Image from "next/image";
+import { compressImage } from "@/lib/image-utils";
 import {
   Megaphone,
   Send,
@@ -127,15 +128,13 @@ export default function AdminAnnouncementsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(isBn ? "ছবি সর্বোচ্চ ৫ মেগাবাইট হতে পারবে" : "Image size must be less than 5MB");
-      return;
-    }
-
     setUploadingImage(true);
     try {
+      // Compress the announcement image to max 1000px width/height and 0.75 quality to preserve clarity for large displays
+      const compressedFile = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.75 });
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append(
         "upload_preset",
         process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "easymess_preset"
