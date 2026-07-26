@@ -54,7 +54,8 @@ export default function DashboardGuard({ children }) {
       }
 
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/member/role/${userId}`);
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const res = await fetch(`${apiBase}/api/member/role/${userId}`);
         
         if (res.status === 404) {
           if (isSubscribed) {
