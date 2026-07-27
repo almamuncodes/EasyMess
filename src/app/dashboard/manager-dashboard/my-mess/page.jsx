@@ -24,7 +24,7 @@ import MessQRCodeModal from "@/components/mess/MessQRCodeModal";
 
 
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function MyMess() {
   const { theme } = useTheme();

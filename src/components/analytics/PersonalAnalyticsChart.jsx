@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { BarChart3, TrendingUp, Calendar, Wallet, ShoppingBag } from "lucide-react";
 import { useTranslation } from "@/lib/useTranslation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 const taka = (n) =>
   new Intl.NumberFormat("en-BD", { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n || 0);

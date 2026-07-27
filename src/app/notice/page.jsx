@@ -52,7 +52,7 @@ export default function NoticePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all"); // all, pinned, recent, oldest, archived
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
   // Fetch role
   useEffect(() => {

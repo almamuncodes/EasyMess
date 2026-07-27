@@ -35,7 +35,7 @@ const hindSiliguri = Hind_Siliguri({
   variable: "--font-body-bn",
 });
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 const NOTE_MAX_LENGTH = 60;
 
 const PAYMENT_STYLES = {

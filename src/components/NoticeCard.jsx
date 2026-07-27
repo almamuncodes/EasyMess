@@ -64,7 +64,7 @@ export default function NoticeCard({ notice, userId, role, onEditClick, onDelete
     };
   }, []);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
   // Emojis list
   const emojiList = ["👍", "❤️", "🤗", "😮", "🎉"];

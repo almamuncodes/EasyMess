@@ -7,7 +7,7 @@ import { Calendar as CalendarIcon, Clock, AlertCircle, ShoppingBag, Sparkles, Us
 import PageLoader from "@/components/ui/PageLoader";
 import { getBDDateStr } from "@/lib/date-utils";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function UserBazaarSchedulePage() {
   const { t, lang } = useTranslation();

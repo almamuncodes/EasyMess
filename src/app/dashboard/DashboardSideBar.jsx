@@ -19,6 +19,7 @@ import {
   History,
   Megaphone,
   Activity,
+  Mail,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -115,6 +116,12 @@ export default function Sidebar() {
       name: lang === "bn" ? "ব্রডকাস্ট নোটিশ" : "Broadcasts",
       href: "/dashboard/admin-dashboard/announcements",
       icon: Megaphone,
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "ইমেইল ব্রডকাস্ট" : "Bulk Email",
+      href: "/dashboard/admin-dashboard/send-email",
+      icon: Mail,
       roles: ["admin"],
     },
     {

@@ -29,7 +29,7 @@ export default function SocketProvider({ children }) {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
   // Fetch notifications from the backend
   const fetchNotifications = async (uId) => {

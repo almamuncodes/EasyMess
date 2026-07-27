@@ -6,7 +6,7 @@ import { useTranslation } from "@/lib/useTranslation";
 import { useUser } from "@/components/action/action";
 import { getBDNow } from "@/lib/date-utils";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function MealCountdownTimer({ userId: customUserId }) {
   const { t, lang } = useTranslation();

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import MessQRCodeModal from "@/components/mess/MessQRCodeModal";
 import { QrCode, Copy, Check } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function MyMessPage() {
   const user = GetUser();

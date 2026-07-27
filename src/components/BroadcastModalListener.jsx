@@ -106,7 +106,7 @@ export default function BroadcastModalListener() {
       fetchActiveBroadcast();
     });
 
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || "";
     const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
     });
