@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSocket } from "@/components/providers/SocketProvider";
 import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
@@ -44,7 +44,7 @@ export default function NoticePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [noticeToDelete, setNoticeToDelete] = useState(null);
   const [commentToDelete, setCommentToDelete] = useState(null);
-  
+
   // Notice being edited
   const [editingNotice, setEditingNotice] = useState(null);
 
@@ -127,11 +127,11 @@ export default function NoticePage() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewNotice = () => {
+    const handleNewNotice = useCallback(() => {
       fetchNotices();
-    };
+    }, [fetchNotices]);
 
-    const handleEditNotice = (data) => {
+    const handleEditNotice = useCallback((data) => {
       setNotices((prev) =>
         prev.map((notice) =>
           notice._id.toString() === data.notice._id.toString()
@@ -139,32 +139,32 @@ export default function NoticePage() {
             : notice
         )
       );
-    };
+    }, []);
 
-    const handleDeleteNotice = (data) => {
+    const handleSocketDeleteNotice = useCallback((data) => {
       setNotices((prev) =>
         prev.filter((notice) => notice._id.toString() !== data.noticeId.toString())
       );
-    };
+    }, []);
 
     socket.on("new-notice", handleNewNotice);
     socket.on("edit-notice", handleEditNotice);
-    socket.on("delete-notice", handleDeleteNotice);
+    socket.on("delete-notice", handleSocketDeleteNotice);
 
     return () => {
       socket.off("new-notice", handleNewNotice);
       socket.off("edit-notice", handleEditNotice);
-      socket.off("delete-notice", handleDeleteNotice);
+      socket.off("delete-notice", handleSocketDeleteNotice);
     };
   }, [socket, messId, activeFilter, searchQuery]);
 
   // Open Edit Modal
-  const openEditModal = (notice) => {
+  const openEditModal = useCallback((notice) => {
     setEditingNotice(notice);
     setTitle(notice.title);
     setDescription(notice.description);
     setIsPinned(notice.isPinned);
-    
+
     if (notice.expiryDate) {
       // Format to YYYY-MM-DD for date input
       const d = new Date(notice.expiryDate);
@@ -174,7 +174,7 @@ export default function NoticePage() {
       setExpiryDate("");
     }
     setIsEditModalOpen(true);
-  };
+  }, []);
 
   // Handle Create Submit
   const handleCreateSubmit = async (e) => {
@@ -258,9 +258,9 @@ export default function NoticePage() {
   };
 
   // Handle Delete Notice Trigger
-  const handleDeleteNotice = (noticeId) => {
+  const handleDeleteNotice = useCallback((noticeId) => {
     setNoticeToDelete(noticeId);
-  };
+  }, []);
 
   const executeDeleteNotice = async (noticeId) => {
     try {
@@ -467,7 +467,7 @@ export default function NoticePage() {
               role={role}
               onEditClick={openEditModal}
               onDeleteClick={handleDeleteNotice}
-              onDeleteComment={(commentId) => setCommentToDelete(commentId)}
+              onDeleteComment={useCallback((commentId) => setCommentToDelete(commentId), [])}
             />
           ))}
         </div>
