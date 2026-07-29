@@ -32,7 +32,7 @@ export default function SocketProvider({ children }) {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
   // Fetch notifications from the backend
-  const fetchNotifications = React.useCallback(async (uId) => {
+  const fetchNotifications = async (uId) => {
     if (!uId) return;
     try {
       const res = await fetch(`${API_BASE}/api/notifications/${uId}`);
@@ -45,7 +45,7 @@ export default function SocketProvider({ children }) {
     } catch (error) {
       console.error("Error fetching notifications:", error);
     }
-  }, [API_BASE]);
+  };
 
   // Mark all notifications as read
   const markAllAsRead = async () => {
@@ -167,7 +167,7 @@ export default function SocketProvider({ children }) {
     loadMessId();
     fetchNotifications(userId);
     registerPushNotifications(userId);
-  }, [userId, API_BASE, fetchNotifications]);
+  }, [userId, API_BASE]);
 
   // Connect to Socket.io server
   useEffect(() => {
@@ -190,21 +190,24 @@ export default function SocketProvider({ children }) {
       if (userId) {
         newSocket.emit("join-user", userId);
       }
+      if (messId) {
+        newSocket.emit("join-mess", messId);
+      }
     });
 
     // Cleanup on unmount or user change
     return () => {
       newSocket.disconnect();
     };
-  }, [userId, API_BASE, fetchNotifications]);
+  }, [userId, messId, API_BASE]);
 
-
-
+  // Emit join room when messId or userId updates after connection
   useEffect(() => {
-    if (socket && socket.connected && messId) {
-      socket.emit("join-mess", messId);
+    if (socket) {
+      if (userId) socket.emit("join-user", userId);
+      if (messId) socket.emit("join-mess", messId);
     }
-  }, [socket, messId]);
+  }, [socket, userId, messId]);
 
   // Listen to new-notice event
   useEffect(() => {

@@ -7,7 +7,7 @@ import { useTranslation } from "@/lib/useTranslation";
 import { Pin, Calendar, Eye, MessageCircle, MoreVertical, Trash2, Edit2, Check, Smile, Reply, Send, X, Users, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-const NoticeCard = React.memo(function NoticeCard({ notice, userId, role, onEditClick, onDeleteClick, onDeleteComment }) {
+export default function NoticeCard({ notice, userId, role, onEditClick, onDeleteClick, onDeleteComment }) {
   const { socket } = useSocket();
   const { t, lang } = useTranslation();
 
@@ -107,46 +107,6 @@ const NoticeCard = React.memo(function NoticeCard({ notice, userId, role, onEdit
     markAsSeen();
   }, [notice._id, userId, seenBy, API_BASE]);
 
-
-
-  // Fetch comments
-  const fetchComments = React.useCallback(async () => {
-    setLoadingComments(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/notices/${notice._id}/comments`);
-      const data = await res.json();
-      if (data.success) {
-        setComments(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    } finally {
-      setLoadingComments(false);
-    }
-  }, [notice._id, API_BASE]);
-
-  useEffect(() => {
-    if (showComments) {
-      fetchComments();
-    }
-  }, [showComments, notice._id]);
-
-  // Fetch seen status detailed list
-  const fetchSeenStatus = React.useCallback(async () => {
-    setLoadingSeen(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/notices/${notice._id}/seen-status?userId=${userId}`);
-      const data = await res.json();
-      if (data.success) {
-        setSeenStatus(data);
-      }
-    } catch (error) {
-      console.error("Error fetching seen status details:", error);
-    } finally {
-      setLoadingSeen(false);
-    }
-  }, [notice._id, userId, API_BASE]);
-
   // Listen for socket interactions for this notice card
   useEffect(() => {
     if (!socket) return;
@@ -169,6 +129,44 @@ const NoticeCard = React.memo(function NoticeCard({ notice, userId, role, onEdit
     socket.on("notice-interaction", handleInteraction);
     return () => socket.off("notice-interaction", handleInteraction);
   }, [socket, notice._id, showSeenList]);
+
+  // Fetch comments
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/notices/${notice._id}/comments`);
+      const data = await res.json();
+      if (data.success) {
+        setComments(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showComments) {
+      fetchComments();
+    }
+  }, [showComments, notice._id]);
+
+  // Fetch seen status detailed list
+  const fetchSeenStatus = async () => {
+    setLoadingSeen(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/notices/${notice._id}/seen-status?userId=${userId}`);
+      const data = await res.json();
+      if (data.success) {
+        setSeenStatus(data);
+      }
+    } catch (error) {
+      console.error("Error fetching seen status details:", error);
+    } finally {
+      setLoadingSeen(false);
+    }
+  };
 
   useEffect(() => {
     if (showSeenList && userId) {
@@ -328,7 +326,7 @@ const NoticeCard = React.memo(function NoticeCard({ notice, userId, role, onEdit
               alt={notice.authorName}
               width={40}
               height={40}
-              unoptimized={typeof notice.authorImage === "string" && notice.authorImage.startsWith("http")} priority
+              unoptimized={typeof notice.authorImage === "string" && notice.authorImage.startsWith("http")}
               className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-slate-700"
             />
           ) : (
@@ -877,5 +875,3 @@ const NoticeCard = React.memo(function NoticeCard({ notice, userId, role, onEdit
     </div>
   );
 }
-
-export default NoticeCard;
