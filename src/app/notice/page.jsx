@@ -16,16 +16,22 @@ export default function NoticePage() {
   const userId = session?.user?.id;
 
   const [notices, setNotices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     if (typeof window !== "undefined" && messId) {
       const cached = sessionStorage.getItem(`notice_list_${messId}`);
       if (cached) {
-        try { setNotices(JSON.parse(cached)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(cached);
+          setNotices(parsed);
+          setLoading(parsed.length === 0);
+        } catch (e) {}
       }
     }
   }, [messId]);
-  const [loading, setLoading] = useState(true);
   const [role, setRole] = useState("");
+
   useEffect(() => {
     if (typeof window !== "undefined" && userId) {
       const cachedRole = sessionStorage.getItem(`user_role_${userId}`);
@@ -75,7 +81,7 @@ export default function NoticePage() {
   }, [userId, API_BASE]);
 
   // Fetch notices list
-  const fetchNotices = useCallback(async () => {
+  const fetchNotices = React.useCallback(async () => {
     if (!messId) return;
 
     const key = `notice_list_${messId}_${activeFilter}_${searchQuery}`;
@@ -84,7 +90,7 @@ export default function NoticePage() {
       if (cached) {
         try { setNotices(JSON.parse(cached)); } catch (e) {}
       } else {
-        if (notices.length === 0) setLoading(true);
+        setLoading(true);
       }
     }
 
@@ -115,7 +121,7 @@ export default function NoticePage() {
     if (messId) {
       fetchNotices();
     }
-  }, [messId, activeFilter, searchQuery]);
+  }, [messId, fetchNotices]);
 
   // Real-time notice list update listeners
   useEffect(() => {
