@@ -127,11 +127,11 @@ export default function NoticePage() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewNotice = useCallback(() => {
+    const handleNewNotice = () => {
       fetchNotices();
-    }, [fetchNotices]);
+    };
 
-    const handleEditNotice = useCallback((data) => {
+    const handleEditNotice = (data) => {
       setNotices((prev) =>
         prev.map((notice) =>
           notice._id.toString() === data.notice._id.toString()
@@ -139,13 +139,13 @@ export default function NoticePage() {
             : notice
         )
       );
-    }, []);
+    };
 
-    const handleSocketDeleteNotice = useCallback((data) => {
+    const handleSocketDeleteNotice = (data) => {
       setNotices((prev) =>
         prev.filter((notice) => notice._id.toString() !== data.noticeId.toString())
       );
-    }, []);
+    };
 
     socket.on("new-notice", handleNewNotice);
     socket.on("edit-notice", handleEditNotice);
@@ -156,7 +156,7 @@ export default function NoticePage() {
       socket.off("edit-notice", handleEditNotice);
       socket.off("delete-notice", handleSocketDeleteNotice);
     };
-  }, [socket, messId, activeFilter, searchQuery]);
+  }, [socket, fetchNotices]);
 
   // Open Edit Modal
   const openEditModal = useCallback((notice) => {
@@ -260,6 +260,10 @@ export default function NoticePage() {
   // Handle Delete Notice Trigger
   const handleDeleteNotice = useCallback((noticeId) => {
     setNoticeToDelete(noticeId);
+  }, []);
+
+  const handleDeleteComment = useCallback((commentId) => {
+    setCommentToDelete(commentId);
   }, []);
 
   const executeDeleteNotice = async (noticeId) => {
@@ -467,7 +471,7 @@ export default function NoticePage() {
               role={role}
               onEditClick={openEditModal}
               onDeleteClick={handleDeleteNotice}
-              onDeleteComment={useCallback((commentId) => setCommentToDelete(commentId), [])}
+              onDeleteComment={handleDeleteComment}
             />
           ))}
         </div>
