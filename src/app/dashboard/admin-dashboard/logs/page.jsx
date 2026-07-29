@@ -19,12 +19,32 @@ export default function AdminAuditLogsPage() {
   const { lang } = useTranslation();
   const isBn = lang === "bn";
 
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState(() => {
+    if (typeof window !== "undefined" && adminUserId) {
+      const cached = sessionStorage.getItem(`admin_audit_logs_${adminUserId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => logs.length === 0);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (force = false) => {
     if (!adminUserId) return;
+
+    if (!force && typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`admin_audit_logs_${adminUserId}`);
+      if (cached) {
+        try {
+          setLogs(JSON.parse(cached));
+          setLoading(false);
+          return;
+        } catch (e) {}
+      }
+    }
+
     setLoading(true);
     try {
       const res = await fetch(
@@ -32,7 +52,11 @@ export default function AdminAuditLogsPage() {
       );
       const data = await res.json();
       if (res.ok && data.success) {
-        setLogs(data.data || []);
+        const newLogs = data.data || [];
+        setLogs(newLogs);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_audit_logs_${adminUserId}`, JSON.stringify(newLogs));
+        }
       } else {
         toast.error(data.message || (isBn ? "অডিট লগ লোড করতে ব্যর্থ" : "Failed to load audit logs"));
       }
@@ -46,7 +70,7 @@ export default function AdminAuditLogsPage() {
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetchLogs();
+      fetchLogs(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminUserId]);
@@ -78,7 +102,7 @@ export default function AdminAuditLogsPage() {
           </p>
         </div>
         <button
-          onClick={fetchLogs}
+          onClick={() => fetchLogs(true)}
           className="self-start sm:self-auto px-4 py-2 bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 rounded-xl text-xs font-semibold hover:bg-orange-100 transition flex items-center gap-1.5 cursor-pointer"
         >
           <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />

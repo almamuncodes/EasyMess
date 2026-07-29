@@ -71,16 +71,52 @@ export default function AdminAnnouncementsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const [broadcasts, setBroadcasts] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [broadcasts, setBroadcasts] = useState(() => {
+    if (typeof window !== "undefined" && adminUserId) {
+      const cached = sessionStorage.getItem(`admin_broadcasts_${adminUserId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.broadcasts || [];
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [users, setUsers] = useState(() => {
+    if (typeof window !== "undefined" && adminUserId) {
+      const cached = sessionStorage.getItem(`admin_broadcasts_${adminUserId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          return parsed.users || [];
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loadingHistory, setLoadingHistory] = useState(() => broadcasts.length === 0);
 
   const [expandedSeenId, setExpandedSeenId] = useState(null);
   const [expandedUnseenId, setExpandedUnseenId] = useState(null);
   const [deleteModalId, setDeleteModalId] = useState(null);
 
-  const fetchBroadcasts = async () => {
+  const fetchBroadcasts = async (force = false) => {
     if (!adminUserId) return;
+
+    if (!force && typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`admin_broadcasts_${adminUserId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setBroadcasts(parsed.broadcasts || []);
+          setUsers(parsed.users || []);
+          setLoadingHistory(false);
+          return;
+        } catch (e) {}
+      }
+    }
+
     setLoadingHistory(true);
     try {
       const res = await fetch(
@@ -88,8 +124,13 @@ export default function AdminAnnouncementsPage() {
       );
       const data = await res.json();
       if (res.ok && data.success) {
-        setBroadcasts(data.data || []);
-        setUsers(data.users || []);
+        const list = data.data || [];
+        const userList = data.users || [];
+        setBroadcasts(list);
+        setUsers(userList);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_broadcasts_${adminUserId}`, JSON.stringify({ broadcasts: list, users: userList }));
+        }
       }
     } catch (err) {
       console.error(err);
@@ -107,7 +148,7 @@ export default function AdminAnnouncementsPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success(isBn ? "ব্রডকাস্ট মুছে ফেলা হয়েছে" : "Broadcast deleted successfully");
-        fetchBroadcasts();
+        fetchBroadcasts(true);
       } else {
         toast.error(data.message || (isBn ? "মুছে ফেলতে ব্যর্থ" : "Failed to delete"));
       }
@@ -119,7 +160,7 @@ export default function AdminAnnouncementsPage() {
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetchBroadcasts();
+      fetchBroadcasts(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminUserId]);
@@ -203,7 +244,7 @@ export default function AdminAnnouncementsPage() {
         setActionUrl("");
         setActionText("");
         setUrgency("normal");
-        fetchBroadcasts();
+        fetchBroadcasts(true);
       } else {
         toast.error(data.message || (isBn ? "ব্রডকাস্ট পাঠাতে ব্যর্থ" : "Failed to send broadcast"));
       }
@@ -446,7 +487,7 @@ export default function AdminAnnouncementsPage() {
           </h2>
           <button
             type="button"
-            onClick={fetchBroadcasts}
+            onClick={() => fetchBroadcasts(true)}
             className="p-2 bg-gray-50 dark:bg-slate-800 rounded-xl text-gray-500 hover:bg-gray-100 transition cursor-pointer"
           >
             <RefreshCcw size={14} className={loadingHistory ? "animate-spin" : ""} />

@@ -13,10 +13,13 @@ import BroadcastModalListener from "@/components/BroadcastModalListener";
 export default function DashboardGuard({ children }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const isBn = lang === "bn";
 
   const { data: session, isPending: isSessionLoading } = authClient.useSession();
   const userId = session?.user?.id;
+
+  const [isBanned, setIsBanned] = useState(false);
 
   const [role, setRole] = useState(() => {
     if (typeof window !== "undefined" && userId) {
@@ -25,6 +28,12 @@ export default function DashboardGuard({ children }) {
     return null;
   });
   const [loading, setLoading] = useState(!role);
+
+  useEffect(() => {
+    if (session?.user?.status === "banned") {
+      setIsBanned(true);
+    }
+  }, [session]);
 
   useEffect(() => {
     if (!isSessionLoading && !session) {
@@ -57,6 +66,13 @@ export default function DashboardGuard({ children }) {
         const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
         const res = await fetch(`${apiBase}/api/member/role/${userId}`);
         
+        if (res.status === 403) {
+          if (isSubscribed) {
+            setIsBanned(true);
+          }
+          return;
+        }
+
         if (res.status === 404) {
           if (isSubscribed) {
             setRole(null);
@@ -70,6 +86,10 @@ export default function DashboardGuard({ children }) {
         const data = await res.json();
         
         if (isSubscribed) {
+          if (data.status === "banned") {
+            setIsBanned(true);
+            return;
+          }
           if (data.role) {
             setRole(data.role);
             sessionStorage.setItem(`user_role_${userId}`, data.role);
@@ -143,6 +163,40 @@ export default function DashboardGuard({ children }) {
 
   if (isSessionLoading || loading) {
     return <PageLoader text={t("checkingAccess")} />;
+  }
+
+  if (isBanned) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gray-50 dark:bg-slate-950 animate-in fade-in duration-300">
+        <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[32px] shadow-xl border border-gray-100/80 dark:border-slate-800 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-20 h-20 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-6 ring-8 ring-rose-50/50 dark:ring-rose-500/5">
+            <AlertTriangle className="w-10 h-10 text-rose-500 stroke-[2.2]" />
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+            {isBn ? "অ্যাকাউন্ট ব্লক করা হয়েছে" : "Account Suspended"}
+          </h1>
+
+          <p className="text-gray-500 dark:text-slate-400 text-sm leading-relaxed mb-8 max-w-xs font-medium">
+            {isBn 
+              ? "দুঃখিত, অ্যাডমিনিস্ট্রেটর আপনার অ্যাকাউন্টটি সাময়িকভাবে বন্ধ করেছেন। অনুগ্রহ করে সহায়তার জন্য যোগাযোগ করুন।" 
+              : "Your account has been suspended by the administrator. Please contact support if you believe this is a mistake."}
+          </p>
+
+          <div className="w-full">
+            <button
+              onClick={async () => {
+                await authClient.signOut();
+                router.replace("/signin");
+              }}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 active:scale-[0.98] text-white font-bold text-sm transition-all shadow-md shadow-rose-500/25 cursor-pointer"
+            >
+              {isBn ? "লগ আউট" : "Sign Out"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // 🔒 PROTECTED ROUTE CHECK: User is not in any mess

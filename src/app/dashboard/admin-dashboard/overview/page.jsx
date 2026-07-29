@@ -31,17 +31,21 @@ export default function AdminOverviewPage() {
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState("");
 
-  const loadOverview = useCallback(async () => {
+  const loadOverview = useCallback(async (force = false) => {
     if (!userId) return;
 
-    if (typeof window !== "undefined") {
+    if (!force && typeof window !== "undefined") {
       const cached = sessionStorage.getItem(`admin_overview_${userId}`);
       if (cached) {
-        try { setOverview(JSON.parse(cached)); } catch (e) {}
-      } else {
-        if (!overview) setLoading(true);
+        try {
+          setOverview(JSON.parse(cached));
+          setLoading(false);
+          return;
+        } catch (e) {}
       }
     }
+
+    if (!overview) setLoading(true);
 
     try {
       setError("");
@@ -76,7 +80,7 @@ export default function AdminOverviewPage() {
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      loadOverview();
+      loadOverview(false);
     });
   }, [loadOverview]);
 
@@ -169,7 +173,7 @@ export default function AdminOverviewPage() {
             </h1>
           </div>
           <button
-            onClick={loadOverview}
+            onClick={() => loadOverview(true)}
             aria-label="Refresh"
             className="shrink-0 rounded-full border border-[#16181D]/10 p-2 text-[#6b6f76] transition hover:border-[#FF6900] hover:text-[#FF6900]"
           >

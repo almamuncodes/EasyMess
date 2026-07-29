@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useDeferredValue } from "react";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
 import { toast } from "sonner";
@@ -25,9 +25,18 @@ export default function AdminUsersPage() {
   const { lang } = useTranslation();
   const isBn = lang === "bn";
 
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState(() => {
+    if (typeof window !== "undefined" && adminUserId) {
+      const cached = sessionStorage.getItem(`admin_all_users_${adminUserId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => users.length === 0);
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -38,8 +47,20 @@ export default function AdminUsersPage() {
   const [newStatus, setNewStatus] = useState("active");
   const [processing, setProcessing] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (force = false) => {
     if (!adminUserId) return;
+
+    if (!force && typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`admin_all_users_${adminUserId}`);
+      if (cached) {
+        try {
+          setUsers(JSON.parse(cached));
+          setLoading(false);
+          return;
+        } catch (e) {}
+      }
+    }
+
     setLoading(true);
     try {
       const res = await fetch(
@@ -47,7 +68,11 @@ export default function AdminUsersPage() {
       );
       const data = await res.json();
       if (res.ok && data.success) {
-        setUsers(data.data || []);
+        const newUsers = data.data || [];
+        setUsers(newUsers);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_all_users_${adminUserId}`, JSON.stringify(newUsers));
+        }
       } else {
         toast.error(data.message || (isBn ? "ইউজার লোড করতে ব্যর্থ" : "Failed to load users"));
       }
@@ -61,7 +86,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetchUsers();
+      fetchUsers(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminUserId]);
@@ -69,9 +94,9 @@ export default function AdminUsersPage() {
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const matchesSearch =
-        u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.messInfo?.messName?.toLowerCase().includes(searchQuery.toLowerCase());
+        u.name?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        u.email?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        u.messInfo?.messName?.toLowerCase().includes(deferredSearchQuery.toLowerCase());
 
       const matchesRole =
         roleFilter === "all" || u.role?.toLowerCase() === roleFilter.toLowerCase();
@@ -81,7 +106,7 @@ export default function AdminUsersPage() {
 
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [users, searchQuery, roleFilter, statusFilter]);
+  }, [users, deferredSearchQuery, roleFilter, statusFilter]);
 
   const handleRoleChange = async () => {
     if (!roleModalUser || !adminUserId) return;
@@ -103,7 +128,7 @@ export default function AdminUsersPage() {
       if (res.ok && data.success) {
         toast.success(data.message || (isBn ? "রোল পরিবর্তিত হয়েছে" : "Role updated"));
         setRoleModalUser(null);
-        fetchUsers();
+        fetchUsers(true);
       } else {
         toast.error(data.message || (isBn ? "রোল পরিবর্তন ব্যর্থ" : "Failed to update role"));
       }
@@ -135,7 +160,7 @@ export default function AdminUsersPage() {
       if (res.ok && data.success) {
         toast.success(data.message || (isBn ? "স্ট্যাটাস পরিবর্তিত হয়েছে" : "Status updated"));
         setStatusModalUser(null);
-        fetchUsers();
+        fetchUsers(true);
       } else {
         toast.error(data.message || (isBn ? "স্ট্যাটাস পরিবর্তন ব্যর্থ" : "Failed to update status"));
       }
@@ -163,7 +188,7 @@ export default function AdminUsersPage() {
           </p>
         </div>
         <button
-          onClick={fetchUsers}
+          onClick={() => fetchUsers(true)}
           className="self-start sm:self-auto px-4 py-2 bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 rounded-xl text-xs font-semibold hover:bg-orange-100 transition flex items-center gap-1.5 cursor-pointer"
         >
           <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
@@ -224,8 +249,22 @@ export default function AdminUsersPage() {
 
       {/* Users Content */}
       {loading ? (
-        <div className="p-12 flex justify-center bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+        <div className="overflow-hidden rounded-2xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-sm animate-pulse">
+          <div className="h-6 w-1/4 bg-gray-200 dark:bg-slate-800 rounded-lg" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 py-3 border-b border-gray-50 dark:border-slate-800/50">
+                <div className="h-10 w-10 bg-gray-200 dark:bg-slate-800 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/3 bg-gray-200 dark:bg-slate-800 rounded-md" />
+                  <div className="h-3 w-1/4 bg-gray-200 dark:bg-slate-800 rounded-md" />
+                </div>
+                <div className="h-6 w-16 bg-gray-200 dark:bg-slate-800 rounded-lg hidden md:block" />
+                <div className="h-6 w-24 bg-gray-200 dark:bg-slate-800 rounded-lg hidden md:block" />
+                <div className="h-8 w-20 bg-gray-200 dark:bg-slate-800 rounded-xl" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : filteredUsers.length === 0 ? (
         <div className="p-12 text-center text-gray-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800">
@@ -241,6 +280,7 @@ export default function AdminUsersPage() {
                   <th className="py-4 px-6">User</th>
                   <th className="py-4 px-4">Role</th>
                   <th className="py-4 px-4">Mess Affiliation</th>
+                  <th className="py-4 px-4">{isBn ? "নিবন্ধন তারিখ" : "Joined At"}</th>
                   <th className="py-4 px-4">Status</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
@@ -299,6 +339,13 @@ export default function AdminUsersPage() {
                         ) : (
                           <span className="text-xs text-gray-400">Not in a Mess</span>
                         )}
+                      </td>
+                      <td className="py-4 px-4 text-xs font-medium text-gray-500 dark:text-slate-400">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString(isBn ? "bn-BD" : "en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }) : "N/A"}
                       </td>
                       <td className="py-4 px-4">
                         <span
@@ -375,6 +422,14 @@ export default function AdminUsersPage() {
                           {u.name}
                         </p>
                         <p className="text-xs text-gray-400">{u.email}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5 font-medium">
+                          {isBn ? "নিবন্ধিত: " : "Joined: "}
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString(isBn ? "bn-BD" : "en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }) : "N/A"}
+                        </p>
                       </div>
                     </div>
                     <span

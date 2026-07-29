@@ -16,8 +16,10 @@ import {
   Info,
   Search,
   ShieldCheck,
+  Calendar,
 } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/useTranslation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -192,7 +194,6 @@ function Avatar({ name, src, size = 44 }) {
       alt={name}
       width={size}
       height={size}
-      unoptimized
       onError={() => setFailed(true)}
       className="shrink-0 rounded-full object-cover"
       style={{ width: size, height: size }}
@@ -286,6 +287,8 @@ function MemberRow({ member, index, messId, mess, onDelete, isDeleting }) {
 /* ---------------------------------------------------------------------- */
 export default function AdminMessRegistry() {
   const { data: session, status } = useSession();
+  const { t, lang } = useTranslation();
+  const isBn = lang === "bn";
   const isAdmin = session?.user?.role === "admin";
   const adminId = session?.user?.id || session?.user?._id;
 
@@ -310,18 +313,21 @@ export default function AdminMessRegistry() {
   const [modal, setModal] = useState({ open: false });
   const closeModal = () => setModal({ open: false });
 
-  const loadMesses = useCallback(async () => {
+  const loadMesses = useCallback(async (force = false) => {
     if (!adminId) return;
 
-    if (typeof window !== "undefined") {
+    if (!force && typeof window !== "undefined") {
       const cached = sessionStorage.getItem(`admin_all_messes_${adminId}`);
       if (cached) {
-        try { setMesses(JSON.parse(cached)); } catch (e) {}
-      } else {
-        if (messes.length === 0) setLoading(true);
+        try {
+          setMesses(JSON.parse(cached));
+          setLoading(false);
+          return;
+        } catch (e) {}
       }
     }
 
+    if (messes.length === 0) setLoading(true);
     setError("");
 
     try {
@@ -351,7 +357,7 @@ export default function AdminMessRegistry() {
 
     let active = true;
     const run = async () => {
-      await loadMesses();
+      await loadMesses(false);
       if (!active) return;
     };
 
@@ -379,7 +385,13 @@ export default function AdminMessRegistry() {
         throw new Error(data.message || "Failed to delete mess.");
       }
 
-      setMesses((prev) => prev.filter((mess) => mess._id !== messId));
+      setMesses((prev) => {
+        const updated = prev.filter((mess) => mess._id !== messId);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_all_messes_${adminId}`, JSON.stringify(updated));
+        }
+        return updated;
+      });
     } catch (err) {
       setDeleteError(err.message || "Failed to delete mess.");
       console.error("Delete mess error:", err);
@@ -431,8 +443,8 @@ export default function AdminMessRegistry() {
       }
 
       // Remove the member locally so the UI updates without a full refetch
-      setMesses((prev) =>
-        prev.map((mess) =>
+      setMesses((prev) => {
+        const updated = prev.map((mess) =>
           mess._id === messId
             ? {
                 ...mess,
@@ -440,8 +452,12 @@ export default function AdminMessRegistry() {
                 totalMembers: (mess.totalMembers || mess.members?.length || 1) - 1,
               }
             : mess
-        )
-      );
+        );
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_all_messes_${adminId}`, JSON.stringify(updated));
+        }
+        return updated;
+      });
     } catch (err) {
       setDeleteError(err.message || "Failed to delete member.");
       console.error("Delete member error:", err);
@@ -537,7 +553,7 @@ export default function AdminMessRegistry() {
             </h1>
           </div>
           <button
-            onClick={loadMesses}
+            onClick={() => loadMesses(true)}
             aria-label="Refresh"
             className="shrink-0 rounded-full border border-[#16181D]/10 p-2 text-[#6b6f76] transition hover:border-[#FF6900] hover:text-[#FF6900]"
           >
@@ -652,6 +668,17 @@ export default function AdminMessRegistry() {
                             <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
                             <span className="truncate">
                               {mess.messLocation || "No location set"}
+                            </span>
+                          </p>
+                          <p className="font-meta mt-0.5 flex items-center gap-1 truncate text-[10px] uppercase tracking-wide text-[#9a9691] font-medium">
+                            <Calendar className="h-3 w-3 shrink-0" strokeWidth={2} />
+                            <span>
+                              {isBn ? "তৈরি: " : "Created: "}
+                              {mess.createdAt ? new Date(mess.createdAt).toLocaleDateString(isBn ? "bn-BD" : "en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }) : "N/A"}
                             </span>
                           </p>
                           <div className="mt-1.5 h-1.5 w-full max-w-[160px] overflow-hidden rounded-full bg-[#F3F1EC]">

@@ -34,8 +34,19 @@ export default function AdminAnalyticsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(() => {
+    if (typeof window !== "undefined" && adminUserId) {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const cached = sessionStorage.getItem(`admin_analytics_${adminUserId}_${currentMonth}_${currentYear}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => !analytics);
 
   const taka = (n) =>
     new Intl.NumberFormat("en-BD", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
@@ -57,8 +68,20 @@ export default function AdminAnalyticsPage() {
 
   const years = [2024, 2025, 2026, 2027];
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (force = false) => {
     if (!adminUserId) return;
+
+    if (!force && typeof window !== "undefined") {
+      const cached = sessionStorage.getItem(`admin_analytics_${adminUserId}_${selectedMonth}_${selectedYear}`);
+      if (cached) {
+        try {
+          setAnalytics(JSON.parse(cached));
+          setLoading(false);
+          return;
+        } catch (e) {}
+      }
+    }
+
     setLoading(true);
     try {
       const res = await fetch(
@@ -67,6 +90,9 @@ export default function AdminAnalyticsPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setAnalytics(data);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`admin_analytics_${adminUserId}_${selectedMonth}_${selectedYear}`, JSON.stringify(data));
+        }
       } else {
         toast.error(data.message || (isBn ? "এনালিটিক্স লোড করতে ব্যর্থ" : "Failed to load analytics"));
       }
@@ -80,7 +106,7 @@ export default function AdminAnalyticsPage() {
 
   useEffect(() => {
     Promise.resolve().then(() => {
-      fetchAnalytics();
+      fetchAnalytics(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminUserId, selectedMonth, selectedYear]);
@@ -120,7 +146,7 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
         <button
-          onClick={fetchAnalytics}
+          onClick={() => fetchAnalytics(true)}
           className="self-start sm:self-auto px-4 py-2 bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 rounded-xl text-xs font-semibold hover:bg-orange-100 transition flex items-center gap-1.5 cursor-pointer"
         >
           <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
