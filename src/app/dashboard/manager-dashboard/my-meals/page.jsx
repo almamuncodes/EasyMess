@@ -29,11 +29,11 @@ const MealCalendar = () => {
 
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  const fetchMeals = async () => {
+  const fetchMeals = async (force = false) => {
     if (!userId) return;
 
     const key = `user_meals_calendar_${userId}_${month}_${year}`;
-    if (typeof window !== "undefined") {
+    if (!force && typeof window !== "undefined") {
       const cached = sessionStorage.getItem(key);
       if (cached) {
         try { setMeals(JSON.parse(cached)); } catch (e) {}
@@ -67,18 +67,68 @@ const MealCalendar = () => {
   
 
   const handleUpdate = async (day, type, currentStatus) => {
-    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/meal/update`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, messId, date: dateStr, mealType: type, status: !currentStatus }),
+    // 1. Save previous meals state for rollback
+    const previousMeals = [...meals];
+
+    // 2. Perform optimistic update on React state
+    const targetDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00.000Z`;
+    let mealExists = false;
+    const newMeals = meals.map((m) => {
+      if (getUTCDayFromMongoDate(m.date) === day) {
+        mealExists = true;
+        return {
+          ...m,
+          [type]: !currentStatus,
+        };
+      }
+      return m;
     });
-    const data = await res.json();
-    if (data.success) {
-      trackEvent("create_meal", { mealType: type, status: !currentStatus });
-      fetchMeals();
-    } else {
-      toast.warning(data.message);
+
+    if (!mealExists) {
+      newMeals.push({
+        date: targetDateStr,
+        breakfast: type === "breakfast" ? !currentStatus : true,
+        lunch: type === "lunch" ? !currentStatus : true,
+        dinner: type === "dinner" ? !currentStatus : true,
+      });
+    }
+
+    setMeals(newMeals);
+
+    // Also update sessionStorage cache optimistically
+    const cacheKey = `user_meals_calendar_${userId}_${month}_${year}`;
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(cacheKey, JSON.stringify(newMeals));
+    }
+
+    // 3. Make API request in the background
+    const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/meal/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, messId, date: dateStr, mealType: type, status: !currentStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        trackEvent("create_meal", { mealType: type, status: !currentStatus });
+        fetchMeals(true); // force fetch to skip reading stale cache
+      } else {
+        // Rollback state and cache, then show warning
+        setMeals(previousMeals);
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(cacheKey, JSON.stringify(previousMeals));
+        }
+        toast.warning(data.message);
+      }
+    } catch (err) {
+      console.log(err);
+      // Rollback state and cache, then show error
+      setMeals(previousMeals);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(cacheKey, JSON.stringify(previousMeals));
+      }
+      toast.error("Failed to update meal. Please try again.");
     }
   };
   const bdTodayStr = getBDNow().dateStr;
