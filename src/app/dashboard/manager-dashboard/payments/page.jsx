@@ -11,7 +11,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import { trackEvent } from "@/lib/analytics";
-import { getBDDateStr } from "@/lib/date-utils";
+import { getBDDateStr, getBDNow } from "@/lib/date-utils";
 
 
 const fraunces = Fraunces({
@@ -62,7 +62,10 @@ export default function ManagerDepositsPage() {
   const managerId = session?.user?.id;
   const queryClient = useQueryClient();
 
-  const [month, setMonth] = useState("");
+  const [month, setMonth] = useState(() => {
+    const now = getBDNow();
+    return `${now.year}-${String(now.month).padStart(2, "0")}`;
+  });
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [expandedId, setExpandedId] = useState(null);
@@ -261,6 +264,7 @@ export default function ManagerDepositsPage() {
           initial={modalState.deposit}
           onClose={() => setModalState(null)}
           onSave={handleSave}
+          selectedMonth={month}
         />
       )}
 
@@ -412,13 +416,25 @@ const MemberLedgerRow = memo(function MemberLedgerRow({
 /* ============================================================
    এড / এডিট মোডাল
    ============================================================ */
-function DepositModal({ mode, initial, onClose, onSave }) {
+function DepositModal({ mode, initial, onClose, onSave, selectedMonth }) {
   const [amount, setAmount] = useState(initial?.amount ?? "");
   const [paymentMethod, setPaymentMethod] = useState(
     initial?.paymentMethod ?? "Cash",
   );
   const [note, setNote] = useState(initial?.note ?? "");
-  const [date, setDate] = useState(() => getBDDateStr(initial?.date));
+  const [date, setDate] = useState(() => {
+    if (initial?.date) return getBDDateStr(initial.date);
+    if (selectedMonth) {
+      const now = getBDNow();
+      const currentMonthStr = `${now.year}-${String(now.month).padStart(2, "0")}`;
+      if (selectedMonth === currentMonthStr) {
+        return now.dateStr; // Today
+      } else {
+        return `${selectedMonth}-01`; // First day of selected month
+      }
+    }
+    return getBDDateStr();
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Inter, Hind_Siliguri } from "next/font/google";
 import { GetUser } from "@/components/action/action";
+import { getBDNow } from "@/lib/date-utils";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,9 +34,16 @@ export default function MyDepositsPage() {
   const user = GetUser();
   const userId = user?.user?.id;
 
+  const [month, setMonth] = useState(() => {
+    const now = getBDNow();
+    return `${now.year}-${String(now.month).padStart(2, "0")}`;
+  });
+
   const [history, setHistory] = useState(() => {
     if (typeof window !== "undefined" && userId) {
-      const cached = sessionStorage.getItem(`user_deposits_${userId}`);
+      const now = getBDNow();
+      const initialMonth = `${now.year}-${String(now.month).padStart(2, "0")}`;
+      const cached = sessionStorage.getItem(`user_deposits_${userId}_${initialMonth}`);
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
@@ -47,7 +55,9 @@ export default function MyDepositsPage() {
   });
   const [total, setTotal] = useState(() => {
     if (typeof window !== "undefined" && userId) {
-      const cached = sessionStorage.getItem(`user_deposits_${userId}`);
+      const now = getBDNow();
+      const initialMonth = `${now.year}-${String(now.month).padStart(2, "0")}`;
+      const cached = sessionStorage.getItem(`user_deposits_${userId}_${initialMonth}`);
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
@@ -64,7 +74,7 @@ export default function MyDepositsPage() {
   const load = useCallback(async () => {
     if (!userId) return;
 
-    const key = `user_deposits_${userId}`;
+    const key = `user_deposits_${userId}_${month}`;
     if (typeof window !== "undefined") {
       const cached = sessionStorage.getItem(key);
       if (cached) {
@@ -74,13 +84,20 @@ export default function MyDepositsPage() {
           setTotal(parsed.total || 0);
         } catch (e) {}
       } else {
-        if (history.length === 0) setLoading(true);
+        setHistory([]);
+        setTotal(0);
+        setLoading(true);
       }
+    } else {
+      if (history.length === 0) setLoading(true);
     }
 
     setErrorMsg("");
     try {
-      const res = await fetch(`${API_BASE}/api/deposits/user/${userId}`);
+      const url = month
+        ? `${API_BASE}/api/deposits/user/${userId}?month=${month}`
+        : `${API_BASE}/api/deposits/user/${userId}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "cannot load");
 
@@ -94,11 +111,11 @@ export default function MyDepositsPage() {
         sessionStorage.setItem(key, JSON.stringify({ history: newHistory, total: newTotal }));
       }
     } catch (err) {
-      if (history.length === 0) setErrorMsg(err.message || "something went wrong");
+      setErrorMsg(err.message || "something went wrong");
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, month]);
 
   useEffect(() => {
     load();
@@ -109,15 +126,33 @@ export default function MyDepositsPage() {
       className={`${inter.variable} ${hindSiliguri.variable} rounded-2xl border-none min-h-screen bg-[#f2f4f1] dark:bg-slate-950 text-neutral-900 dark:text-slate-100 font-sans`}
     >
       <div className="max-w-2xl mx-auto px-6 py-10 md:py-14">
-        <h1 className="text-2xl font-semibold mb-8">My Deposits</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-semibold">My Deposits</h1>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="px-3 py-2 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 text-neutral-900 dark:text-slate-100 border border-gray-200 dark:border-slate-800"
+          />
+        </div>
 
         <TotalCard total={total} count={history.length} />
 
         {errorMsg && <ErrorBanner message={errorMsg} />}
 
-        <p className="text-xs mb-3 text-neutral-800 dark:text-slate-300">
-          History
-        </p>
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-xs text-neutral-800 dark:text-slate-300">
+            History
+          </p>
+          {month && (
+            <button
+              onClick={() => setMonth("")}
+              className="text-xs text-orange-500 hover:text-orange-600 font-semibold"
+            >
+              Show All Time
+            </button>
+          )}
+        </div>
 
         {loading ? (
           <LoadingSkeleton />

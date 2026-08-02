@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
+import { getBDNow } from "@/lib/date-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
@@ -22,12 +23,19 @@ export default function MyDepositsPage() {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
   const [selectedNote, setSelectedNote] = useState(null);
+  const [month, setMonth] = useState(() => {
+    const now = getBDNow();
+    return `${now.year}-${String(now.month).padStart(2, "0")}`;
+  });
 
   const { data: depositsData, isLoading: queryLoading, isError, error: queryError } = useQuery({
-    queryKey: ["user-deposits", userId],
+    queryKey: ["user-deposits", userId, month],
     queryFn: async () => {
       if (!userId) return { data: [], total: 0 };
-      const res = await fetch(`${API_BASE}/api/deposits/user/${userId}`);
+      const url = month 
+        ? `${API_BASE}/api/deposits/user/${userId}?month=${month}`
+        : `${API_BASE}/api/deposits/user/${userId}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "cannot load");
       return data;
@@ -46,15 +54,33 @@ export default function MyDepositsPage() {
       className="rounded-2xl border-none min-h-screen bg-[#f2f4f1] dark:bg-slate-950 text-neutral-900 dark:text-slate-100 font-sans"
     >
       <div className="max-w-2xl mx-auto px-6 py-10 md:py-14">
-        <h1 className="text-2xl font-semibold mb-8">My Deposits</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-semibold">My Deposits</h1>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="px-3 py-2 rounded-xl text-sm outline-none bg-white dark:bg-slate-900 text-neutral-900 dark:text-slate-100 border border-gray-200 dark:border-slate-800"
+          />
+        </div>
 
         <TotalCard total={total} count={history.length} />
 
         {errorMsg && <ErrorBanner message={errorMsg} />}
 
-        <p className="text-xs mb-3 text-neutral-800 dark:text-slate-300">
-          History
-        </p>
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-xs text-neutral-800 dark:text-slate-300">
+            History
+          </p>
+          {month && (
+            <button
+              onClick={() => setMonth("")}
+              className="text-xs text-orange-500 hover:text-orange-600 font-semibold"
+            >
+              Show All Time
+            </button>
+          )}
+        </div>
 
         {loading ? (
           <LoadingSkeleton />
