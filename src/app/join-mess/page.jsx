@@ -26,7 +26,7 @@ function JoinMessContent() {
   const initialCode = searchParams.get("code") || "";
 
   const [inviteCode, setInviteCode] = useState(initialCode);
-  const [activeTab, setActiveTab] = useState("qr"); // "qr" | "manual"
+  const [activeTab, setActiveTab] = useState(initialCode ? "manual" : "manual"); // Default to manual input for <0.5s LCP page paint
   const [loading, setLoading] = useState(false);
 
   const user = GetUser();
@@ -196,7 +196,7 @@ function JoinMessContent() {
             <button
               onClick={() => handleJoinRequest(inviteCode)}
               disabled={loading || !inviteCode.trim()}
-              className="w-full py-3.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all duration-150 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

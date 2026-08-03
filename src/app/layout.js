@@ -39,12 +39,22 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 // app/layout.jsx
 
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ff6900" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata = {
   metadataBase: new URL("https://easymess.vercel.app"),
   manifest: "/manifest.json",
 
   title: {
-    default: "EasyMess",
+    default: "EasyMess — Smart Meal & Mess Management Platform",
     template: "%s | EasyMess",
   },
 
@@ -72,23 +82,48 @@ export const metadata = {
   applicationName: "EasyMess",
 
   icons: {
-    icon: "/logo.png",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/web-app-manifest-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/web-app-manifest-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/web-app-manifest-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "EasyMess",
   },
 
   openGraph: {
-    title: "EasyMess",
+    title: "EasyMess — Smart Meal & Mess Management Platform",
     description:
-      "Smart meal management platform for hostels and shared living.",
+      "Smart meal management platform for hostels and shared living. Manage meals, members, expenses, and monthly billing easily in one place.",
     url: "https://easymess.vercel.app",
     siteName: "EasyMess",
+    images: [
+      {
+        url: "/web-app-manifest-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "EasyMess Logo",
+      },
+    ],
+    locale: "en_US",
     type: "website",
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "EasyMess",
+    title: "EasyMess — Smart Meal & Mess Management Platform",
     description:
       "Smart meal management platform for hostels and shared living.",
+    images: ["/web-app-manifest-512x512.png"],
   },
 
   robots: {

@@ -5,7 +5,8 @@ import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
-import { Sparkles, X, Copy, Calculator, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { toast } from "sonner";
 import { getBDNow } from "@/lib/date-utils";
 // import { fetchOverview } from "@/lib/api";
 
@@ -374,190 +375,22 @@ export default function OverviewDashboard({ role }) {
               <SummaryCard label="Meal Rate" value={`৳ ${taka(data.summary.mealRate)}`} icon="💵" />
             </div>
 
-            {/* Action Bar: Predictor & Share */}
+            {/* Action Bar */}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2">
                 <p className="font-[family-name:var(--font-display)] text-lg">Member Summary</p>
-                <button
-                  onClick={() => setShowPredictor(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-3 py-1.5 text-xs font-semibold hover:bg-amber-500/20 transition cursor-pointer"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                  {t("predictMealRate")}
-                </button>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handleDownloadPdf}
                   disabled={exporting}
-                  className="rounded-md bg-[#ff6900] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition hover:bg-[#1B2A26]/90 disabled:opacity-60 cursor-pointer"
+                  className="rounded-md bg-[#ff6900] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition-all duration-150 hover:bg-[#1B2A26]/90 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm"
                 >
                   {exporting ? "Preparing…" : "📄 Download PDF"}
                 </button>
               </div>
             </div>
-
-            {/* Predictor Modal */}
-            {showPredictor && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-gray-100 dark:border-slate-800 text-gray-900 dark:text-slate-100 animate-in zoom-in-95 duration-200">
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
-                    <h3 className="font-[family-name:var(--font-display)] text-lg font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                      <Sparkles className="h-5 w-5" />
-                      {t("predictedMealRateTitle")}
-                    </h3>
-                    <button
-                      onClick={() => setShowPredictor(false)}
-                      className="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  {(() => {
-                    const bdNow = getBDNow();
-                    const isCurrentMonthYear = String(month) === String(bdNow.month) && String(year) === String(bdNow.year);
-                    const isPastMonthYear = Number(year) < bdNow.year || (Number(year) === bdNow.year && Number(month) < bdNow.month);
-                    
-                    const daysInMonth = new Date(Number(year), Number(month), 0).getDate();
-                    
-                    let currentDay = bdNow.day;
-                    let remainingDays = daysInMonth - currentDay;
-                    
-                    if (isPastMonthYear) {
-                      currentDay = daysInMonth;
-                      remainingDays = 0;
-                    } else if (!isCurrentMonthYear) {
-                      currentDay = 0;
-                      remainingDays = daysInMonth;
-                    }
-
-                    const totalBazaar = data.summary?.totalBazaar || 0;
-                    const totalMeals = data.summary?.totalMeal || 0;
-                    const totalDeposit = data.summary?.totalDeposit || 0;
-                    const currentRate = data.summary?.mealRate || 0;
-
-                    const currentCashBalance = totalDeposit - totalBazaar;
-
-                    // Daily averages
-                    const avgMealsPerDay = totalMeals / Math.max(1, currentDay);
-                    
-                    let estimatedRemainingBazaar = 0;
-                    let estimatedRemainingMeals = 0;
-                    let confidence = 100;
-                    let errorMarginPercent = 0;
-
-                    if (isPastMonthYear) {
-                      estimatedRemainingBazaar = 0;
-                      estimatedRemainingMeals = 0;
-                      confidence = 100;
-                      errorMarginPercent = 0;
-                    } else if (isCurrentMonthYear) {
-                      const avgBazaarPerMeal = totalMeals > 0 ? totalBazaar / totalMeals : 0;
-                      const variableRateCap = 30; // ৳30 max variable cost per meal for daily estimation
-                      const bulkBazaar = currentDay <= 7 && avgBazaarPerMeal > variableRateCap
-                        ? Math.max(0, totalBazaar - (totalMeals * variableRateCap))
-                        : 0;
-                      
-                      const variableBazaar = totalBazaar - bulkBazaar;
-                      const avgDailyVariableBazaar = variableBazaar / Math.max(1, currentDay);
-                      
-                      estimatedRemainingBazaar = remainingDays * avgDailyVariableBazaar;
-                      estimatedRemainingMeals = Math.round(remainingDays * avgMealsPerDay);
-                      
-                      confidence = Math.min(99, Math.round(50 + (currentDay / daysInMonth) * 49));
-                      errorMarginPercent = (1 - currentDay / daysInMonth) * 0.08;
-                    } else {
-                      estimatedRemainingBazaar = 0;
-                      estimatedRemainingMeals = 0;
-                      confidence = 0;
-                      errorMarginPercent = 0;
-                    }
-
-                    const projectedTotalBazaar = totalBazaar + estimatedRemainingBazaar;
-                    const projectedTotalMeals = totalMeals + estimatedRemainingMeals;
-
-                    const projectedRate = projectedTotalMeals > 0 ? projectedTotalBazaar / projectedTotalMeals : currentRate;
-                    const projectedRateMin = projectedRate * (1 - errorMarginPercent);
-                    const projectedRateMax = projectedRate * (1 + errorMarginPercent);
-
-                    return (
-                      <div className="mt-4 space-y-4 text-gray-900 dark:text-slate-100">
-                        {/* Highlights Card */}
-                        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-2">
-                          <p className="text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300 font-bold">
-                            {isBn ? "প্রত্যাশিত মাস-শেষের মিল রেট" : "Estimated Month-End Meal Rate"}
-                          </p>
-                          <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">
-                            ৳ {taka(projectedRateMin)} - ৳ {taka(projectedRateMax)}
-                          </p>
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="text-xs text-gray-500 dark:text-slate-400">
-                              Confidence Level:
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-black">
-                              {confidence}%
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Visual Progress Bar for Confidence */}
-                        <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                          <div
-                            className="bg-amber-500 h-full transition-all duration-500"
-                            style={{ width: `${confidence}%` }}
-                          />
-                        </div>
-
-                        {/* Detailed Metrics Table */}
-                        <div className="grid grid-cols-1 gap-2.5 text-xs sm:text-sm">
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-800">
-                            <span className="text-gray-500 dark:text-slate-400">Current Cash Balance</span>
-                            <span className={`font-bold font-mono ${currentCashBalance >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
-                              ৳ {taka(currentCashBalance)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-800">
-                            <span className="text-gray-500 dark:text-slate-400">Current Meal Rate (Real)</span>
-                            <span className="font-bold font-mono text-gray-800 dark:text-slate-200">
-                              ৳ {taka(currentRate)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-800">
-                            <span className="text-gray-500 dark:text-slate-400">Estimated Remaining Bazaar</span>
-                            <span className="font-bold font-mono text-gray-800 dark:text-slate-200">
-                              ৳ {taka(estimatedRemainingBazaar)}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-800">
-                            <span className="text-gray-500 dark:text-slate-400">Estimated Remaining Meals</span>
-                            <span className="font-bold font-mono text-gray-800 dark:text-slate-200">
-                              {estimatedRemainingMeals} meals
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="text-[10px] text-gray-400 dark:text-slate-500 italic text-center">
-                          * Forecast adjusts dynamically using bulk-buy decay offsets and current cash balance thresholds.
-                        </p>
-
-                        <button
-                          onClick={() => setShowPredictor(false)}
-                          className="w-full py-3 bg-gray-900 dark:bg-slate-800 text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-black dark:hover:bg-slate-700 transition cursor-pointer"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
-
             {/* Search Bar */}
             <div className="mt-6 flex items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-[#1B2A26]/10 dark:border-slate-800 shadow-sm">
               <div className="relative flex-1 max-w-sm">

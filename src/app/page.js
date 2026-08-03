@@ -846,7 +846,7 @@ export default function LandingPage() {
                 <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
                   {t("memberHeader")}
                 </p>
-                <div className="flex gap-6">
+                <div className="flex gap-4 sm:gap-6 shrink-0">
                   {mealTypes.map((m) => (
                     <p
                       key={m.key}
@@ -865,7 +865,7 @@ export default function LandingPage() {
                     key={member.userId}
                     className="flex items-center justify-between px-5 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-[#F3F1EC]"
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       {member.image ? (
                         <Image
                           width={48}
@@ -873,19 +873,19 @@ export default function LandingPage() {
                           src={getOptimizedImageUrl(member.image, { width: 96, height: 96 })}
                           alt={member.name}
                           unoptimized={typeof member.image === "string" && member.image.startsWith("http")}
-                          className="h-8 w-8 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          className="h-8 w-8 shrink-0 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
                           onMouseEnter={() => preloadImage(member.image, { width: 400, height: 400 })}
                           onClick={() => setSelectedMember(member)}
                         />
                       ) : (
                         <span 
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6900]/10 font-meta text-xs font-semibold text-[#FF6900] cursor-pointer hover:bg-[#FF6900]/20 transition-colors"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF6900]/10 font-meta text-xs font-semibold text-[#FF6900] cursor-pointer hover:bg-[#FF6900]/20 transition-colors"
                           onClick={() => setSelectedMember(member)}
                         >
                           {member.name?.charAt(0) || "?"}
                         </span>
                       )}
-                      <span className="text-sm font-medium text-[#16181D]">
+                      <span className="text-sm font-medium text-[#16181D] truncate">
                         {isMe ? t("youLabel") : member.name}
                         {member.role === "manager" && (
                           <span className="ml-1.5 font-meta text-[9px] uppercase tracking-wide text-[#9a9691]">
@@ -895,17 +895,18 @@ export default function LandingPage() {
                       </span>
                     </div>
 
-                    <div className="flex gap-6">
+                    <div className="flex gap-4 sm:gap-6 shrink-0">
                       {mealTypes.map((m) => (
-                        <span
-                          key={m.key}
-                          className={`block h-2.5 w-2.5 self-center rounded-full ${
-                            member[m.key] ? "bg-[#FF6900]" : "bg-[#E7E5E1]"
-                          }`}
-                          title={`${isMe ? t("youLabel") : member.name} — ${
-                            m.label
-                          } ${member[m.key] ? "on" : "off"}`}
-                        />
+                        <div key={m.key} className="w-8 flex items-center justify-center">
+                          <span
+                            className={`block h-2.5 w-2.5 rounded-full ${
+                              member[m.key] ? "bg-[#FF6900]" : "bg-[#E7E5E1]"
+                            }`}
+                            title={`${isMe ? t("youLabel") : member.name} — ${
+                              m.label
+                            } ${member[m.key] ? "on" : "off"}`}
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>

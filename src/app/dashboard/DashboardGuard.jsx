@@ -162,7 +162,16 @@ export default function DashboardGuard({ children }) {
   }, [role, pathname, router]);
 
   if (isSessionLoading || loading) {
-    return <PageLoader text={t("checkingAccess")} />;
+    return (
+      <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
+        <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900">
+          <Sidebar />
+        </aside>
+        <main className="flex-1 p-4 md:p-6 bg-gray-50 dark:bg-slate-950 flex items-center justify-center min-h-[60vh]">
+          <PageLoader text={t("checkingAccess")} fullScreen={false} />
+        </main>
+      </div>
+    );
   }
 
   if (isBanned) {

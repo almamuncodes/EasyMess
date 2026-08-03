@@ -61,17 +61,27 @@ export default function Sidebar() {
 
   if (!mounted || !role) {
     return (
-      <aside className="w-full md:w-64 flex flex-col min-h-screen bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 p-6 animate-pulse">
-        <div className="mb-10">
-          <div className="h-4 bg-gray-200 dark:bg-slate-800 rounded w-28"></div>
-        </div>
-        <div className="flex flex-col gap-3">
-          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
-          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
-          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
-          <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
-        </div>
-      </aside>
+      <>
+        {/* Mobile Skeleton Nav */}
+        <nav className="md:hidden flex overflow-x-auto w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-2 gap-2 animate-pulse h-14 items-center">
+          <div className="h-8 w-24 bg-gray-200 dark:bg-slate-800 rounded-full shrink-0"></div>
+          <div className="h-8 w-24 bg-gray-200 dark:bg-slate-800 rounded-full shrink-0"></div>
+          <div className="h-8 w-24 bg-gray-200 dark:bg-slate-800 rounded-full shrink-0"></div>
+        </nav>
+
+        {/* Desktop Skeleton Sidebar */}
+        <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 p-6 animate-pulse">
+          <div className="mb-10">
+            <div className="h-4 bg-gray-200 dark:bg-slate-800 rounded w-28"></div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+            <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+            <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+            <div className="h-11 bg-gray-100 dark:bg-slate-800/60 rounded-xl"></div>
+          </div>
+        </aside>
+      </>
     );
   }
 

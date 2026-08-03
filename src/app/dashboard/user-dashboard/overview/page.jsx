@@ -363,7 +363,7 @@ export default function UserOverviewPage() {
                 <button
                   onClick={handleDownloadPdf}
                   disabled={exporting}
-                  className="rounded-xl bg-[#ff6900] px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff6900]/90 disabled:opacity-60 cursor-pointer"
+                  className="rounded-xl bg-[#ff6900] px-3.5 py-2 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#ff6900]/90 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm"
                 >
                   {exporting ? "Preparing…" : "📄 Download PDF"}
                 </button>

@@ -50,15 +50,15 @@ export async function proxy(request) {
       if (apiBase) {
         const statusRes = await fetch(`${apiBase}/api/system/settings`, {
           headers: { "x-internal-check": "1" },
-          // Use a short timeout so proxy never stalls page loads
-          signal: AbortSignal.timeout(3000),
+          // Use a short timeout (1.5s) so proxy never stalls page loads or mobile data requests
+          signal: AbortSignal.timeout(1500),
         });
 
         if (statusRes.ok) {
           const body = await statusRes.json();
           maintenanceMode = body?.data?.maintenanceMode === true;
           cachedMaintenance = maintenanceMode;
-          cacheExpiry = now + 10000; // Cache for 10 seconds inside warm Edge instances
+          cacheExpiry = now + 60000; // Cache for 60 seconds inside warm Edge instances
         }
       }
     } catch {
