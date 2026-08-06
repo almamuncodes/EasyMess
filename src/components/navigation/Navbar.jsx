@@ -119,15 +119,15 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center shrink-0">
+        <Link href="/" className="flex items-center shrink-0 py-1">
           <Image
             src="/image/easymess.png"
             alt="EasyMess"
-            width={140}
-            height={40}
+            width={180}
+            height={52}
             priority
             style={{ height: "auto" }}
-            className="w-[110px] md:w-[140px] dark:brightness-0 dark:invert transition-all duration-200"
+            className="w-[135px] sm:w-[155px] md:w-[175px] dark:brightness-0 dark:invert transition-all duration-200"
           />
         </Link>
 

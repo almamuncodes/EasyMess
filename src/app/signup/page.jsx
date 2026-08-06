@@ -197,10 +197,16 @@ export default function SignupForm() {
   };
 
   const handleGoogleSignIn = async () => {
-    trackEvent("sign_up", { method: "google" });
-    await authClient.signIn.social({
-      provider: "google",
-    });
+    try {
+      trackEvent("sign_up", { method: "google" });
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch (err) {
+      console.error("Google sign in error:", err);
+      toast.error("Google sign in failed. Please try again.");
+    }
   };
 
   // 6-digit OTP Handlers
