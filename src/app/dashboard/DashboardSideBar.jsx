@@ -20,6 +20,7 @@ import {
   Megaphone,
   Activity,
   Mail,
+  Boxes,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -58,6 +59,19 @@ export default function Sidebar() {
   });
 
   const role = queryRole || (typeof window !== "undefined" ? sessionStorage.getItem(`user_role_${userId}`) || sessionStorage.getItem("user_role") : "") || "";
+
+  const { data: riceConfig } = useQuery({
+    queryKey: ["rice-config", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+      const res = await fetch(`${apiBase}/api/rice/config?userId=${userId}`);
+      const data = await res.json();
+      return data.config || null;
+    },
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5,
+  });
 
   if (!mounted || !role) {
     return (
@@ -98,6 +112,11 @@ export default function Sidebar() {
       icon: LayoutDashboard,
       roles: [ "manager"],
     },
+    ...(riceConfig?.enableRiceManagement === true
+      ? [
+          { name: lang === "bn" ? "রাইস ওভারভিউ" : "Rice Overview", href: "/dashboard/manager-dashboard/rice-overview", icon: BarChart3, roles: ["manager"] },
+        ]
+      : []),
     {
       name: t("overview"),
       href: "/dashboard/admin-dashboard/overview",
@@ -158,6 +177,11 @@ export default function Sidebar() {
       icon: UtensilsCrossed,
       roles: [ "manager"],
     },
+    ...(riceConfig?.enableRiceManagement === true
+      ? [
+          { name: t("riceManagement"), href: "/dashboard/manager-dashboard/rice-management", icon: Boxes, roles: ["manager"] },
+        ]
+      : []),
     {
       name: t("myMess"),
       href: "/dashboard/user-dashboard/my-mess",
@@ -170,6 +194,11 @@ export default function Sidebar() {
       icon: Utensils,
       roles: ["member"],
     },
+    ...(riceConfig?.enableRiceManagement === true
+      ? [
+          { name: t("riceManagement"), href: "/dashboard/user-dashboard/rice-management", icon: Boxes, roles: ["member"] },
+        ]
+      : []),
     {
       name: t("billsSidebar"),
       href: "/dashboard/manager-dashboard/bills",

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import {
@@ -17,6 +18,7 @@ import {
   Sunset,
   Moon,
   Users,
+  Boxes,
 } from "lucide-react";
 import { useTranslation } from "@/lib/useTranslation";
 import { getBDDateStr } from "@/lib/date-utils";
@@ -119,6 +121,11 @@ export default function MealManagementPage() {
   // Toggle individual meal for a member instantly
   const handleToggleMeal = async (member, mealType) => {
     if (!userId) return;
+    const cacheKey = `manager_meals_${userId}_${date}`;
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(cacheKey);
+    }
+
     const newStatus = !member[mealType];
     const updatedMember = {
       ...member,
@@ -181,6 +188,11 @@ export default function MealManagementPage() {
   // Save guest meals modal
   const handleSaveGuestMeals = async () => {
     if (!editingMember) return;
+    const cacheKey = `manager_meals_${userId}_${date}`;
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(cacheKey);
+    }
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/manager/update-meal`,
@@ -194,9 +206,9 @@ export default function MealManagementPage() {
             breakfast: editingMember.breakfast,
             lunch: editingMember.lunch,
             dinner: editingMember.dinner,
-            guestBreakfast: editingMember.guestBreakfast || 0,
-            guestLunch: editingMember.guestLunch || 0,
-            guestDinner: editingMember.guestDinner || 0,
+            guestBreakfast: parseInt(editingMember.guestBreakfast) || 0,
+            guestLunch: parseInt(editingMember.guestLunch) || 0,
+            guestDinner: parseInt(editingMember.guestDinner) || 0,
           }),
         }
       );
@@ -232,7 +244,15 @@ export default function MealManagementPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/dashboard/manager-dashboard/rice-management"
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-500/20 transition cursor-pointer"
+          >
+            <Boxes size={16} />
+            <span>{lang === "bn" ? "রাইস ম্যানেজমেন্ট" : "Rice Management"}</span>
+          </Link>
+
           <div className="relative">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -245,7 +265,7 @@ export default function MealManagementPage() {
 
           <button
             onClick={() => fetchData(true)}
-            className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition"
+            className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition cursor-pointer"
             title="Refresh"
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />

@@ -177,7 +177,60 @@ export default function ManagerSettingsPage() {
         onSubmit={handleSave}
         className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
       >
-        <h2 className="mb-4 text-lg font-semibold text-gray-800">
+        {/* Features & Rice Management Configuration */}
+        <div className="mb-6 p-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50">
+          <h3 className="text-base font-semibold text-gray-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+            <span>Features & Modules</span>
+          </h3>
+          <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-slate-700">
+            <div>
+              <p className="font-medium text-sm text-gray-800 dark:text-slate-200">Rice Management</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Enable optional rice stock and meal consumption tracking</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mealSettings.enableRiceManagement === true}
+                onChange={(e) => handleFieldChange("enableRiceManagement", e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+            </label>
+          </div>
+
+          {mealSettings.enableRiceManagement && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-2">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
+                  Rice Per Meal (Units)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={mealSettings.ricePerMeal !== undefined ? mealSettings.ricePerMeal : 1}
+                  onChange={(e) => handleFieldChange("ricePerMeal", parseFloat(e.target.value) || 1)}
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-gray-800 dark:text-slate-200 outline-none focus:border-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1">
+                  Rice Unit Name (e.g. Unit / Bowl / বাটি)
+                </label>
+                <input
+                  type="text"
+                  value={mealSettings.riceUnitName || "Unit"}
+                  onChange={(e) => handleFieldChange("riceUnitName", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-gray-800 dark:text-slate-200 outline-none focus:border-orange-500"
+                  placeholder="Unit / বাটি / Bati / Bowl"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-slate-200">
           Meal Settings
         </h2>
 
