@@ -72,12 +72,13 @@ export default function ManagerRiceManagementPage() {
     if (userId) fetchData(true);
   }, [userId, date]);
 
-  // Toggle meal state (Breakfast, Lunch, Dinner)
+  // Toggle rice state (Breakfast, Lunch, Dinner Rice) without changing meal management meals!
   const handleToggleMeal = async (memberId, mealType, currentVal) => {
+    const riceKey = `${mealType}Rice`;
     const newVal = !currentVal;
     // Optimistic UI update
     setMembers((prev) =>
-      prev.map((m) => (m.userId === memberId ? { ...m, [mealType]: newVal } : m))
+      prev.map((m) => (m.userId === memberId ? { ...m, [riceKey]: newVal } : m))
     );
 
     try {
@@ -90,17 +91,17 @@ export default function ManagerRiceManagementPage() {
             managerId: userId,
             userId: memberId,
             date,
-            [mealType]: newVal,
+            [riceKey]: newVal,
           }),
         }
       );
       const resData = await res.json();
       if (!resData.success) {
-        toast.error(resData.message || "Failed to update meal");
+        toast.error(resData.message || "Failed to update rice setting");
         fetchData(false);
       }
     } catch (err) {
-      toast.error("Error updating meal");
+      toast.error("Error updating rice setting");
       fetchData(false);
     }
   };
@@ -198,9 +199,12 @@ export default function ManagerRiceManagementPage() {
   // Compute daily totals
   const summary = members.reduce(
     (acc, curr) => {
-      if (curr.breakfast) acc.breakfast += 1;
-      if (curr.lunch) acc.lunch += 1;
-      if (curr.dinner) acc.dinner += 1;
+      const isBf = curr.breakfastRice !== undefined ? curr.breakfastRice : curr.breakfast;
+      const isLn = curr.lunchRice !== undefined ? curr.lunchRice : curr.lunch;
+      const isDn = curr.dinnerRice !== undefined ? curr.dinnerRice : curr.dinner;
+      if (isBf) acc.breakfast += 1;
+      if (isLn) acc.lunch += 1;
+      if (isDn) acc.dinner += 1;
       acc.guestMeal += (curr.guestBreakfast || 0) + (curr.guestLunch || 0) + (curr.guestDinner || 0);
       return acc;
     },
@@ -399,43 +403,50 @@ export default function ManagerRiceManagementPage() {
                 </div>
 
                 {/* Meal Toggles */}
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  <button
-                    onClick={() => handleToggleMeal(m.userId, "breakfast", m.breakfast)}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                      m.breakfast
-                        ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
-                        : "bg-gray-100 dark:bg-slate-800 text-gray-400"
-                    }`}
-                  >
-                    {m.breakfast ? <Check size={14} /> : <X size={14} />}
-                    <span>BF: {m.breakfast ? "ON" : "OFF"}</span>
-                  </button>
+                {(() => {
+                  const isBf = m.breakfastRice !== undefined ? m.breakfastRice : m.breakfast;
+                  const isLn = m.lunchRice !== undefined ? m.lunchRice : m.lunch;
+                  const isDn = m.dinnerRice !== undefined ? m.dinnerRice : m.dinner;
+                  return (
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <button
+                        onClick={() => handleToggleMeal(m.userId, "breakfast", isBf)}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                          isBf
+                            ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                        }`}
+                      >
+                        {isBf ? <Check size={14} /> : <X size={14} />}
+                        <span>BF: {isBf ? "ON" : "OFF"}</span>
+                      </button>
 
-                  <button
-                    onClick={() => handleToggleMeal(m.userId, "lunch", m.lunch)}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                      m.lunch
-                        ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
-                        : "bg-gray-100 dark:bg-slate-800 text-gray-400"
-                    }`}
-                  >
-                    {m.lunch ? <Check size={14} /> : <X size={14} />}
-                    <span>LN: {m.lunch ? "ON" : "OFF"}</span>
-                  </button>
+                      <button
+                        onClick={() => handleToggleMeal(m.userId, "lunch", isLn)}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                          isLn
+                            ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                        }`}
+                      >
+                        {isLn ? <Check size={14} /> : <X size={14} />}
+                        <span>LN: {isLn ? "ON" : "OFF"}</span>
+                      </button>
 
-                  <button
-                    onClick={() => handleToggleMeal(m.userId, "dinner", m.dinner)}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
-                      m.dinner
-                        ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
-                        : "bg-gray-100 dark:bg-slate-800 text-gray-400"
-                    }`}
-                  >
-                    {m.dinner ? <Check size={14} /> : <X size={14} />}
-                    <span>DN: {m.dinner ? "ON" : "OFF"}</span>
-                  </button>
-                </div>
+                      <button
+                        onClick={() => handleToggleMeal(m.userId, "dinner", isDn)}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
+                          isDn
+                            ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
+                            : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                        }`}
+                      >
+                        {isDn ? <Check size={14} /> : <X size={14} />}
+                        <span>DN: {isDn ? "ON" : "OFF"}</span>
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -482,49 +493,58 @@ export default function ManagerRiceManagementPage() {
                     </td>
 
                     {/* Breakfast Toggle */}
-                    <td className="py-4 px-4 text-center">
-                      <button
-                        onClick={() => handleToggleMeal(m.userId, "breakfast", m.breakfast)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
-                          m.breakfast
-                            ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
-                            : "bg-gray-100 dark:bg-slate-800 text-gray-400"
-                        }`}
-                      >
-                        {m.breakfast ? <Check size={14} /> : <X size={14} />}
-                        <span>{m.breakfast ? "ON" : "OFF"}</span>
-                      </button>
-                    </td>
+                    {(() => {
+                      const isBf = m.breakfastRice !== undefined ? m.breakfastRice : m.breakfast;
+                      const isLn = m.lunchRice !== undefined ? m.lunchRice : m.lunch;
+                      const isDn = m.dinnerRice !== undefined ? m.dinnerRice : m.dinner;
+                      return (
+                        <>
+                          <td className="py-4 px-4 text-center">
+                            <button
+                              onClick={() => handleToggleMeal(m.userId, "breakfast", isBf)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
+                                isBf
+                                  ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                              }`}
+                            >
+                              {isBf ? <Check size={14} /> : <X size={14} />}
+                              <span>{isBf ? "ON" : "OFF"}</span>
+                            </button>
+                          </td>
 
-                    {/* Lunch Toggle */}
-                    <td className="py-4 px-4 text-center">
-                      <button
-                        onClick={() => handleToggleMeal(m.userId, "lunch", m.lunch)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
-                          m.lunch
-                            ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
-                            : "bg-gray-100 dark:bg-slate-800 text-gray-400"
-                        }`}
-                      >
-                        {m.lunch ? <Check size={14} /> : <X size={14} />}
-                        <span>{m.lunch ? "ON" : "OFF"}</span>
-                      </button>
-                    </td>
+                          {/* Lunch Toggle */}
+                          <td className="py-4 px-4 text-center">
+                            <button
+                              onClick={() => handleToggleMeal(m.userId, "lunch", isLn)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
+                                isLn
+                                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                              }`}
+                            >
+                              {isLn ? <Check size={14} /> : <X size={14} />}
+                              <span>{isLn ? "ON" : "OFF"}</span>
+                            </button>
+                          </td>
 
-                    {/* Dinner Toggle */}
-                    <td className="py-4 px-4 text-center">
-                      <button
-                        onClick={() => handleToggleMeal(m.userId, "dinner", m.dinner)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
-                          m.dinner
-                            ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
-                            : "bg-gray-100 dark:bg-slate-800 text-gray-400"
-                        }`}
-                      >
-                        {m.dinner ? <Check size={14} /> : <X size={14} />}
-                        <span>{m.dinner ? "ON" : "OFF"}</span>
-                      </button>
-                    </td>
+                          {/* Dinner Toggle */}
+                          <td className="py-4 px-4 text-center">
+                            <button
+                              onClick={() => handleToggleMeal(m.userId, "dinner", isDn)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
+                                isDn
+                                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                              }`}
+                            >
+                              {isDn ? <Check size={14} /> : <X size={14} />}
+                              <span>{isDn ? "ON" : "OFF"}</span>
+                            </button>
+                          </td>
+                        </>
+                      );
+                    })()}
 
                     {/* Guest Rice / Guest Meals (+ / -) */}
                     <td className="py-4 px-4 text-center relative">
