@@ -27,8 +27,9 @@ function MessSimulator({ isBn }) {
   const simulatedBalance = calcDeposit - Number(simulatedMyBill);
 
   return (
-    <div className="w-full rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-xl border border-gray-100 dark:border-slate-800/60 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/30 dark:bg-orange-950/20 rounded-full blur-xl pointer-events-none" />
+    <div className="w-full rounded-3xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl p-6 shadow-[0_15px_40px_rgba(0,0,0,0.08)] border border-gray-200/80 dark:border-slate-800 relative overflow-hidden transition-all duration-300">
+      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-500/30 to-transparent pointer-events-none" />
+      <div className="absolute top-0 right-0 w-24 h-24 bg-orange-100/40 dark:bg-orange-950/20 rounded-full blur-xl pointer-events-none" />
 
       {/* Widget Header */}
       <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800/60 mb-5">
@@ -733,7 +734,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F3F1EC] font-body">
+    <div className="min-h-screen bg-[#F3F1EC] dark:bg-slate-950 font-body">
       {fonts}
       <section className="mx-auto max-w-2xl px-4 py-14">
         <p className="font-meta text-[11px] uppercase tracking-[0.3em] text-[#FF6900]">
@@ -742,59 +743,66 @@ export default function LandingPage() {
 
         {overviewLoading ? (
           <div className="mt-2 space-y-2 animate-pulse">
-            <div className="h-9 w-48 rounded-lg bg-[#E7E5E1]" />
-            <div className="h-4 w-60 rounded bg-[#E7E5E1]" />
+            <div className="h-9 w-48 rounded-lg bg-[#E7E5E1] dark:bg-slate-800" />
+            <div className="h-4 w-60 rounded bg-[#E7E5E1] dark:bg-slate-800" />
           </div>
         ) : (
           <>
-            <h1 className="font-display mt-2 text-3xl font-bold text-[#16181D]">
+            <h1 className="font-display mt-2 text-3xl font-bold text-[#16181D] dark:text-white">
               {messInfo?.messName || (lang === "en" ? "Your mess" : "আপনার মেস")}
             </h1>
-            <p className="mt-1 font-meta text-xs text-[#9a9691]">
-              {messInfo?.totalMembers ?? "—"} {t("members")} · {lang === "en" ? "managed by" : "পরিচালনায়"} {" "}
-              {messInfo?.managerName || "—"}
+            <p className="mt-1 font-meta text-xs text-[#9a9691] dark:text-slate-400">
+              {messInfo?.totalMembers ?? "—"} {t("members")} · {lang === "en" ? "managed by" : "পরিচালনায়"}{" "}
+              <span className="font-semibold text-gray-700 dark:text-slate-300">{messInfo?.managerName || "—"}</span>
             </p>
           </>
         )}
 
-        {/* This month's rate & bill — read-only, straight from the ledger */}
+        {/* This month's rate & bill — Clean Glass Cards over #F3F1EC */}
         <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
-          <div className="rounded-2xl bg-white p-2.5 sm:p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-[#9a9691] truncate">
+          <div className="relative overflow-hidden rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 p-3 sm:p-4 text-center border border-amber-200/80 dark:border-amber-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
+            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300 font-semibold truncate">
               {t("mealRate")}
             </p>
-            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-bold text-[#16181D]">
+            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-black text-amber-950 dark:text-amber-100">
               {monthSummary ? `৳${monthSummary.mealRate}` : "—"}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-2.5 sm:p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-[#9a9691] truncate">
+          <div className="relative overflow-hidden rounded-2xl bg-orange-50/80 dark:bg-orange-950/25 p-3 sm:p-4 text-center border border-orange-200/80 dark:border-orange-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
+            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-orange-700 dark:text-orange-300 font-semibold truncate">
               {t("yourBill")}
             </p>
-            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-bold text-[#16181D]">
+            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-black text-orange-950 dark:text-orange-100">
               {monthSummary ? `৳${monthSummary.bill}` : "—"}
             </p>
           </div>
-          <div className="rounded-2xl bg-white p-2.5 sm:p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-            <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-[#9a9691] truncate">
+          <div className={`relative overflow-hidden rounded-2xl p-3 sm:p-4 text-center border shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ${
+            monthSummary?.status === "due"
+              ? "bg-red-50/80 dark:bg-red-950/25 border-red-200/80 dark:border-red-900/40"
+              : "bg-emerald-50/80 dark:bg-emerald-950/25 border-emerald-200/80 dark:border-emerald-900/40"
+          }`}>
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+            <p className={`font-meta text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold truncate ${
+              monthSummary?.status === "due" ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
+            }`}>
               {monthSummary?.status === "due" ? t("youOwe") : t("advance")}
             </p>
-            <p
-              className={`font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-bold ${
-                monthSummary?.status === "due"
-                  ? "text-[#D4453A]"
-                  : "text-[#16181D]"
-              }`}
-            >
+            <p className={`font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-black ${
+              monthSummary?.status === "due"
+                ? "text-red-600 dark:text-red-400"
+                : "text-emerald-950 dark:text-emerald-100"
+            }`}>
               {monthSummary ? `৳${Math.abs(monthSummary.balance)}` : "—"}
             </p>
           </div>
         </div>
 
-        <h2 className="font-display mt-10 text-xl font-semibold text-[#16181D]">
+        <h2 className="font-display mt-10 text-xl font-bold text-[#16181D] dark:text-white">
           {t("todaysMeals")}
         </h2>
-        <p className="mt-1 font-meta text-xs text-[#9a9691]">
+        <p className="mt-1 font-meta text-xs text-[#9a9691] dark:text-slate-400">
           {new Date().toLocaleDateString(lang === "en" ? "en-US" : "bn-BD", {
             weekday: "long",
             month: "long",
@@ -805,52 +813,52 @@ export default function LandingPage() {
         {mealsLoading ? (
           <div className="mt-6 space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[#EAE7E0] animate-pulse">
+              <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[#EAE7E0] dark:border-slate-800 animate-pulse">
                 <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-full bg-[#E7E5E1]" />
-                  <div className="h-4 w-28 rounded bg-[#E7E5E1]" />
+                  <div className="h-8 w-8 rounded-full bg-[#E7E5E1] dark:bg-slate-800" />
+                  <div className="h-4 w-28 rounded bg-[#E7E5E1] dark:bg-slate-800" />
                 </div>
-                <div className="h-4 w-12 rounded bg-[#E7E5E1]" />
+                <div className="h-4 w-12 rounded bg-[#E7E5E1] dark:bg-slate-800" />
               </div>
             ))}
           </div>
         ) : !todayMeals ? (
-          <p className="mt-6 font-meta text-xs text-[#D4453A]">
+          <p className="mt-6 font-meta text-xs text-red-500">
             {mealError ? t("couldNotLoadMeals") : t("couldNotLoadMeals")}
           </p>
         ) : (
           <>
-            {/* Summary — how many members are eating each meal today */}
-            <div className="mt-4 grid grid-cols-3 gap-4">
+            {/* Meals Summary — Breakfast, Lunch, Dinner */}
+            <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
               {mealTypes.map((m) => (
                 <div
                   key={m.key}
-                  className="rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]"
+                  className="rounded-2xl bg-white dark:bg-slate-900 p-4 text-center shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-300"
                 >
-                  <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+                  <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
                     {m.label}
                   </p>
-                  <p className="font-display mt-1 text-2xl font-bold text-[#16181D]">
+                  <p className="font-display mt-1 text-2xl font-black text-[#16181D] dark:text-white">
                     {todayMeals.summary?.[m.key] ?? 0}
                   </p>
-                  <p className="font-meta text-[10px] text-[#9a9691]">
+                  <p className="font-meta text-[10px] text-[#9a9691] dark:text-slate-500">
                     {t("eatingOf")} {todayMeals.members.length} {t("eating")}
                   </p>
                 </div>
               ))}
             </div>
 
-            {/* Who's eating what — view only, nobody can change anything from here */}
-            <div className="mt-6 rounded-2xl bg-white shadow-[0_1px_2px_rgba(22,24,29,0.04)] ring-1 ring-[#EAE7E0]">
-              <div className="flex items-center justify-between border-b border-[#E7E5E1] px-5 py-3">
-                <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+            {/* Members Meal Status List Container */}
+            <div className="mt-6 rounded-2xl bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 overflow-hidden transition-all duration-300">
+              <div className="flex items-center justify-between border-b border-[#E7E5E1] dark:border-slate-800 px-5 py-3 bg-gray-50/50 dark:bg-slate-800/40">
+                <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
                   {t("memberHeader")}
                 </p>
                 <div className="flex gap-4 sm:gap-6 shrink-0">
                   {mealTypes.map((m) => (
                     <p
                       key={m.key}
-                      className="w-8 text-center font-meta text-[10px] uppercase tracking-wide text-[#9a9691]"
+                      className="w-8 text-center font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold"
                     >
                       {m.label.slice(0, 1)}
                     </p>
@@ -863,7 +871,7 @@ export default function LandingPage() {
                 return (
                   <div
                     key={member.userId}
-                    className="flex items-center justify-between px-5 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-[#F3F1EC]"
+                    className="flex items-center justify-between px-5 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-[#F3F1EC] dark:[&:not(:last-child)]:border-slate-800/60 hover:bg-orange-50/30 dark:hover:bg-slate-800/30 transition-colors"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       {member.image ? (
@@ -873,22 +881,22 @@ export default function LandingPage() {
                           src={getOptimizedImageUrl(member.image, { width: 96, height: 96 })}
                           alt={member.name}
                           unoptimized={typeof member.image === "string" && member.image.startsWith("http")}
-                          className="h-8 w-8 shrink-0 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          className="h-8 w-8 shrink-0 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity border border-gray-200 dark:border-slate-700"
                           onMouseEnter={() => preloadImage(member.image, { width: 400, height: 400 })}
                           onClick={() => setSelectedMember(member)}
                         />
                       ) : (
                         <span 
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF6900]/10 font-meta text-xs font-semibold text-[#FF6900] cursor-pointer hover:bg-[#FF6900]/20 transition-colors"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF6900]/10 dark:bg-orange-950/40 font-meta text-xs font-bold text-[#FF6900] dark:text-orange-400 cursor-pointer hover:bg-[#FF6900]/20 transition-colors"
                           onClick={() => setSelectedMember(member)}
                         >
                           {member.name?.charAt(0) || "?"}
                         </span>
                       )}
-                      <span className="text-sm font-medium text-[#16181D] truncate">
+                      <span className="text-sm font-semibold text-[#16181D] dark:text-slate-100 truncate">
                         {isMe ? t("youLabel") : member.name}
                         {member.role === "manager" && (
-                          <span className="ml-1.5 font-meta text-[9px] uppercase tracking-wide text-[#9a9691]">
+                          <span className="ml-1.5 font-meta text-[9px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-bold">
                             {t("managerLabel")}
                           </span>
                         )}
@@ -899,8 +907,10 @@ export default function LandingPage() {
                       {mealTypes.map((m) => (
                         <div key={m.key} className="w-8 flex items-center justify-center">
                           <span
-                            className={`block h-2.5 w-2.5 rounded-full ${
-                              member[m.key] ? "bg-[#FF6900]" : "bg-[#E7E5E1]"
+                            className={`block h-3 w-3 rounded-full transition-all duration-200 ${
+                              member[m.key] 
+                                ? "bg-[#FF6900] shadow-sm shadow-orange-500/40 scale-110" 
+                                : "bg-[#E7E5E1] dark:bg-slate-700"
                             }`}
                             title={`${isMe ? t("youLabel") : member.name} — ${
                               m.label
@@ -914,7 +924,7 @@ export default function LandingPage() {
               })}
             </div>
 
-            <p className="mt-4 font-meta text-[11px] text-[#9a9691]">
+            <p className="mt-4 font-meta text-[11px] text-[#9a9691] dark:text-slate-500">
               {t("viewOnlyDesc")}
             </p>
           </>

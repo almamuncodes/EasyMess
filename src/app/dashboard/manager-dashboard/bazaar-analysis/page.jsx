@@ -6,6 +6,8 @@ import { useTranslation } from "@/lib/useTranslation";
 import { ShoppingBag, TrendingUp, Calendar, Award, BarChart3, ChevronDown, AlertCircle, ShoppingCart } from "lucide-react";
 import { getBDNow } from "@/lib/date-utils";
 
+export const dynamic = "force-dynamic";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 const taka = (n) =>

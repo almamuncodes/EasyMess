@@ -9,6 +9,8 @@ import { Sparkles, X, Search } from "lucide-react";
 import { toast } from "sonner";
 import { getBDNow } from "@/lib/date-utils";
 
+export const dynamic = "force-dynamic";
+
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });

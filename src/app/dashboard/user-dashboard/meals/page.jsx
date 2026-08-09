@@ -7,6 +7,8 @@ import { trackEvent } from "@/lib/analytics";
 import MealCountdownTimer from "@/components/ui/MealCountdownTimer";
 import { getBDNow, getUTCDayFromMongoDate, getBDDateStr } from "@/lib/date-utils";
 
+export const dynamic = "force-dynamic";
+
 const MealCalendar = () => {
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;

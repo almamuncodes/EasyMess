@@ -5,6 +5,8 @@ import { Inter, Hind_Siliguri } from "next/font/google";
 import { GetUser } from "@/components/action/action";
 import { getBDNow } from "@/lib/date-utils";
 
+export const dynamic = "force-dynamic";
+
 const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],

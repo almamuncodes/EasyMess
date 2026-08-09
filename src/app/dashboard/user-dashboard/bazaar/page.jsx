@@ -4,6 +4,8 @@ import { GetUser } from "@/components/action/action";
 import { useState, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 const monthNames = [
   "January",
   "February",

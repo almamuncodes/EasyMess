@@ -28,7 +28,7 @@ export default function MealCountdownTimer({ userId: customUserId }) {
     hours: 0,
     minutes: 0,
     seconds: 0,
-    icon: Sun,
+    iconType: "sun",
   });
 
   useEffect(() => {
@@ -102,33 +102,33 @@ export default function MealCountdownTimer({ userId: customUserId }) {
       let targetBDDate = new Date(bdNow.bdDateObj);
       let mealNameBn = "";
       let mealNameEn = "";
-      let MealIcon = Sun;
+      let iconType = "sun";
 
       if (currentMinutes < bTime.totalMinutes) {
         // Next: Breakfast Today
         targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
         mealNameBn = "আজকের সকালের মিল";
         mealNameEn = "Today's Breakfast";
-        MealIcon = Coffee;
+        iconType = "coffee";
       } else if (currentMinutes < lTime.totalMinutes) {
         // Next: Lunch Today
         targetBDDate.setUTCHours(lTime.hours, lTime.minutes, 0, 0);
         mealNameBn = "আজকের দুপুরের মিল";
         mealNameEn = "Today's Lunch";
-        MealIcon = Sun;
+        iconType = "sun";
       } else if (currentMinutes < dTime.totalMinutes) {
         // Next: Dinner Today
         targetBDDate.setUTCHours(dTime.hours, dTime.minutes, 0, 0);
         mealNameBn = "আজকের রাতের মিল";
         mealNameEn = "Today's Dinner";
-        MealIcon = Moon;
+        iconType = "moon";
       } else {
         // Next: Tomorrow's Breakfast
         targetBDDate.setUTCDate(targetBDDate.getUTCDate() + 1);
         targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
         mealNameBn = "আগামীকাল সকালের মিল";
         mealNameEn = "Tomorrow's Breakfast";
-        MealIcon = Coffee;
+        iconType = "coffee";
       }
 
       const diffMs = targetBDDate.getTime() - bdNow.bdDateObj.getTime();
@@ -144,7 +144,7 @@ export default function MealCountdownTimer({ userId: customUserId }) {
         hours,
         minutes,
         seconds,
-        icon: MealIcon,
+        iconType,
       });
     }
 
@@ -156,7 +156,14 @@ export default function MealCountdownTimer({ userId: customUserId }) {
   if (!mounted) return null;
 
   const pad = (n) => String(n).padStart(2, "0");
-  const IconComponent = state.icon || Clock;
+  const IconComponent =
+    state.iconType === "coffee"
+      ? Coffee
+      : state.iconType === "moon"
+      ? Moon
+      : state.iconType === "sun"
+      ? Sun
+      : Clock;
 
   return (
     <div className="p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-slate-900 border-orange-500/30 text-slate-800 dark:text-slate-100">

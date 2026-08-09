@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
+
+export const dynamic = "force-dynamic";
 import {
   Check,
   X,
@@ -232,7 +234,8 @@ export default function MealManagementPage() {
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
+      <div className="relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300">
+        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-500/30 to-transparent pointer-events-none" />
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Utensils className="text-orange-500" size={26} />
@@ -247,7 +250,7 @@ export default function MealManagementPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/dashboard/manager-dashboard/rice-management"
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-500/20 transition cursor-pointer"
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-500/25 transition cursor-pointer active:scale-95"
           >
             <Boxes size={16} />
             <span>{lang === "bn" ? "রাইস ম্যানেজমেন্ট" : "Rice Management"}</span>
@@ -259,13 +262,13 @@ export default function MealManagementPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition"
+              className="pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition backdrop-blur-sm"
             />
           </div>
 
           <button
             onClick={() => fetchData(true)}
-            className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition cursor-pointer"
+            className="p-2.5 bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition cursor-pointer active:scale-95"
             title="Refresh"
           >
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
@@ -273,59 +276,67 @@ export default function MealManagementPage() {
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Liquid Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
+        {/* Breakfast Card */}
+        <div className="relative overflow-hidden bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
+          <div className="w-12 h-12 bg-amber-500/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
             <Sun size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
               Breakfast
             </p>
-            <p className="text-2xl font-extrabold text-amber-950 dark:text-amber-100">
+            <p className="text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-0.5">
               {data.summary.breakfast}
             </p>
           </div>
         </div>
 
-        <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-orange-500/10 dark:bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400">
+        {/* Lunch Card */}
+        <div className="relative overflow-hidden bg-orange-50/80 dark:bg-orange-950/25 border border-orange-200/80 dark:border-orange-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
+          <div className="w-12 h-12 bg-orange-500/15 dark:bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
             <Sunset size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
               Lunch
             </p>
-            <p className="text-2xl font-extrabold text-orange-950 dark:text-orange-100">
+            <p className="text-2xl font-extrabold text-orange-950 dark:text-orange-100 mt-0.5">
               {data.summary.lunch}
             </p>
           </div>
         </div>
 
-        <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+        {/* Dinner Card */}
+        <div className="relative overflow-hidden bg-indigo-50/80 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent pointer-events-none" />
+          <div className="w-12 h-12 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
             <Moon size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
               Dinner
             </p>
-            <p className="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100">
+            <p className="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-0.5">
               {data.summary.dinner}
             </p>
           </div>
         </div>
 
-        <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-purple-500/10 dark:bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400">
+        {/* Guest Meal Card */}
+        <div className="relative overflow-hidden bg-purple-50/80 dark:bg-purple-950/25 border border-purple-200/80 dark:border-purple-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-purple-400/40 to-transparent pointer-events-none" />
+          <div className="w-12 h-12 bg-purple-500/15 dark:bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-inner">
             <Users size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
               Guest Meals
             </p>
-            <p className="text-2xl font-extrabold text-purple-950 dark:text-purple-100">
+            <p className="text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-0.5">
               {data.summary.guestMeal}
             </p>
           </div>
@@ -333,9 +344,9 @@ export default function MealManagementPage() {
       </div>
 
       {/* Main Members Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300">
         {/* Search Bar */}
-        <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-4">
+        <div className="p-4 border-b border-gray-200/60 dark:border-slate-800 flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
@@ -343,7 +354,7 @@ export default function MealManagementPage() {
               placeholder="Search member..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+              className="w-full pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition backdrop-blur-sm"
             />
           </div>
           <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">

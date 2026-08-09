@@ -8,6 +8,8 @@ import { useTranslation } from "@/lib/useTranslation";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { getBDNow } from "@/lib/date-utils";
+
+export const dynamic = "force-dynamic";
 // import { fetchOverview } from "@/lib/api";
 
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
@@ -40,13 +42,17 @@ function Perforation({ className = "" }) {
   );
 }
 
-function SummaryCard({ label, value, mono: useMono = true }) {
+function SummaryCard({ label, value, mono: useMono = true, icon = "📊" }) {
   return (
-    <div className="rounded-2xl bg-[#FFF7ED] dark:bg-slate-900 border border-[#FFEEDD] dark:border-slate-800 p-3 min-[375px]:p-4 sm:p-5 shadow-sm">
-      <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400">
-        {label}
-      </p>
-      <p className={`mt-1 text-sm min-[375px]:text-base sm:text-xl md:text-2xl font-bold text-gray-950 dark:text-slate-100 whitespace-nowrap ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
+    <div className="relative overflow-hidden rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/70 dark:border-amber-900/40 backdrop-blur-xl p-3.5 min-[375px]:p-4 sm:p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400">
+          {label}
+        </p>
+        <span className="text-sm">{icon}</span>
+      </div>
+      <p className={`mt-0.5 text-sm min-[375px]:text-base sm:text-xl md:text-2xl font-bold text-gray-950 dark:text-slate-100 whitespace-nowrap ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
         {value}
       </p>
     </div>
@@ -392,7 +398,7 @@ export default function OverviewDashboard({ role }) {
               </div>
             </div>
             {/* Search Bar */}
-            <div className="mt-6 flex items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-xl border border-[#1B2A26]/10 dark:border-slate-800 shadow-sm">
+            <div className="mt-6 flex items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -400,7 +406,7 @@ export default function OverviewDashboard({ role }) {
                   placeholder={lang === "bn" ? "মেম্বার খুঁজুন..." : "Search member..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                  className="w-full pl-10 pr-4 py-2 bg-white/60 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition backdrop-blur-sm"
                 />
               </div>
               <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
@@ -409,16 +415,16 @@ export default function OverviewDashboard({ role }) {
             </div>
 
             {filteredMembers.length === 0 ? (
-              <div className="mt-4 p-8 text-center text-gray-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-md border border-[#1B2A26]/10 dark:border-slate-800">
+              <div className="mt-4 p-8 text-center text-gray-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-gray-200/80 dark:border-slate-800">
                 {lang === "bn" ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
               </div>
             ) : (
               <>
                 {/* Desktop table */}
-                <div className="mt-4 hidden overflow-hidden rounded-md border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 sm:block">
+                <div className="mt-4 hidden overflow-hidden rounded-2xl border border-gray-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:block">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-[#1B2A26]/10 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50 dark:text-slate-400">
+                      <tr className="border-b border-gray-100 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50 dark:text-slate-400 bg-gray-50/50 dark:bg-slate-800/40">
                         <th className="px-4 py-3 font-medium">Member</th>
                         <th className="px-4 py-3 font-medium">Meal</th>
                         <th className="px-4 py-3 font-medium">Deposit</th>
@@ -431,16 +437,18 @@ export default function OverviewDashboard({ role }) {
                       {filteredMembers.map((m, idx) => (
                         <tr
                           key={m.userId}
-                          className={`border-b border-[#1B2A26]/5 dark:border-slate-800/50 last:border-0 ${idx % 2 === 1 ? "bg-[#1B2A26]/[0.02] dark:bg-slate-800/20" : ""
-                            }`}
+                          className={`border-b border-gray-100 dark:border-slate-800/50 last:border-0 hover:bg-orange-50/30 dark:hover:bg-slate-800/30 transition-colors ${
+                            idx % 2 === 1 ? "bg-gray-50/30 dark:bg-slate-800/20" : ""
+                          }`}
                         >
-                          <td className="px-4 py-3">{m.userName}</td>
+                          <td className="px-4 py-3 font-medium">{m.userName}</td>
                           <td className="px-4 py-3 font-[family-name:var(--font-mono)]">{m.totalMeal}</td>
                           <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.deposit)}</td>
                           <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.bill)}</td>
                           <td
-                            className={`px-4 py-3 font-[family-name:var(--font-mono)] ${m.balance >= 0 ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
-                              }`}
+                            className={`px-4 py-3 font-[family-name:var(--font-mono)] font-bold ${
+                              m.balance >= 0 ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
+                            }`}
                           >
                             {m.balance >= 0 ? "+" : ""}
                             {taka(m.balance)}
@@ -457,9 +465,9 @@ export default function OverviewDashboard({ role }) {
                 {/* Mobile receipt-style cards */}
                 <div className="mt-4 space-y-3 sm:hidden">
                   {filteredMembers.map((m) => (
-                    <div key={m.userId} className="rounded-md border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+                    <div key={m.userId} className="rounded-2xl border border-gray-200/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
                       <div className="mb-2 flex items-center justify-between">
-                        <p className="font-medium">{m.userName}</p>
+                        <p className="font-semibold">{m.userName}</p>
                         <StatusBadge status={m.status} />
                       </div>
                       <div className="space-y-1 text-sm text-[#1B2A26]/80 dark:text-slate-300">

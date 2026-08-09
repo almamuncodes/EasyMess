@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import MessQRCodeModal from "@/components/mess/MessQRCodeModal";
 import { QrCode, Copy, Check } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function MyMessPage() {

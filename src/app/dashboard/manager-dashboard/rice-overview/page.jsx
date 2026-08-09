@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import Image from "next/image";
+
+export const dynamic = "force-dynamic";
 import {
   Boxes,
   Plus,
