@@ -437,10 +437,10 @@ export default function ManagerRiceOverviewPage() {
             return (
               <div key={m.userId} className={`p-4 space-y-3 transition ${isPositive ? "bg-emerald-50/40 hover:bg-emerald-50/70 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/20" : "bg-red-50/40 hover:bg-red-50/70 dark:bg-red-950/10 dark:hover:bg-red-950/20"}`}>
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <MemberAvatar src={imgUrl} name={m.name} size={40} />
+                  <div className="flex items-center gap-2.5">
+                    <MemberAvatar src={imgUrl} name={m.name} size={34} />
                     <div>
-                      <p className="font-bold text-gray-900 dark:text-white text-base">{m.name}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</p>
                       <span className="text-[10px] uppercase font-bold text-gray-400">{m.role}</span>
                     </div>
                   </div>

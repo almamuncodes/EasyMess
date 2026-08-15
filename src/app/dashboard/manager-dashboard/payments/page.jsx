@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Fraunces,
   Inter,
-  Noto_Serif_Bengali,
   Hind_Siliguri,
 } from "next/font/google";
 import { authClient } from "@/lib/auth-client";
@@ -24,7 +23,7 @@ const inter = Inter({
   weight: ["400", "500", "600"],
   variable: "--font-body",
 });
-const notoBengali = Noto_Serif_Bengali({
+const notoBengali = Hind_Siliguri({
   subsets: ["bengali"],
   weight: ["600", "700"],
   variable: "--font-display-bn",

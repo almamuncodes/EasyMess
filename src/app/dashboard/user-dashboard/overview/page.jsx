@@ -446,12 +446,7 @@ export default function UserOverviewPage() {
                                 : "bg-rose-50/20 hover:bg-rose-50/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20"
                             }`}
                           >
-                            <td className="px-4 py-3 font-semibold">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <MemberAvatar src={imgUrl} name={memberName} size={36} />
-                                <span className="font-bold text-gray-900 dark:text-slate-100">{memberName}</span>
-                              </div>
-                            </td>
+                            <td className="px-4 py-3 font-semibold">{m.userName}</td>
                             <td className="px-4 py-3 font-mono">{m.totalMeal}</td>
                             <td className="px-4 py-3 font-mono">৳ {taka(m.deposit)}</td>
                             <td className="px-4 py-3 font-mono">৳ {taka(m.bill)}</td>
@@ -477,8 +472,6 @@ export default function UserOverviewPage() {
                 <div className="mt-4 space-y-3 sm:hidden">
                   {filteredMembers.map((m) => {
                     const isPositive = m.balance >= 0;
-                    const imgUrl = m.image || m.userImage || m.avatar || m.photo || m.userPhoto || memberImageMap[m.userId];
-                    const memberName = m.userName || m.name || "Member";
                     return (
                       <div
                         key={m.userId}
@@ -489,10 +482,7 @@ export default function UserOverviewPage() {
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <MemberAvatar src={imgUrl} name={memberName} size={40} />
-                            <p className="font-bold text-base text-gray-900 dark:text-white truncate">{memberName}</p>
-                          </div>
+                          <p className="font-bold text-sm text-gray-900 dark:text-white">{m.userName}</p>
                           <StatusBadge status={m.status} />
                         </div>
                         <div className="space-y-1.5">

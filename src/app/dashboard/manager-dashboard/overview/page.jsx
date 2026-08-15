@@ -471,12 +471,7 @@ export default function OverviewDashboard({ role }) {
                                 : "bg-rose-50/20 hover:bg-rose-50/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20"
                             }`}
                           >
-                            <td className="px-4 py-3 font-medium">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <MemberAvatar src={imgUrl} name={memberName} size={36} />
-                                <span className="font-semibold text-gray-900 dark:text-slate-100">{memberName}</span>
-                              </div>
-                            </td>
+                            <td className="px-4 py-3 font-medium">{m.userName}</td>
                             <td className="px-4 py-3 font-[family-name:var(--font-mono)]">{m.totalMeal}</td>
                             <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.deposit)}</td>
                             <td className="px-4 py-3 font-[family-name:var(--font-mono)]">৳ {taka(m.bill)}</td>
@@ -513,11 +508,8 @@ export default function OverviewDashboard({ role }) {
                             : "border-rose-200/50 bg-rose-50/25 dark:border-rose-900/30 dark:bg-rose-950/15"
                         }`}
                       >
-                        <div className="mb-3 flex items-center justify-between">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <MemberAvatar src={imgUrl} name={memberName} size={40} />
-                            <p className="font-bold truncate text-base text-gray-900 dark:text-slate-100">{memberName}</p>
-                          </div>
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="font-semibold">{m.userName}</p>
                           <StatusBadge status={m.status} />
                         </div>
                         <div className="space-y-1 text-sm text-[#1B2A26]/80 dark:text-slate-300">
