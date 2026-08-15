@@ -60,9 +60,9 @@ export default function BottomNav() {
 
   return (
     <div className="md:hidden fixed bottom-4 left-4 right-4 z-40 max-w-md mx-auto pointer-events-none">
-      <div className="pointer-events-auto relative bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl backdrop-saturate-180 border border-gray-200/90 dark:border-white/15 shadow-[0_12px_35px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] rounded-[26px] p-1.5 px-3 flex justify-around items-center ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300 overflow-hidden">
+      <div className="pointer-events-auto relative bg-white/65 dark:bg-slate-900/65 backdrop-blur-2xl backdrop-saturate-200 border border-white/80 dark:border-white/15 shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] rounded-[26px] p-1.5 px-3 flex justify-around items-center ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300 overflow-hidden">
         {/* Specular Top Edge Light */}
-        <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/80 dark:via-white/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/90 dark:via-white/20 to-transparent pointer-events-none" />
 
         {tabs.map((tab) => {
           const Icon = tab.icon;
