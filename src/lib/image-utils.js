@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * EasyMess Image Optimization & Preloading Utilities
  */
@@ -126,3 +128,39 @@ export function compressImage(file, { maxWidth = 500, maxHeight = 500, quality =
   });
 }
 
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Gets cached member images map from localStorage (valid for 7 days)
+ */
+export function getCachedImageMap() {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem("easymess_member_image_cache");
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed.expiry && Date.now() > parsed.expiry) {
+      window.localStorage.removeItem("easymess_member_image_cache");
+      return {};
+    }
+    return parsed.data || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+/**
+ * Saves/merges member image map into localStorage with 7-day TTL
+ */
+export function setCachedImageMap(newMap) {
+  if (typeof window === "undefined" || typeof localStorage === "undefined" || !newMap || Object.keys(newMap).length === 0) return;
+  try {
+    const existing = getCachedImageMap();
+    const merged = { ...existing, ...newMap };
+    const payload = {
+      expiry: Date.now() + SEVEN_DAYS_MS,
+      data: merged,
+    };
+    window.localStorage.setItem("easymess_member_image_cache", JSON.stringify(payload));
+  } catch (e) {}
+}

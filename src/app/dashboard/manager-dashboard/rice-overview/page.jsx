@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
 import Image from "next/image";
+import { getOptimizedImageUrl, getCachedImageMap, setCachedImageMap } from "@/lib/image-utils";
+import MemberAvatar from "@/components/ui/MemberAvatar";
 
 export const dynamic = "force-dynamic";
 import {
@@ -34,13 +36,21 @@ export default function ManagerRiceOverviewPage() {
   const [selectedMonth, setSelectedMonth] = useState(defaultDateObj.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(defaultDateObj.getFullYear());
 
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
-    config: { enableRiceManagement: true, ricePerMeal: 1, riceUnitName: "Unit" },
-    summary: { totalMessStockAdded: 0, totalMessConsumed: 0, totalMessRemaining: 0 },
-    members: [],
-    history: [],
+  const [data, setData] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`rice_summary_${userId}_${selectedMonth}_${selectedYear}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return {
+      config: { enableRiceManagement: true, ricePerMeal: 1, riceUnitName: "Unit" },
+      summary: { totalMessStockAdded: 0, totalMessConsumed: 0, totalMessRemaining: 0 },
+      members: [],
+      history: [],
+    };
   });
+  const [loading, setLoading] = useState(() => !data || data.members.length === 0);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -126,7 +136,7 @@ export default function ManagerRiceOverviewPage() {
 
   const fetchData = async (showLoader = false) => {
     if (!userId) return;
-    if (showLoader) setLoading(true);
+    if (showLoader && (!data || !data.members || data.members.length === 0)) setLoading(true);
 
     try {
       const res = await fetch(
@@ -135,6 +145,18 @@ export default function ManagerRiceOverviewPage() {
       const resData = await res.json();
       if (resData.success) {
         setData(resData);
+        if (resData.members && Array.isArray(resData.members)) {
+          const map = {};
+          resData.members.forEach((m) => {
+            if (m.userId && m.image) {
+              map[m.userId] = m.image;
+            }
+          });
+          setCachedImageMap(map);
+        }
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(`rice_summary_${userId}_${selectedMonth}_${selectedYear}`, JSON.stringify(resData));
+        }
       } else {
         toast.error(resData.message || "Failed to load rice summary");
       }
@@ -245,16 +267,16 @@ export default function ManagerRiceOverviewPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white p-6 rounded-3xl shadow-lg shadow-amber-500/20">
+      {/* Clean Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <Boxes className="h-7 w-7" />
-            <h1 className="text-2xl md:text-3xl font-extrabold">
-              {lang === "bn" ? "রাইস ওভারভিউ (Rice Overview)" : "Rice Overview"}
-            </h1>
-          </div>
-          <p className="text-amber-100 text-sm mt-1">
+          <p className="text-xs uppercase tracking-[0.18em] text-[#C99A3E] font-semibold">
+            Rice Management · Monthly Overview
+          </p>
+          <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold text-[#1B2A26] dark:text-white">
+            {lang === "bn" ? "রাইস ওভারভিউ" : "Rice Overview"}
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
             {lang === "bn"
               ? `মাসিক চালের ওভারভিউ ও ব্যালেন্স হিসাব (১ মিল = ${data.config.ricePerMeal} ${unit})`
               : `Monthly Rice Overview & Balance Summary (1 Meal = ${data.config.ricePerMeal} ${unit})`}
@@ -262,15 +284,15 @@ export default function ManagerRiceOverviewPage() {
         </div>
 
         {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Month Selector */}
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl px-4 py-2.5 text-xs font-bold backdrop-blur-md outline-none cursor-pointer"
+            className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
           >
             {monthsList.map((m) => (
-              <option key={m.value} value={m.value} className="text-gray-900">
+              <option key={m.value} value={m.value}>
                 {m.label}
               </option>
             ))}
@@ -280,10 +302,10 @@ export default function ManagerRiceOverviewPage() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl px-4 py-2.5 text-xs font-bold backdrop-blur-md outline-none cursor-pointer"
+            className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
           >
             {[2024, 2025, 2026, 2027].map((y) => (
-              <option key={y} value={y} className="text-gray-900">
+              <option key={y} value={y}>
                 {y}
               </option>
             ))}
@@ -291,19 +313,81 @@ export default function ManagerRiceOverviewPage() {
 
           <button
             onClick={() => fetchData(true)}
-            className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition backdrop-blur-md"
+            className="p-2 bg-white dark:bg-slate-900 border border-[#1B2A26]/15 dark:border-slate-800 text-gray-700 dark:text-slate-300 rounded-md hover:bg-gray-50 transition cursor-pointer shadow-sm"
             title="Refresh Data"
           >
-            <RefreshCw size={18} />
+            <RefreshCw size={16} />
           </button>
+        </div>
+      </div>
 
+      {/* Clean Summary Cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        {/* Total Stock */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#FFFDF5] dark:bg-amber-950/25 border border-[#FCEECB] dark:border-amber-900/40 backdrop-blur-xl p-3.5 sm:p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400 truncate">
+              {lang === "bn" ? "মোট চাল জমা" : "Total Stock"}
+            </p>
+            <span className="text-sm">🌾</span>
+          </div>
+          <p className="mt-0.5 text-base sm:text-2xl font-bold font-mono text-gray-950 dark:text-slate-100">
+            {data.summary.totalMessStockAdded}{" "}
+            <span className="text-xs font-normal text-gray-500">{unit}</span>
+          </p>
+        </div>
+
+        {/* Total Consumed */}
+        <div className="relative overflow-hidden rounded-2xl bg-[#FFFDF5] dark:bg-amber-950/25 border border-[#FCEECB] dark:border-amber-900/40 backdrop-blur-xl p-3.5 sm:p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400 truncate">
+              {lang === "bn" ? "মোট চাল খরচ" : "Total Consumed"}
+            </p>
+            <span className="text-sm">🍲</span>
+          </div>
+          <p className="mt-0.5 text-base sm:text-2xl font-bold font-mono text-gray-950 dark:text-slate-100">
+            {data.summary.totalMessConsumed}{" "}
+            <span className="text-xs font-normal text-gray-500">{unit}</span>
+          </p>
+        </div>
+
+        {/* Total Remaining */}
+        <div className={`col-span-2 sm:col-span-1 relative overflow-hidden rounded-2xl backdrop-blur-xl p-3.5 sm:p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ${
+          data.summary.totalMessRemaining >= 0
+            ? "bg-[#FFFDF5] dark:bg-amber-950/25 border border-[#FCEECB] dark:border-amber-900/40"
+            : "bg-red-50/60 dark:bg-red-950/25 border border-red-200/60 dark:border-red-900/40"
+        }`}>
+          <div className="flex items-center justify-between mb-1">
+            <p className={`text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider truncate ${
+              data.summary.totalMessRemaining >= 0 ? "text-[#EA580C] dark:text-orange-400" : "text-red-700 dark:text-red-400"
+            }`}>
+              {lang === "bn" ? "অবশিষ্ট স্টক" : "Stock Balance"}
+            </p>
+            <span className="text-sm">⚖️</span>
+          </div>
+          <p className={`mt-0.5 text-base sm:text-2xl font-bold font-mono ${
+            data.summary.totalMessRemaining >= 0 ? "text-gray-950 dark:text-slate-100" : "text-red-600 dark:text-red-400"
+          }`}>
+            {data.summary.totalMessRemaining}{" "}
+            <span className="text-xs font-normal text-gray-500">{unit}</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
+        <p className="font-[family-name:var(--font-display)] text-lg font-semibold text-[#1B2A26] dark:text-slate-200">
+          {lang === "bn" ? "মেম্বার চালের বিবরণী" : "Member Rice Balances Overview"}
+        </p>
+
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleDownloadPdf}
             disabled={exporting}
-            className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer border border-white/20 disabled:opacity-50"
+            className="rounded-md bg-[#ff6900] px-3.5 py-2 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#ff6900]/90 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm flex items-center gap-1.5"
           >
-            <Download size={16} />
-            <span>{exporting ? (lang === "bn" ? "তৈরি হচ্ছে..." : "Preparing...") : (lang === "bn" ? "রিপোর্ট ডাউনলোড (PDF)" : "Download PDF")}</span>
+            <Download size={14} />
+            <span>{exporting ? (lang === "bn" ? "তৈরি হচ্ছে..." : "Preparing...") : (lang === "bn" ? "📄 Download PDF" : "📄 Download PDF")}</span>
           </button>
 
           <button
@@ -311,74 +395,11 @@ export default function ManagerRiceOverviewPage() {
               if (data.members.length > 0) setSelectedMemberId(data.members[0].userId);
               setIsModalOpen(true);
             }}
-            className="px-5 py-3 bg-white text-orange-600 hover:bg-amber-50 rounded-2xl font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
+            className="rounded-md border border-[#1B2A26]/15 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold transition hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5"
           >
-            <Plus size={18} />
-            <span>{lang === "bn" ? "চাল জমা/বিয়োগ দিন" : "Add/Deduct Rice"}</span>
+            <Plus size={14} />
+            <span>{lang === "bn" ? "চাল জমা/বিয়োগ" : "Add/Deduct Rice"}</span>
           </button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Total Stock */}
-        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              {lang === "bn" ? "এই মাসে মোট জমা চাল" : "Monthly Rice Stock Added"}
-            </p>
-            <h3 className="text-3xl font-black text-gray-900 dark:text-white mt-1">
-              {data.summary.totalMessStockAdded}{" "}
-              <span className="text-base font-medium text-gray-500">{unit}</span>
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-500 flex items-center justify-center">
-            <ArrowUpRight size={24} />
-          </div>
-        </div>
-
-        {/* Total Consumed */}
-        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              {lang === "bn" ? "এই মাসে ব্যবহৃত চাল" : "Monthly Rice Consumed"}
-            </p>
-            <h3 className="text-3xl font-black text-gray-900 dark:text-white mt-1">
-              {data.summary.totalMessConsumed}{" "}
-              <span className="text-base font-medium text-gray-500">{unit}</span>
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/40 text-orange-500 flex items-center justify-center">
-            <TrendingDown size={24} />
-          </div>
-        </div>
-
-        {/* Total Remaining */}
-        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-6 rounded-3xl shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              {lang === "bn" ? "মাসিক অবশিষ্ট স্টক" : "Monthly Stock Balance"}
-            </p>
-            <h3
-              className={`text-3xl font-black mt-1 ${
-                data.summary.totalMessRemaining >= 0
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-red-600 dark:text-red-400"
-              }`}
-            >
-              {data.summary.totalMessRemaining}{" "}
-              <span className="text-base font-medium text-gray-500">{unit}</span>
-            </h3>
-          </div>
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-              data.summary.totalMessRemaining >= 0
-                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500"
-                : "bg-red-50 dark:bg-red-950/40 text-red-500"
-            }`}
-          >
-            <Scale size={24} />
-          </div>
         </div>
       </div>
 
@@ -412,25 +433,14 @@ export default function ManagerRiceOverviewPage() {
         <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
           {filteredMembers.map((m) => {
             const isPositive = m.remaining >= 0;
+            const imgUrl = m.image || getCachedImageMap()[m.userId];
             return (
-              <div key={m.userId} className="p-4 space-y-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition">
+              <div key={m.userId} className={`p-4 space-y-3 transition ${isPositive ? "bg-emerald-50/40 hover:bg-emerald-50/70 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/20" : "bg-red-50/40 hover:bg-red-50/70 dark:bg-red-950/10 dark:hover:bg-red-950/20"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    {m.image ? (
-                      <Image
-                        src={m.image}
-                        alt={m.name}
-                        width={38}
-                        height={38}
-                        className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-slate-700"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center text-xs">
-                        {m.name?.[0]?.toUpperCase()}
-                      </div>
-                    )}
+                    <MemberAvatar src={imgUrl} name={m.name} size={40} />
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</p>
+                      <p className="font-bold text-gray-900 dark:text-white text-base">{m.name}</p>
                       <span className="text-[10px] uppercase font-bold text-gray-400">{m.role}</span>
                     </div>
                   </div>
@@ -476,23 +486,12 @@ export default function ManagerRiceOverviewPage() {
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800 text-sm">
               {filteredMembers.map((m) => {
                 const isPositive = m.remaining >= 0;
+                const imgUrl = m.image || getCachedImageMap()[m.userId];
                 return (
-                  <tr key={m.userId} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition">
+                  <tr key={m.userId} className={`transition ${isPositive ? "bg-emerald-50/30 hover:bg-emerald-50/60 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/20" : "bg-red-50/30 hover:bg-red-50/60 dark:bg-red-950/10 dark:hover:bg-red-950/20"}`}>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        {m.image ? (
-                          <Image
-                            src={m.image}
-                            alt={m.name}
-                            width={36}
-                            height={36}
-                            className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-slate-700"
-                          />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center text-xs">
-                            {m.name?.[0]?.toUpperCase()}
-                          </div>
-                        )}
+                        <MemberAvatar src={imgUrl} name={m.name} size={36} />
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</p>
                           <span className="text-[10px] uppercase font-bold text-gray-400">{m.role}</span>

@@ -237,7 +237,9 @@ export default function ManagerSettingsPage() {
         {Object.keys(mealSettings).length === 0 ? (
           <p className="text-sm text-gray-400">No meal settings found yet.</p>
         ) : (
-          Object.entries(mealSettings).map(([key, value]) => {
+          Object.entries(mealSettings)
+            .filter(([key]) => !["enableRiceManagement", "ricePerMeal", "riceUnitName"].includes(key))
+            .map(([key, value]) => {
             const isTime =
               key.toLowerCase().includes("time") ||
               key.toLowerCase().includes("deadline");

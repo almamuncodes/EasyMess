@@ -10,7 +10,7 @@ import { preloadImage, getOptimizedImageUrl, shimmerBlurDataUrl } from "@/lib/im
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-import { getBDDateStr, getBDMonthYear } from "@/lib/date-utils";
+import { getBDDateStr, getBDMonthYear, getBDNow } from "@/lib/date-utils";
 
 function todayDateString() {
   return getBDDateStr();
@@ -206,8 +206,58 @@ export default function LandingPage() {
   const [overviewLoading, setOverviewLoading] = useState(() => !messInfo);
 
   const [selectedMember, setSelectedMember] = useState(null);
+  const [mealSettings, setMealSettings] = useState(null);
 
   const today = todayDateString();
+
+  // Fetch mess meal settings for deadlines
+  useEffect(() => {
+    if (!hasMess || !session?.user?.id) return;
+    fetch(`${API_URL}/api/user/mess-settings/${session.user.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.mealSettings) {
+          setMealSettings(data.mealSettings);
+        }
+      })
+      .catch((err) => console.error("Failed to load meal settings for deadlines:", err));
+  }, [hasMess, session?.user?.id]);
+
+  function isDeadlineActive(mealKey) {
+    const bdNow = getBDNow();
+    const currentMinutes = bdNow.hours * 60 + bdNow.minutes;
+
+    let val = mealSettings?.[`${mealKey}Deadline`] || mealSettings?.[`${mealKey}Time`];
+
+    let deadlineMinutes = 0;
+    if (val === undefined || val === null || val === "") {
+      if (mealKey === "breakfast") deadlineMinutes = 7 * 60;
+      else if (mealKey === "lunch") deadlineMinutes = 11 * 60;
+      else if (mealKey === "dinner") deadlineMinutes = 14 * 60;
+    } else if (typeof val === "number") {
+      let h = val;
+      if (mealKey === "dinner" && h > 0 && h <= 12) h = h < 12 ? h + 12 : 12;
+      if (mealKey === "lunch" && h > 0 && h <= 5) h += 12;
+      deadlineMinutes = h * 60;
+    } else if (typeof val === "string") {
+      const str = val.trim();
+      if (str.includes(":")) {
+        const parts = str.split(":");
+        let h = parseInt(parts[0]) || 0;
+        let m = parseInt(parts[1]) || 0;
+        if (str.toUpperCase().includes("PM") && h < 12) h += 12;
+        if (str.toUpperCase().includes("AM") && h === 12) h = 0;
+        deadlineMinutes = h * 60 + m;
+      } else {
+        let h = parseInt(str) || 0;
+        if (mealKey === "dinner" && h > 0 && h <= 12) h = h < 12 ? h + 12 : 12;
+        if (mealKey === "lunch" && h > 0 && h <= 5) h += 12;
+        deadlineMinutes = h * 60;
+      }
+    }
+
+    return currentMinutes < deadlineMinutes;
+  }
 
   // ১. ইউজার কোনো mess-এর member কিনা চেক করা (উইথ sessionStorage ক্যাশিং)
   useEffect(() => {
@@ -904,20 +954,33 @@ export default function LandingPage() {
                     </div>
 
                     <div className="flex gap-4 sm:gap-6 shrink-0">
-                      {mealTypes.map((m) => (
-                        <div key={m.key} className="w-8 flex items-center justify-center">
-                          <span
-                            className={`block h-3 w-3 rounded-full transition-all duration-200 ${
-                              member[m.key] 
-                                ? "bg-[#FF6900] shadow-sm shadow-orange-500/40 scale-110" 
-                                : "bg-[#E7E5E1] dark:bg-slate-700"
-                            }`}
-                            title={`${isMe ? t("youLabel") : member.name} — ${
-                              m.label
-                            } ${member[m.key] ? "on" : "off"}`}
-                          />
-                        </div>
-                      ))}
+                      {mealTypes.map((m) => {
+                        const isOpen = isDeadlineActive(m.key);
+                        const isMealOn = !!member[m.key];
+                        return (
+                          <div key={m.key} className="w-8 flex items-center justify-center">
+                            <span
+                              className={`block h-3 w-3 rounded-full transition-all duration-300 ${
+                                isMealOn
+                                  ? isOpen
+                                    ? "bg-[#FF6900] shadow-sm shadow-orange-500/50 scale-110 ring-2 ring-orange-400/40"
+                                    : "bg-[#FF6900] shadow-sm shadow-orange-500/40 scale-110 opacity-90"
+                                  : "bg-[#E7E5E1] dark:bg-slate-700"
+                              }`}
+                              style={
+                                isMealOn && isOpen
+                                  ? { animation: "pulse 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite" }
+                                  : undefined
+                              }
+                              title={`${isMe ? t("youLabel") : member.name} — ${
+                                m.label
+                              } ${isMealOn ? "on" : "off"}${
+                                isMealOn ? (isOpen ? " (Deadline open — Blinking)" : " (Deadline passed — Fixed)") : ""
+                              }`}
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );

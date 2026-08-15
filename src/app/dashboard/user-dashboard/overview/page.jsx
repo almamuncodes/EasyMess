@@ -7,7 +7,10 @@ import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
 import { Sparkles, X, Search } from "lucide-react";
 import { toast } from "sonner";
-import { getBDNow } from "@/lib/date-utils";
+import { getBDNow, getBDDateStr } from "@/lib/date-utils";
+import Image from "next/image";
+import { getOptimizedImageUrl, getCachedImageMap, setCachedImageMap } from "@/lib/image-utils";
+import MemberAvatar from "@/components/ui/MemberAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +87,7 @@ export default function UserOverviewPage() {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [memberImageMap, setMemberImageMap] = useState(() => getCachedImageMap());
 
   const filteredMembers = useMemo(() => {
     if (!data?.members) return [];
@@ -92,7 +96,27 @@ export default function UserOverviewPage() {
     );
   }, [data?.members, searchQuery]);
 
-
+  // Fetch member images from mess meals API to enrich overview members & sync 7-day cache
+  useEffect(() => {
+    if (!userId) return;
+    const todayStr = getBDDateStr();
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
+    fetch(`${apiBase}/api/mess/meals?userId=${userId}&date=${todayStr}`)
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData?.members && Array.isArray(resData.members)) {
+          const map = {};
+          resData.members.forEach((m) => {
+            if (m.userId && m.image) {
+              map[m.userId] = m.image;
+            }
+          });
+          setMemberImageMap((prev) => ({ ...prev, ...map }));
+          setCachedImageMap(map);
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -409,53 +433,80 @@ export default function UserOverviewPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredMembers.map((m, idx) => (
-                        <tr
-                          key={m.userId}
-                          className={`border-b border-[#1B2A26]/5 dark:border-slate-800/50 last:border-0 ${
-                            idx % 2 === 1 ? "bg-[#1B2A26]/[0.02] dark:bg-slate-800/20" : ""
-                          }`}
-                        >
-                          <td className="px-4 py-3 font-semibold">{m.userName}</td>
-                          <td className="px-4 py-3 font-mono">{m.totalMeal}</td>
-                          <td className="px-4 py-3 font-mono">৳ {taka(m.deposit)}</td>
-                          <td className="px-4 py-3 font-mono">৳ {taka(m.bill)}</td>
-                          <td
-                            className={`px-4 py-3 font-mono font-bold ${
-                              m.balance >= 0 ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
+                      {filteredMembers.map((m, idx) => {
+                        const isPositive = m.balance >= 0;
+                        const imgUrl = m.image || m.userImage || m.avatar || m.photo || m.userPhoto || memberImageMap[m.userId];
+                        const memberName = m.userName || m.name || "Member";
+                        return (
+                          <tr
+                            key={m.userId}
+                            className={`border-b border-[#1B2A26]/5 dark:border-slate-800/50 last:border-0 transition-colors ${
+                              isPositive
+                                ? "bg-emerald-50/20 hover:bg-emerald-50/40 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/20"
+                                : "bg-rose-50/20 hover:bg-rose-50/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20"
                             }`}
                           >
-                            {m.balance >= 0 ? "+" : ""}
-                            {taka(m.balance)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <StatusBadge status={m.status} />
-                          </td>
-                        </tr>
-                      ))}
+                            <td className="px-4 py-3 font-semibold">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <MemberAvatar src={imgUrl} name={memberName} size={36} />
+                                <span className="font-bold text-gray-900 dark:text-slate-100">{memberName}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 font-mono">{m.totalMeal}</td>
+                            <td className="px-4 py-3 font-mono">৳ {taka(m.deposit)}</td>
+                            <td className="px-4 py-3 font-mono">৳ {taka(m.bill)}</td>
+                            <td
+                              className={`px-4 py-3 font-mono font-bold ${
+                                isPositive ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
+                              }`}
+                            >
+                              {isPositive ? "+" : ""}
+                              {taka(m.balance)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <StatusBadge status={m.status} />
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Mobile Cards */}
                 <div className="mt-4 space-y-3 sm:hidden">
-                  {filteredMembers.map((m) => (
-                    <div key={m.userId} className="rounded-2xl border border-[#1B2A26]/10 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="font-bold text-sm text-gray-900 dark:text-white">{m.userName}</p>
-                        <StatusBadge status={m.status} />
+                  {filteredMembers.map((m) => {
+                    const isPositive = m.balance >= 0;
+                    const imgUrl = m.image || m.userImage || m.avatar || m.photo || m.userPhoto || memberImageMap[m.userId];
+                    const memberName = m.userName || m.name || "Member";
+                    return (
+                      <div
+                        key={m.userId}
+                        className={`rounded-2xl border backdrop-blur-xl p-4 shadow-sm transition-all duration-300 space-y-2 ${
+                          isPositive
+                            ? "border-emerald-200/50 bg-emerald-50/25 dark:border-emerald-900/30 dark:bg-emerald-950/15"
+                            : "border-rose-200/50 bg-rose-50/25 dark:border-rose-900/30 dark:bg-rose-950/15"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <MemberAvatar src={imgUrl} name={memberName} size={40} />
+                            <p className="font-bold text-base text-gray-900 dark:text-white truncate">{memberName}</p>
+                          </div>
+                          <StatusBadge status={m.status} />
+                        </div>
+                        <div className="space-y-1.5">
+                          <LeaderRow left="Meal" right={m.totalMeal} />
+                          <LeaderRow left="Deposit" right={`৳ ${taka(m.deposit)}`} />
+                          <LeaderRow left="Bill" right={`৳ ${taka(m.bill)}`} />
+                          <LeaderRow
+                            left="Balance"
+                            right={`${isPositive ? "+" : ""}৳ ${taka(m.balance)}`}
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <LeaderRow left="Meal" right={m.totalMeal} />
-                        <LeaderRow left="Deposit" right={`৳ ${taka(m.deposit)}`} />
-                        <LeaderRow left="Bill" right={`৳ ${taka(m.bill)}`} />
-                        <LeaderRow
-                          left="Balance"
-                          right={`${m.balance >= 0 ? "+" : ""}৳ ${taka(m.balance)}`}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
