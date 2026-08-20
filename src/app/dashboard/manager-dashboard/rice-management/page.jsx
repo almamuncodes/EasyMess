@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
+import MemberAvatar from "@/components/ui/MemberAvatar";
 import {
   Boxes,
   Check,
@@ -27,10 +29,17 @@ import {
 import { useTranslation } from "@/lib/useTranslation";
 import { getBDDateStr } from "@/lib/date-utils";
 
+export const dynamic = "force-dynamic";
+
+const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
+const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });
+
 export default function ManagerRiceManagementPage() {
   const user = GetUser();
   const userId = user?.user?.id;
   const { t, lang } = useTranslation();
+  const isBn = lang === "bn";
 
   const [date, setDate] = useState(() => getBDDateStr());
   const [searchQuery, setSearchQuery] = useState("");
@@ -205,7 +214,7 @@ export default function ManagerRiceManagementPage() {
       if (isBf) acc.breakfast += 1;
       if (isLn) acc.lunch += 1;
       if (isDn) acc.dinner += 1;
-      acc.guestMeal += (curr.guestBreakfast || 0) + (curr.guestLunch || 0) + (curr.guestDinner || 0);
+      acc.guestMeal += (curr.guestBreakfast || 0) + (curr.guestLunch || 0) + (curr.guestDinner || 0) + (curr.guestRiceExtra || 0);
       return acc;
     },
     { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 }
@@ -213,37 +222,46 @@ export default function ManagerRiceManagementPage() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto space-y-6 animate-pulse">
-        <div className="h-8 bg-gray-200 dark:bg-slate-800 rounded w-1/3"></div>
-        <div className="h-48 bg-gray-200 dark:bg-slate-800 rounded-3xl"></div>
+      <div className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-pulse`}>
+        <div className="h-10 bg-amber-200/50 dark:bg-slate-800 rounded-2xl w-1/3"></div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
+          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
+          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
+          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 font-[family-name:var(--font-body)] text-[#1B2A26] dark:text-slate-200 rounded-2xl p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6`}
+    >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-[#1B2A26]/10 dark:border-slate-800 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Boxes className="text-amber-500" size={26} />
-            <span>{lang === "bn" ? "রাইস ম্যানেজমেন্ট" : "Rice Management"}</span>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#C99A3E] font-semibold flex items-center gap-1.5">
+            <Boxes size={15} /> <span>{isBn ? "ম্যানেজার রাইস প্যানেল" : "Manager Rice Panel"}</span>
+          </p>
+          <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
+            {isBn ? "দৈনিক চাল ব্যবস্থাপনা" : "Daily Rice Management"}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {lang === "bn"
-              ? "দৈনিক চাল জমা, খরচ, মিল কমানো/বাড়ানো এবং গেস্ট চালের হিসাব"
+          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
+            {isBn
+              ? "দৈনিক চাল জমা, খরচ, মিল চাল চালু/বন্ধ এবং গেস্ট চালের হিসাব"
               : "Daily Rice Management (Deduct/Add Rice, Toggle Meals & Guest Rice)"}
           </p>
         </div>
 
         {/* Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/dashboard/manager-dashboard/rice-overview"
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs flex items-center gap-2 hover:from-amber-600 hover:to-orange-600 shadow-md transition cursor-pointer"
+            className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 hover:from-amber-600 hover:to-orange-600 shadow-sm transition cursor-pointer"
           >
-            <BarChart3 size={16} />
-            <span>{lang === "bn" ? "রাইস ওভারভিউ" : "Rice Overview"}</span>
+            <BarChart3 size={15} />
+            <span>{isBn ? "রাইস ওভারভিউ" : "Rice Overview"}</span>
           </Link>
 
           <button
@@ -251,132 +269,120 @@ export default function ManagerRiceManagementPage() {
               if (members.length > 0) setDepositMemberId(members[0].userId);
               setIsDepositModalOpen(true);
             }}
-            className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 hover:bg-emerald-700 shadow-md transition cursor-pointer"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
-            <Plus size={16} />
-            <span>{lang === "bn" ? "চাল জমা/বিয়োগ (+/-)" : "Add/Deduct Rice"}</span>
+            <Plus size={15} />
+            <span>{isBn ? "চাল জমা/বিয়োগ (+/-)" : "Add/Deduct Rice"}</span>
           </button>
 
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-amber-500/20 outline-none transition"
+              className="pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-[#1B2A26]/15 dark:border-slate-800 rounded-xl text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
             />
           </div>
 
           <button
             onClick={() => fetchData(true)}
-            className="p-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl transition cursor-pointer"
-            title="Refresh"
+            className="p-2 bg-white dark:bg-slate-900 border border-[#1B2A26]/15 dark:border-slate-800 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-sm"
+            title="Refresh Data"
           >
-            <RefreshCw size={18} />
+            <RefreshCw size={16} />
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-amber-500/10 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400">
-            <Sun size={24} />
+      {/* Summary Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        {/* Breakfast */}
+        <div className="rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              {isBn ? "সকালের চাল" : "Breakfast Rice"}
+            </span>
+            <span className="text-base">🌅</span>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              Breakfast Rice
-            </p>
-            <p className="text-2xl font-extrabold text-amber-950 dark:text-amber-100">
-              {summary.breakfast}
-            </p>
-          </div>
+          <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
+            {summary.breakfast} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Meals"}</span>
+          </p>
         </div>
 
-        <div className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-orange-500/10 dark:bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400">
-            <Sunset size={24} />
+        {/* Lunch */}
+        <div className="rounded-2xl bg-orange-50/70 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40 backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300">
+              {isBn ? "দুপুরের চাল" : "Lunch Rice"}
+            </span>
+            <span className="text-base">☀️</span>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-              Lunch Rice
-            </p>
-            <p className="text-2xl font-extrabold text-orange-950 dark:text-orange-100">
-              {summary.lunch}
-            </p>
-          </div>
+          <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
+            {summary.lunch} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Meals"}</span>
+          </p>
         </div>
 
-        <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-            <Moon size={24} />
+        {/* Dinner */}
+        <div className="rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+              {isBn ? "রাতের চাল" : "Dinner Rice"}
+            </span>
+            <span className="text-base">🌙</span>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
-              Dinner Rice
-            </p>
-            <p className="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100">
-              {summary.dinner}
-            </p>
-          </div>
+          <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
+            {summary.dinner} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Meals"}</span>
+          </p>
         </div>
 
-        <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200/60 dark:border-purple-900/50 p-4 rounded-2xl flex items-center gap-4">
-          <div className="w-12 h-12 bg-purple-500/10 dark:bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400">
-            <Users size={24} />
+        {/* Guest Rice */}
+        <div className="rounded-2xl bg-purple-50/70 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-900/40 backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+              {isBn ? "গেস্ট চাল" : "Guest Rice"}
+            </span>
+            <span className="text-base">👥</span>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
-              Guest Rice
-            </p>
-            <p className="text-2xl font-extrabold text-purple-950 dark:text-purple-100">
-              {summary.guestMeal}
-            </p>
-          </div>
+          <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
+            {summary.guestMeal} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Extra"}</span>
+          </p>
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+      {/* Main Table / Member List Section */}
+      <div className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
         {/* Search */}
-        <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800 pb-4">
+          <h2 className="text-base font-bold">
+            {isBn ? "সদস্যদের রাইস কন্ট্রোল প্যানেল" : "Member Rice Controls"}
+          </h2>
+
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input
               type="text"
-              placeholder={lang === "bn" ? "মেম্বার খুঁজুন..." : "Search member..."}
+              placeholder={isBn ? "মেম্বার খুঁজুন..." : "Search member..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-amber-500"
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition"
             />
           </div>
         </div>
 
         {/* Mobile View - Cards (No Horizontal Scrolling) */}
-        <div className="md:hidden divide-y divide-gray-100 dark:divide-slate-800">
+        <div className="md:hidden space-y-3">
           {filteredMembers.map((m) => {
             const totalGuest = Math.max(0, (m.guestBreakfast || 0) + (m.guestLunch || 0) + (m.guestDinner || 0) + (m.guestRiceExtra || 0));
 
             return (
-              <div key={m.userId} className="p-4 space-y-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition">
+              <div key={m.userId} className="p-3.5 rounded-xl bg-gray-50/70 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-800 space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    {m.image ? (
-                      <Image
-                        src={m.image}
-                        alt={m.name}
-                        width={36}
-                        height={36}
-                        className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-slate-700"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center text-xs">
-                        {m.name?.[0]?.toUpperCase()}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2.5">
+                    <MemberAvatar src={m.image} name={m.name} size={36} />
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</p>
-                      <span className="text-[10px] uppercase font-bold text-gray-400">{m.role}</span>
+                      <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">{m.name}</p>
+                      <span className="text-[10px] uppercase font-bold text-gray-400">{m.role || "MEMBER"}</span>
                     </div>
                   </div>
 
@@ -389,7 +395,7 @@ export default function ManagerRiceManagementPage() {
                     >
                       <Minus size={12} />
                     </button>
-                    <span className="px-2 text-xs font-extrabold text-purple-950 dark:text-purple-200">
+                    <span className="px-2 text-xs font-bold font-[family-name:var(--font-mono)] text-purple-950 dark:text-purple-200">
                       Guest: {totalGuest}
                     </span>
                     <button
@@ -413,7 +419,7 @@ export default function ManagerRiceManagementPage() {
                         onClick={() => handleToggleMeal(m.userId, "breakfast", isBf)}
                         className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                           isBf
-                            ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
+                            ? "bg-[#ff6900] text-white shadow-sm shadow-orange-500/20"
                             : "bg-gray-100 dark:bg-slate-800 text-gray-400"
                         }`}
                       >
@@ -425,7 +431,7 @@ export default function ManagerRiceManagementPage() {
                         onClick={() => handleToggleMeal(m.userId, "lunch", isLn)}
                         className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                           isLn
-                            ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
+                            ? "bg-[#ff6900] text-white shadow-sm shadow-orange-500/20"
                             : "bg-gray-100 dark:bg-slate-800 text-gray-400"
                         }`}
                       >
@@ -437,7 +443,7 @@ export default function ManagerRiceManagementPage() {
                         onClick={() => handleToggleMeal(m.userId, "dinner", isDn)}
                         className={`py-2 px-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                           isDn
-                            ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
+                            ? "bg-[#ff6900] text-white shadow-sm shadow-orange-500/20"
                             : "bg-gray-100 dark:bg-slate-800 text-gray-400"
                         }`}
                       >
@@ -454,40 +460,28 @@ export default function ManagerRiceManagementPage() {
 
         {/* Desktop View - Table */}
         <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="bg-gray-50/60 dark:bg-slate-800/40 border-b border-gray-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-gray-400">
-                <th className="py-4 px-6">Member</th>
-                <th className="py-4 px-4 text-center">Breakfast</th>
-                <th className="py-4 px-4 text-center">Lunch</th>
-                <th className="py-4 px-4 text-center">Dinner</th>
-                <th className="py-4 px-4 text-center">Guest Rice</th>
+              <tr className="border-b border-gray-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-gray-400 bg-gray-50/50 dark:bg-slate-800/40">
+                <th className="py-3 px-4">Member</th>
+                <th className="py-3 px-4 text-center">Breakfast Rice</th>
+                <th className="py-3 px-4 text-center">Lunch Rice</th>
+                <th className="py-3 px-4 text-center">Dinner Rice</th>
+                <th className="py-3 px-4 text-center">Guest Rice</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-slate-800 text-sm">
+            <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
               {filteredMembers.map((m) => {
                 const totalGuest = Math.max(0, (m.guestBreakfast || 0) + (m.guestLunch || 0) + (m.guestDinner || 0) + (m.guestRiceExtra || 0));
 
                 return (
                   <tr key={m.userId} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition">
-                    <td className="py-4 px-6">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
-                        {m.image ? (
-                          <Image
-                            src={m.image}
-                            alt={m.name}
-                            width={36}
-                            height={36}
-                            className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-slate-700"
-                          />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center text-xs">
-                            {m.name?.[0]?.toUpperCase()}
-                          </div>
-                        )}
+                        <MemberAvatar src={m.image} name={m.name} size={36} />
                         <div>
                           <p className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</p>
-                          <span className="text-[10px] uppercase font-bold text-gray-400">{m.role}</span>
+                          <span className="text-[10px] uppercase font-bold text-gray-400">{m.role || "MEMBER"}</span>
                         </div>
                       </div>
                     </td>
@@ -499,13 +493,13 @@ export default function ManagerRiceManagementPage() {
                       const isDn = m.dinnerRice !== undefined ? m.dinnerRice : m.dinner;
                       return (
                         <>
-                          <td className="py-4 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleToggleMeal(m.userId, "breakfast", isBf)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
                                 isBf
-                                  ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
-                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                                  ? "bg-[#ff6900] text-white shadow-sm shadow-orange-500/20"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"
                               }`}
                             >
                               {isBf ? <Check size={14} /> : <X size={14} />}
@@ -514,13 +508,13 @@ export default function ManagerRiceManagementPage() {
                           </td>
 
                           {/* Lunch Toggle */}
-                          <td className="py-4 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleToggleMeal(m.userId, "lunch", isLn)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
                                 isLn
-                                  ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20"
-                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                                  ? "bg-[#ff6900] text-white shadow-sm shadow-orange-500/20"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"
                               }`}
                             >
                               {isLn ? <Check size={14} /> : <X size={14} />}
@@ -529,13 +523,13 @@ export default function ManagerRiceManagementPage() {
                           </td>
 
                           {/* Dinner Toggle */}
-                          <td className="py-4 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center">
                             <button
                               onClick={() => handleToggleMeal(m.userId, "dinner", isDn)}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer ${
                                 isDn
-                                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-500/20"
-                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400"
+                                  ? "bg-[#ff6900] text-white shadow-sm shadow-orange-500/20"
+                                  : "bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"
                               }`}
                             >
                               {isDn ? <Check size={14} /> : <X size={14} />}
@@ -547,7 +541,7 @@ export default function ManagerRiceManagementPage() {
                     })()}
 
                     {/* Guest Rice / Guest Meals (+ / -) */}
-                    <td className="py-4 px-4 text-center relative">
+                    <td className="py-3.5 px-4 text-center">
                       <div className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/40 p-1.5 rounded-xl border border-purple-200/50">
                         <button
                           onClick={() => handleGuestMealChange(m.userId, -1)}
@@ -556,7 +550,7 @@ export default function ManagerRiceManagementPage() {
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="px-2 text-xs font-extrabold text-purple-950 dark:text-purple-200">
+                        <span className="px-2 text-xs font-bold font-[family-name:var(--font-mono)] text-purple-950 dark:text-purple-200">
                           {totalGuest}
                         </span>
                         <button
@@ -578,11 +572,20 @@ export default function ManagerRiceManagementPage() {
 
       {/* Add Deposit Modal */}
       {isDepositModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-xl font-extrabold text-gray-900 dark:text-white">
-              {lang === "bn" ? "চাল জমা/বিয়োগ করুন" : "Add / Deduct Rice Deposit"}
-            </h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Plus size={18} className="text-amber-500" />
+                <span>{isBn ? "চাল জমা/বিয়োগ করুন" : "Add / Deduct Rice Deposit"}</span>
+              </h3>
+              <button
+                onClick={() => setIsDepositModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
             <form onSubmit={handleAddDeposit} className="space-y-4">
               <div>
@@ -592,7 +595,7 @@ export default function ManagerRiceManagementPage() {
                 <select
                   value={depositMemberId}
                   onChange={(e) => setDepositMemberId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-sm font-medium outline-none focus:border-amber-500"
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                 >
                   {members.map((m) => (
                     <option key={m.userId} value={m.userId}>
@@ -612,7 +615,7 @@ export default function ManagerRiceManagementPage() {
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   placeholder="e.g. 10 to add, or -2 to deduct"
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-sm font-medium outline-none focus:border-amber-500"
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   required
                 />
               </div>
@@ -623,7 +626,7 @@ export default function ManagerRiceManagementPage() {
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-sm font-medium outline-none focus:border-amber-500"
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   required
                 />
               </div>
@@ -637,22 +640,22 @@ export default function ManagerRiceManagementPage() {
                   value={depositNote}
                   onChange={(e) => setDepositNote(e.target.value)}
                   placeholder="e.g. Rice deposit or adjustment note"
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-sm font-medium outline-none focus:border-amber-500"
+                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex justify-end gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsDepositModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100"
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingDeposit}
-                  className="px-5 py-2.5 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 shadow-md transition disabled:opacity-50"
+                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 cursor-pointer"
                 >
                   {savingDeposit ? "Saving..." : "Save Entry"}
                 </button>

@@ -183,12 +183,6 @@ export default function Sidebar() {
         ]
       : []),
     {
-      name: t("myMess"),
-      href: "/dashboard/user-dashboard/my-mess",
-      icon: Home,
-      roles: ["member"],
-    },
-    {
       name: t("mealsSidebar"),
       href: "/dashboard/user-dashboard/meals",
       icon: Utensils,
@@ -196,9 +190,15 @@ export default function Sidebar() {
     },
     ...(riceConfig?.enableRiceManagement === true
       ? [
-          { name: t("riceManagement"), href: "/dashboard/user-dashboard/rice-management", icon: Boxes, roles: ["member"] },
+          { name: t("riceOverview"), href: "/dashboard/user-dashboard/rice-management", icon: Boxes, roles: ["member"] },
         ]
       : []),
+    {
+      name: t("myMess"),
+      href: "/dashboard/user-dashboard/my-mess",
+      icon: Home,
+      roles: ["member"],
+    },
     {
       name: t("billsSidebar"),
       href: "/dashboard/manager-dashboard/bills",

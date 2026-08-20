@@ -54,6 +54,7 @@ export const translations = {
     activityLog: "Activity Log",
     settingsSidebar: "Settings",
     riceManagement: "Rice Management",
+    riceOverview: "Rice Overview",
 
     // Under Construction (About, Features, Pricing pages)
     underConstruction: "Under Construction",
@@ -180,6 +181,7 @@ export const translations = {
     activityLog: "অ্যাক্টিভিটি লগ",
     settingsSidebar: "সেটিংস",
     riceManagement: "চাল ব্যবস্থাপনা",
+    riceOverview: "রাইস ওভারভিউ",
     offlineNotice: "আপনি অফলাইনে আছেন — ক্যাশড ডাটা দেখানো হচ্ছে",
     predictedMealRateTitle: "মিল রেট পূর্বাভাস",
     currentMealRateLabel: "বর্তমান মিল রেট",

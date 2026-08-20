@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
-import { Search } from "lucide-react";
+import {
+  Sparkles,
+  X,
+  Search,
+  ArrowUpDown,
+  SlidersHorizontal,
+  ChevronDown,
+  Check,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Receipt,
+} from "lucide-react";
 import { toast } from "sonner";
 import { getBDNow, getBDDateStr } from "@/lib/date-utils";
 import Image from "next/image";
@@ -19,13 +31,33 @@ const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable:
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });
 
-
-
 const taka = (n) =>
   new Intl.NumberFormat("en-BD", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n || 0);
 
 function monthLabel(month, year) {
   return new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+}
+
+const SORT_OPTIONS = [
+  { id: "default", labelEn: "Default Order", labelBn: "ডিফল্ট অর্ডার", icon: ArrowUpDown },
+  { id: "meal-desc", labelEn: "Meal: High to Low", labelBn: "মিল: বেশি থেকে কম", icon: TrendingUp },
+  { id: "meal-asc", labelEn: "Meal: Low to High", labelBn: "মিল: কম থেকে বেশি", icon: TrendingDown },
+  { id: "deposit-desc", labelEn: "Deposit: High to Low", labelBn: "ডিপোজিট: বেশি থেকে কম", icon: Wallet },
+  { id: "bill-desc", labelEn: "Bill: High to Low", labelBn: "বিল: বেশি থেকে কম", icon: Receipt },
+  { id: "balance-desc", labelEn: "Advance: High to Low", labelBn: "অ্যাডভান্স: বেশি থেকে কম", icon: Sparkles },
+  { id: "balance-asc", labelEn: "Due: High to Low", labelBn: "ডিউ: বেশি থেকে কম", icon: ArrowUpDown },
+];
+
+function getSortLabel(sortBy, isBn) {
+  switch (sortBy) {
+    case "meal-desc": return isBn ? "মিল: বেশি → কম" : "Meal: High → Low";
+    case "meal-asc": return isBn ? "মিল: কম → বেশি" : "Meal: Low → High";
+    case "deposit-desc": return isBn ? "ডিপোজিট: বেশি" : "Deposit: High";
+    case "bill-desc": return isBn ? "বিল: বেশি" : "Bill: High";
+    case "balance-desc": return isBn ? "অ্যাডভান্স: বেশি" : "Advance: High";
+    case "balance-asc": return isBn ? "ডিউ: বেশি" : "Due: High";
+    default: return isBn ? "ফিল্টার" : "Filter";
+  }
 }
 
 // Perforated "tear tab" edge — the signature element.
@@ -109,14 +141,47 @@ export default function OverviewDashboard({ role }) {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("default");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortMenuRef = useRef(null);
   const [memberImageMap, setMemberImageMap] = useState(() => getCachedImageMap());
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+        setIsSortOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const filteredMembers = useMemo(() => {
     if (!data?.members) return [];
-    return data.members.filter((m) =>
+    let list = data.members.filter((m) =>
       m.userName?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [data?.members, searchQuery]);
+
+    if (sortBy === "meal-desc") {
+      return [...list].sort((a, b) => (b.totalMeal || 0) - (a.totalMeal || 0));
+    }
+    if (sortBy === "meal-asc") {
+      return [...list].sort((a, b) => (a.totalMeal || 0) - (b.totalMeal || 0));
+    }
+    if (sortBy === "deposit-desc") {
+      return [...list].sort((a, b) => (b.deposit || 0) - (a.deposit || 0));
+    }
+    if (sortBy === "bill-desc") {
+      return [...list].sort((a, b) => (b.bill || 0) - (a.bill || 0));
+    }
+    if (sortBy === "balance-desc") {
+      return [...list].sort((a, b) => (b.balance || 0) - (a.balance || 0));
+    }
+    if (sortBy === "balance-asc") {
+      return [...list].sort((a, b) => (a.balance || 0) - (b.balance || 0));
+    }
+    return list;
+  }, [data?.members, searchQuery, sortBy]);
 
   // Fetch member images from mess meals API to enrich overview members & sync 7-day cache
   useEffect(() => {
@@ -421,19 +486,97 @@ export default function OverviewDashboard({ role }) {
                 </button>
               </div>
             </div>
-            {/* Search Bar */}
-            <div className="mt-6 flex items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  placeholder={lang === "bn" ? "মেম্বার খুঁজুন..." : "Search member..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-white/60 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition backdrop-blur-sm"
-                />
+            {/* Search & Filter Bar */}
+            <div className="mt-6 relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+              <div className="flex flex-1 items-center gap-2 sm:gap-3 w-full">
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
+                  <input
+                    type="text"
+                    placeholder={lang === "bn" ? "মেম্বার খুঁজুন..." : "Search member..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-8 py-2.5 bg-white/60 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition backdrop-blur-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-full"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Custom Smart Filter Dropdown Trigger */}
+                <div className="relative z-40" ref={sortMenuRef}>
+                  <button
+                    onClick={() => setIsSortOpen((prev) => !prev)}
+                    type="button"
+                    className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-semibold transition-all duration-200 shrink-0 cursor-pointer shadow-sm ${
+                      sortBy !== "default"
+                        ? "bg-orange-500/10 border-orange-500/40 text-orange-600 dark:text-orange-400 ring-2 ring-orange-500/20"
+                        : "bg-white/60 dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100/80 dark:hover:bg-slate-700/70"
+                    }`}
+                  >
+                    <SlidersHorizontal size={16} className={sortBy !== "default" ? "text-orange-500" : "text-gray-500 dark:text-slate-400"} />
+                    <span className="whitespace-nowrap">{getSortLabel(sortBy, isBn)}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-200 text-gray-400 ${isSortOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {/* Smart Filter Modal Popover */}
+                  {isSortOpen && (
+                    <div className="absolute right-0 mt-2 w-64 sm:w-72 z-[100] rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-gray-200/90 dark:border-slate-800 p-2 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-2 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400 flex items-center gap-1.5">
+                          <SlidersHorizontal size={13} /> {isBn ? "সর্ট ও ফিল্টার" : "Sort & Filter"}
+                        </span>
+                        {sortBy !== "default" && (
+                          <button
+                            onClick={() => {
+                              setSortBy("default");
+                              setIsSortOpen(false);
+                            }}
+                            className="text-xs text-orange-500 hover:text-orange-600 dark:hover:text-orange-400 font-semibold cursor-pointer"
+                          >
+                            {isBn ? "রিসেট" : "Reset"}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="py-1.5 space-y-1 max-h-72 overflow-y-auto">
+                        {SORT_OPTIONS.map((opt) => {
+                          const isSelected = sortBy === opt.id;
+                          const Icon = opt.icon;
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => {
+                                setSortBy(opt.id);
+                                setIsSortOpen(false);
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm transition-all duration-150 cursor-pointer ${
+                                isSelected
+                                  ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold border border-orange-500/20"
+                                  : "text-gray-700 dark:text-slate-300 font-medium hover:bg-gray-100/80 dark:hover:bg-slate-800/80"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <Icon size={16} className={isSelected ? "text-orange-500" : "text-gray-400 dark:text-slate-500"} />
+                                <span>{isBn ? opt.labelBn : opt.labelEn}</span>
+                              </div>
+                              {isSelected && <Check size={16} className="text-orange-500" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="text-xs font-semibold text-gray-400 dark:text-gray-500">
+
+              <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 self-end sm:self-center shrink-0">
                 {filteredMembers.length} {lang === "bn" ? "মেম্বার" : filteredMembers.length === 1 ? "Member" : "Members"}
               </span>
             </div>
