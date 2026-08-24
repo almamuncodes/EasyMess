@@ -189,8 +189,13 @@ export default function MyMessPage() {
       <div className="bg-[#FBF8EF] dark:bg-slate-900 rounded-2xl shadow p-5 space-y-3">
         <h2 className="font-semibold text-gray-800 dark:text-slate-100">Current Month Summary</h2>
 
-        <div className="grid grid-cols-2 gap-4 text-sm ">
-          <SummaryItem label="Total Meal" value={summary.totalMeal} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          <SummaryItem
+            label="Total Meal"
+            value={summary.totalMeal}
+            subValue={summary.ownMeal !== undefined ? `Own: ${summary.ownMeal}` : null}
+          />
+          <SummaryItem label="Guest Meal" value={summary.guestMeal ?? 0} />
           <SummaryItem
             label="Total Deposit"
             value={`৳${summary.totalDeposit}`}
@@ -296,11 +301,16 @@ export default function MyMessPage() {
 }
 
 // Small reusable component for each summary box
-function SummaryItem({ label, value }) {
+function SummaryItem({ label, value, subValue }) {
   return (
     <div className="bg-[#F0F0F0] dark:bg-slate-800 rounded-xl px-4 py-3 text-neutral-900 dark:text-slate-100">
-      <p className="text-gray-500 dark:text-slate-400 text-xs">{label}</p>
-      <p className="font-semibold text-gray-800 dark:text-slate-100">{value}</p>
+      <p className="text-gray-500 dark:text-slate-400 text-xs font-medium">{label}</p>
+      <p className="font-semibold text-gray-800 dark:text-slate-100 text-base sm:text-lg mt-0.5">{value}</p>
+      {subValue && (
+        <p className="text-[11px] text-gray-400 dark:text-slate-400 font-normal mt-0.5">
+          {subValue}
+        </p>
+      )}
     </div>
   );
 }

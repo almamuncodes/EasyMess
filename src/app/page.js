@@ -880,22 +880,38 @@ export default function LandingPage() {
           <>
             {/* Meals Summary — Breakfast, Lunch, Dinner */}
             <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
-              {mealTypes.map((m) => (
-                <div
-                  key={m.key}
-                  className="rounded-2xl bg-white dark:bg-slate-900 p-4 text-center shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-300"
-                >
-                  <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
-                    {m.label}
-                  </p>
-                  <p className="font-display mt-1 text-2xl font-black text-[#16181D] dark:text-white">
-                    {todayMeals.summary?.[m.key] ?? 0}
-                  </p>
-                  <p className="font-meta text-[10px] text-[#9a9691] dark:text-slate-500">
-                    {t("eatingOf")} {todayMeals.members.length} {t("eating")}
-                  </p>
-                </div>
-              ))}
+              {mealTypes.map((m) => {
+                const guestKey = `guest${m.key.charAt(0).toUpperCase()}${m.key.slice(1)}`;
+                const totalMealCount = todayMeals.summary?.[m.key] ?? 0;
+                const guestCountForType = todayMeals.members.reduce(
+                  (sum, mem) => sum + (mem[guestKey] || 0),
+                  0
+                );
+                const ownCountForType = Math.max(0, totalMealCount - guestCountForType);
+
+                return (
+                  <div
+                    key={m.key}
+                    className="rounded-2xl bg-white dark:bg-slate-900 p-4 text-center shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-300"
+                  >
+                    <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
+                      {m.label}
+                    </p>
+                    <p className="font-display mt-1 text-2xl font-black text-[#16181D] dark:text-white">
+                      {totalMealCount}
+                    </p>
+                    {guestCountForType > 0 ? (
+                      <p className="font-meta text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                        ({ownCountForType} own + {guestCountForType} guest)
+                      </p>
+                    ) : (
+                      <p className="font-meta text-[10px] text-[#9a9691] dark:text-slate-500">
+                        {t("eatingOf")} {todayMeals.members.length} {t("eating")}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Members Meal Status List Container */}
@@ -918,6 +934,11 @@ export default function LandingPage() {
 
               {todayMeals.members.map((member) => {
                 const isMe = member.userId === session.user.id;
+                const totalGuestForMember =
+                  (member.guestBreakfast || 0) +
+                  (member.guestLunch || 0) +
+                  (member.guestDinner || 0);
+
                 return (
                   <div
                     key={member.userId}
@@ -943,28 +964,40 @@ export default function LandingPage() {
                           {member.name?.charAt(0) || "?"}
                         </span>
                       )}
-                      <span className="text-sm font-semibold text-[#16181D] dark:text-slate-100 truncate">
-                        {isMe ? t("youLabel") : member.name}
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span className="text-sm font-semibold text-[#16181D] dark:text-slate-100 truncate">
+                          {isMe ? t("youLabel") : member.name}
+                        </span>
                         {member.role === "manager" && (
-                          <span className="ml-1.5 font-meta text-[9px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-bold">
+                          <span className="font-meta text-[9px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-bold">
                             {t("managerLabel")}
                           </span>
                         )}
-                      </span>
+                        {totalGuestForMember > 0 && (
+                          <span className="font-meta text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/50">
+                            +{totalGuestForMember} Guest
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex gap-4 sm:gap-6 shrink-0">
                       {mealTypes.map((m) => {
                         const isOpen = isDeadlineActive(m.key);
                         const isMealOn = !!member[m.key];
+                        const guestKey = `guest${m.key.charAt(0).toUpperCase()}${m.key.slice(1)}`;
+                        const guestCountForMeal = member[guestKey] || 0;
+
                         return (
-                          <div key={m.key} className="w-8 flex items-center justify-center">
+                          <div key={m.key} className="w-8 flex items-center justify-center relative">
                             <span
                               className={`block h-3 w-3 rounded-full transition-all duration-300 ${
                                 isMealOn
                                   ? isOpen
                                     ? "bg-[#FF6900] shadow-sm shadow-orange-500/50 scale-110 ring-2 ring-orange-400/40"
                                     : "bg-[#FF6900] shadow-sm shadow-orange-500/40 scale-110 opacity-90"
+                                  : guestCountForMeal > 0
+                                  ? "bg-amber-500/30 border border-amber-500"
                                   : "bg-[#E7E5E1] dark:bg-slate-700"
                               }`}
                               style={
@@ -974,10 +1007,18 @@ export default function LandingPage() {
                               }
                               title={`${isMe ? t("youLabel") : member.name} — ${
                                 m.label
-                              } ${isMealOn ? "on" : "off"}${
-                                isMealOn ? (isOpen ? " (Deadline open — Blinking)" : " (Deadline passed — Fixed)") : ""
+                              }: ${isMealOn ? "Own Meal ON" : "Own Meal OFF"}${
+                                guestCountForMeal > 0 ? ` (+${guestCountForMeal} Guest)` : ""
                               }`}
                             />
+                            {guestCountForMeal > 0 && (
+                              <span
+                                className="absolute -top-2 -right-1 text-[9px] font-black text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950 px-1 rounded-full border border-amber-300 dark:border-amber-800 leading-none py-0.5 shadow-2xs"
+                                title={`${guestCountForMeal} Guest ${m.label} Meal(s)`}
+                              >
+                                +{guestCountForMeal}
+                              </span>
+                            )}
                           </div>
                         );
                       })}

@@ -59,6 +59,15 @@ export default function MyMess() {
     }
     return [];
   });
+  const [summary, setSummary] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`my_mess_summary_${userId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(() => !mess);
   const [loadError, setLoadError] = useState("");
 
@@ -98,27 +107,36 @@ export default function MyMess() {
     }
   }, []);
 
-  // ---- load mess + members --------------------------------------------------
+  // ---- load mess + members + summary ----------------------------------------
   const loadAll = useCallback(async () => {
     if (!userId) return;
 
     if (typeof window !== "undefined") {
       const cachedMess = sessionStorage.getItem(`my_mess_info_${userId}`);
       const cachedMembers = sessionStorage.getItem(`my_mess_members_${userId}`);
+      const cachedSummary = sessionStorage.getItem(`my_mess_summary_${userId}`);
       if (cachedMess) {
         try { setMess(JSON.parse(cachedMess)); } catch (e) {}
       }
       if (cachedMembers) {
         try { setMembers(JSON.parse(cachedMembers)); } catch (e) {}
       }
+      if (cachedSummary) {
+        try { setSummary(JSON.parse(cachedSummary)); } catch (e) {}
+      }
       if (!cachedMess && !mess) setLoading(true);
     }
 
     setLoadError("");
 
-    const [messRes, membersRes] = await Promise.all([
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    const [messRes, membersRes, summaryRes] = await Promise.all([
       callApi(`/api/manager/my-mess/${userId}`),
       callApi(`/api/manager/members/${userId}`),
+      callApi(`/api/user/month-summary/${userId}?month=${month}&year=${year}`),
     ]);
 
     if (!messRes.success) {
@@ -130,10 +148,16 @@ export default function MyMess() {
     setMess(messRes);
     const newMembers = membersRes.success ? membersRes.data : [];
     setMembers(newMembers);
+    if (summaryRes && summaryRes.success) {
+      setSummary(summaryRes);
+    }
 
     if (typeof window !== "undefined") {
       sessionStorage.setItem(`my_mess_info_${userId}`, JSON.stringify(messRes));
       sessionStorage.setItem(`my_mess_members_${userId}`, JSON.stringify(newMembers));
+      if (summaryRes && summaryRes.success) {
+        sessionStorage.setItem(`my_mess_summary_${userId}`, JSON.stringify(summaryRes));
+      }
     }
 
     setLoading(false);
@@ -547,6 +571,42 @@ export default function MyMess() {
           </div>
         </div>
 
+        {/* ---- Current Month Summary ---- */}
+        {summary && (
+          <div className="paper-card rounded-2xl p-5 sm:p-7 mb-6">
+            <h2 className="ff-body text-base sm:text-lg font-bold text-gray-900 dark:text-slate-100 mb-3">
+              Current Month Summary
+            </h2>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              <SummaryItem
+                label="Total Meal"
+                value={summary.totalMeal}
+                subValue={summary.ownMeal !== undefined ? `Own: ${summary.ownMeal}` : null}
+              />
+              <SummaryItem label="Guest Meal" value={summary.guestMeal ?? 0} />
+              <SummaryItem
+                label="Total Deposit"
+                value={`৳${summary.totalDeposit}`}
+              />
+              <SummaryItem label="Meal Rate" value={`৳${summary.mealRate}`} />
+              <SummaryItem label="Bill" value={`৳${summary.bill}`} />
+            </div>
+
+            <div
+              className={`rounded-xl px-4 py-3 text-center font-semibold mt-3 ff-body text-sm sm:text-base ${
+                summary.status === "advance"
+                  ? "bg-[#F0F0F0] dark:bg-slate-800 text-green-700 dark:text-green-400"
+                  : "bg-[#F0F0F0] dark:bg-slate-800 text-red-700 dark:text-red-400"
+              }`}
+            >
+              {summary.status === "advance"
+                ? `You are ৳${Math.abs(summary.balance)} in advance`
+                : `You have ৳${Math.abs(summary.balance)} due`}
+            </div>
+          </div>
+        )}
+
         {/* ---- Invite code stamp + actions ---- */}
         <div className="paper-card rounded-2xl p-5 sm:p-7 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
@@ -807,6 +867,20 @@ function Field({ label, children }) {
         {label}
       </label>
       {children}
+    </div>
+  );
+}
+
+function SummaryItem({ label, value, subValue }) {
+  return (
+    <div className="bg-[#F0F0F0] dark:bg-slate-800 rounded-xl px-4 py-3 text-neutral-900 dark:text-slate-100 ff-body">
+      <p className="text-gray-500 dark:text-slate-400 text-xs font-medium">{label}</p>
+      <p className="font-semibold text-gray-800 dark:text-slate-100 text-base sm:text-lg mt-0.5">{value}</p>
+      {subValue && (
+        <p className="text-[11px] text-gray-400 dark:text-slate-400 font-normal mt-0.5">
+          {subValue}
+        </p>
+      )}
     </div>
   );
 }
