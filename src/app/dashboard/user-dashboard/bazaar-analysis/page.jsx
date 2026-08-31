@@ -501,6 +501,8 @@ export default function UserBazaarAnalysisPage() {
                           <p className="text-xs text-gray-400 italic">
                             {b.note || renderBazaarSummaryTitle(b)} (Total: ৳{taka(amt)})
                           </p>
+                        )}
+
                         {Array.isArray(b.documents) && b.documents.length > 0 && (
                           <div className="pt-2 flex justify-end">
                             <button
