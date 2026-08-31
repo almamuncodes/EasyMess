@@ -2,7 +2,7 @@
 
 import { GetUser } from "@/components/action/action";
 import { useState, useEffect, useCallback } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Paperclip, X } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +56,9 @@ export default function BazaarHistory() {
   const [loading, setLoading] = useState(() => bazaars.length === 0);
   const [error, setError] = useState("");
   const [expandedIds, setExpandedIds] = useState(new Set());
+
+  const [previewImages, setPreviewImages] = useState(null);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const fetchBazaars = useCallback(async () => {
     if (!userId) return;
@@ -176,6 +179,7 @@ export default function BazaarHistory() {
       <div className="space-y-3">
         {bazaars.map((bazaar) => {
           const isOpen = expandedIds.has(bazaar._id);
+          const hasDocs = Array.isArray(bazaar.documents) && bazaar.documents.length > 0;
           return (
             <div
               key={bazaar._id}
@@ -195,9 +199,9 @@ export default function BazaarHistory() {
                       year: "numeric",
                     })}
                   </p>
-                  {bazaar.note && (
-                    <p className="text-gray-700 font-medium">{bazaar.note}</p>
-                  )}
+                  <p className="text-xs text-neutral-500 mt-0.5 truncate" title={bazaar.note || ""}>
+                    {bazaar.items.length} item{bazaar.items.length > 1 ? "s" : ""}{bazaar.note ? ` · ${bazaar.note}` : ""}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-green-600">
@@ -210,6 +214,23 @@ export default function BazaarHistory() {
                   />
                 </div>
               </button>
+
+              {/* View Voucher button if vouchers/memos attached */}
+              {hasDocs && (
+                <div className="px-4 pb-3 pt-1 border-t border-gray-100 flex justify-end">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewImages(bazaar.documents);
+                      setPreviewIndex(0);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition cursor-pointer shadow-sm active:scale-95"
+                  >
+                    <Paperclip size={13} className="text-amber-500" />
+                    <span>View Voucher ({bazaar.documents.length})</span>
+                  </button>
+                </div>
+              )}
 
               {/* Expandable details */}
               <div
@@ -240,6 +261,62 @@ export default function BazaarHistory() {
           );
         })}
       </div>
+
+      {/* Lightbox / Document On-Demand Viewer Modal */}
+      {previewImages && previewImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => { setPreviewImages(null); setPreviewIndex(0); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2"
+          >
+            <button
+              onClick={() => { setPreviewImages(null); setPreviewIndex(0); }}
+              className="absolute -top-10 right-0 text-white hover:text-amber-400 p-2 transition cursor-pointer"
+              title="Close Preview"
+            >
+              <X size={28} />
+            </button>
+
+            <div className="relative w-full flex items-center justify-center">
+              {previewImages.length > 1 && (
+                <button
+                  onClick={() => setPreviewIndex((prev) => (prev === 0 ? previewImages.length - 1 : prev - 1))}
+                  className="absolute left-2 z-10 p-2.5 bg-black/60 hover:bg-black text-white rounded-full transition cursor-pointer text-base font-bold shadow-lg"
+                  title="Previous photo"
+                >
+                  ←
+                </button>
+              )}
+
+              <img
+                src={previewImages[previewIndex]}
+                alt={`Receipt Memo ${previewIndex + 1}`}
+                className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+              />
+
+              {previewImages.length > 1 && (
+                <button
+                  onClick={() => setPreviewIndex((prev) => (prev === previewImages.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-2 z-10 p-2.5 bg-black/60 hover:bg-black text-white rounded-full transition cursor-pointer text-base font-bold shadow-lg"
+                  title="Next photo"
+                >
+                  →
+                </button>
+              )}
+            </div>
+
+            {previewImages.length > 1 && (
+              <div className="flex items-center gap-2 mt-3 bg-black/60 px-4 py-1.5 rounded-full text-white text-xs font-semibold backdrop-blur-sm">
+                <span>{previewIndex + 1} / {previewImages.length}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

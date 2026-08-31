@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { GetUser } from "@/components/action/action";
 import { useTranslation } from "@/lib/useTranslation";
-import { ShoppingBag, TrendingUp, Calendar, Award, BarChart3, ChevronDown, AlertCircle, ShoppingCart } from "lucide-react";
+import { ShoppingBag, TrendingUp, Calendar, Award, BarChart3, ChevronDown, AlertCircle, ShoppingCart, Paperclip, X } from "lucide-react";
 import { getBDNow } from "@/lib/date-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
@@ -55,6 +55,9 @@ export default function UserBazaarAnalysisPage() {
   const [month, setMonth] = useState(currentMonth);
   const [year, setYear] = useState(currentYear);
   const [expandedIds, setExpandedIds] = useState(new Set());
+
+  const [previewImages, setPreviewImages] = useState(null);
+  const [previewIndex, setPreviewIndex] = useState(0);
 
   const [bazaars, setBazaars] = useState(() => {
     if (typeof window !== "undefined" && userId) {
@@ -498,6 +501,20 @@ export default function UserBazaarAnalysisPage() {
                           <p className="text-xs text-gray-400 italic">
                             {b.note || renderBazaarSummaryTitle(b)} (Total: ৳{taka(amt)})
                           </p>
+                        {Array.isArray(b.documents) && b.documents.length > 0 && (
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewImages(b.documents);
+                                setPreviewIndex(0);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition cursor-pointer shadow-sm active:scale-95"
+                            >
+                              <Paperclip size={13} className="text-amber-500" />
+                              <span>{isBn ? `ভাউচার দেখুন (${b.documents.length})` : `View Voucher (${b.documents.length})`}</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -508,6 +525,61 @@ export default function UserBazaarAnalysisPage() {
           )}
         </div>
       </div>
+
+      {/* Lightbox / Document On-Demand Viewer Modal */}
+      {previewImages && previewImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => { setPreviewImages(null); setPreviewIndex(0); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center p-2"
+          >
+            <button
+              onClick={() => { setPreviewImages(null); setPreviewIndex(0); }}
+              className="absolute -top-10 right-0 text-white hover:text-amber-400 p-2 transition cursor-pointer"
+              title="Close Preview"
+            >
+              <X size={28} />
+            </button>
+
+            <div className="relative w-full flex items-center justify-center">
+              {previewImages.length > 1 && (
+                <button
+                  onClick={() => setPreviewIndex((prev) => (prev === 0 ? previewImages.length - 1 : prev - 1))}
+                  className="absolute left-2 z-10 p-2.5 bg-black/60 hover:bg-black text-white rounded-full transition cursor-pointer text-base font-bold shadow-lg"
+                  title="Previous photo"
+                >
+                  ←
+                </button>
+              )}
+
+              <img
+                src={previewImages[previewIndex]}
+                alt={`Receipt Memo ${previewIndex + 1}`}
+                className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/20"
+              />
+
+              {previewImages.length > 1 && (
+                <button
+                  onClick={() => setPreviewIndex((prev) => (prev === previewImages.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-2 z-10 p-2.5 bg-black/60 hover:bg-black text-white rounded-full transition cursor-pointer text-base font-bold shadow-lg"
+                  title="Next photo"
+                >
+                  →
+                </button>
+              )}
+            </div>
+
+            {previewImages.length > 1 && (
+              <div className="flex items-center gap-2 mt-3 bg-black/60 px-4 py-1.5 rounded-full text-white text-xs font-semibold backdrop-blur-sm">
+                <span>{previewIndex + 1} / {previewImages.length}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
