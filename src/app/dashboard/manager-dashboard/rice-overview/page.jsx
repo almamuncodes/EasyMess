@@ -25,6 +25,8 @@ import {
   User,
   Sparkles,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useTranslation } from "@/lib/useTranslation";
 import { getBDNow, getBDDateStr } from "@/lib/date-utils";
@@ -32,6 +34,12 @@ import { getBDNow, getBDDateStr } from "@/lib/date-utils";
 const display = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-display", display: "swap" });
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body", display: "swap" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });
+
+function formatRice(val) {
+  if (val === undefined || val === null || isNaN(val)) return "0";
+  const num = Number(val);
+  return Number.isInteger(num) ? num.toString() : (Math.round(num * 10) / 10).toString();
+}
 
 function formatDate(dateStr) {
   if (!dateStr) return "—";
@@ -94,6 +102,7 @@ export default function ManagerRiceOverviewPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [expandedMemberId, setExpandedMemberId] = useState(null);
 
   // Form state for adding rice deposit
   const [selectedMemberId, setSelectedMemberId] = useState("");
@@ -155,8 +164,8 @@ export default function ManagerRiceOverviewPage() {
       const autoTable = (await import("jspdf-autotable")).default;
 
       const doc = new jsPDF();
-      const monthObj = monthsList.find((m) => m.value === selectedMonth);
-      const monthName = monthObj ? monthObj.label : selectedMonth;
+      const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const monthName = englishMonths[selectedMonth - 1] || selectedMonth;
       const unitStr = data.config.riceUnitName || "Unit";
 
       doc.setFontSize(16);
@@ -170,7 +179,7 @@ export default function ManagerRiceOverviewPage() {
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.text(
-        `Total Added: ${data.summary.totalMessStockAdded} ${unitStr}   |   Consumed: ${data.summary.totalMessConsumed} ${unitStr}   |   Stock Balance: ${data.summary.totalMessRemaining} ${unitStr}`,
+        `Total Added: ${formatRice(data.summary.totalMessStockAdded)} ${unitStr}   |   Consumed: ${formatRice(data.summary.totalMessConsumed)} ${unitStr}   |   Stock Balance: ${formatRice(data.summary.totalMessRemaining)} ${unitStr}`,
         14,
         38
       );
@@ -181,9 +190,9 @@ export default function ManagerRiceOverviewPage() {
         body: data.members.map((m) => [
           m.name,
           m.role ? m.role.toUpperCase() : "MEMBER",
-          `${m.totalAdded} ${unitStr}`,
-          `${m.totalConsumed} ${unitStr}`,
-          `${m.remaining} ${unitStr}`,
+          `${formatRice(m.totalAdded)} ${unitStr}`,
+          `${formatRice(m.totalConsumed)} ${unitStr}`,
+          `${formatRice(m.remaining)} ${unitStr}`,
         ]),
         headStyles: { fillColor: [217, 119, 6] },
         styles: { fontSize: 9 },
@@ -268,6 +277,16 @@ export default function ManagerRiceOverviewPage() {
       m.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [data.members, searchQuery]);
+
+  const memberHistoryGrouped = useMemo(() => {
+    if (!data.history || !Array.isArray(data.history)) return {};
+    const map = {};
+    data.history.forEach((h) => {
+      if (!map[h.userId]) map[h.userId] = [];
+      map[h.userId].push(h);
+    });
+    return map;
+  }, [data.history]);
 
   const unit = data.config.riceUnitName || "Unit";
 
@@ -368,7 +387,7 @@ export default function ManagerRiceOverviewPage() {
             <span className="text-base">🌾</span>
           </div>
           <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
-            {data.summary.totalMessStockAdded} <span className="text-xs font-normal text-gray-500">{unit}</span>
+            {formatRice(data.summary.totalMessStockAdded)} <span className="text-xs font-normal text-gray-500">{unit}</span>
           </p>
         </div>
 
@@ -381,7 +400,7 @@ export default function ManagerRiceOverviewPage() {
             <span className="text-base">🍲</span>
           </div>
           <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
-            {data.summary.totalMessConsumed} <span className="text-xs font-normal text-gray-500">{unit}</span>
+            {formatRice(data.summary.totalMessConsumed)} <span className="text-xs font-normal text-gray-500">{unit}</span>
           </p>
         </div>
 
@@ -402,7 +421,7 @@ export default function ManagerRiceOverviewPage() {
           <p className={`text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] ${
             data.summary.totalMessRemaining >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
           }`}>
-            {data.summary.totalMessRemaining} <span className="text-xs font-normal text-gray-500">{unit}</span>
+            {formatRice(data.summary.totalMessRemaining)} <span className="text-xs font-normal text-gray-500">{unit}</span>
           </p>
         </div>
       </div>
@@ -462,7 +481,7 @@ export default function ManagerRiceOverviewPage() {
           </div>
         </div>
 
-        {/* Mobile View - Cards (No Horizontal Scrolling / No cut-off) */}
+        {/* Mobile View - Cards */}
         <div className="md:hidden space-y-2.5">
           {filteredMembers.map((m) => {
             const isPositive = m.remaining >= 0;
@@ -492,18 +511,18 @@ export default function ManagerRiceOverviewPage() {
                         : "bg-rose-100/70 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
                     }`}
                   >
-                    {m.remaining} {unit}
+                    {formatRice(m.remaining)} {unit}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 bg-white/70 dark:bg-slate-800/60 p-2.5 rounded-xl text-center text-xs">
                   <div>
                     <span className="text-[10px] text-gray-400 block font-bold uppercase">{isBn ? "মোট জমা" : "Total Added"}</span>
-                    <span className="font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">{m.totalAdded} {unit}</span>
+                    <span className="font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">{formatRice(m.totalAdded)} {unit}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-gray-400 block font-bold uppercase">{isBn ? "ব্যবহৃত" : "Consumed"}</span>
-                    <span className="font-bold font-[family-name:var(--font-mono)] text-orange-500">{m.totalConsumed} {unit}</span>
+                    <span className="font-bold font-[family-name:var(--font-mono)] text-orange-500">{formatRice(m.totalConsumed)} {unit}</span>
                   </div>
                 </div>
 
@@ -558,11 +577,11 @@ export default function ManagerRiceOverviewPage() {
                     </td>
 
                     <td className="py-3.5 px-4 text-center font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
-                      {m.totalAdded} {unit}
+                      {formatRice(m.totalAdded)} {unit}
                     </td>
 
                     <td className="py-3.5 px-4 text-center font-bold font-[family-name:var(--font-mono)] text-orange-500">
-                      {m.totalConsumed} {unit}
+                      {formatRice(m.totalConsumed)} {unit}
                     </td>
 
                     <td className="py-3.5 px-4 text-center">
@@ -573,7 +592,7 @@ export default function ManagerRiceOverviewPage() {
                             : "bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400"
                         }`}
                       >
-                        {m.remaining} {unit}
+                        {formatRice(m.remaining)} {unit}
                       </span>
                     </td>
 
@@ -597,105 +616,172 @@ export default function ManagerRiceOverviewPage() {
         </div>
       </div>
 
-      {/* Monthly Deposit History - Fully Mobile Optimized */}
+      {/* Monthly Deposit History - Grouped by Member (Accordion Layout) */}
       <div className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
-          <h2 className="text-base font-bold flex items-center gap-2">
-            <FileText size={18} className="text-amber-500" />
-            <span>{isBn ? "চাল জমার ইতিহাস (Monthly Deposits)" : "Monthly Deposit History"}</span>
-          </h2>
-          <span className="text-xs font-semibold text-gray-400">
-            {data.history.length} {isBn ? "টি এন্ট্রি" : "entries"}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
+          <div>
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <FileText size={18} className="text-amber-500" />
+              <span>{isBn ? "সদস্যভিত্তিক চাল জমার ইতিহাস" : "Monthly Deposit History"}</span>
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {isBn
+                ? "সদস্যভিত্তিক চাল জমার হিস্ট্রি দেখতে যেকোনো মেম্বারের ওপর ক্লিক করুন"
+                : "Click on any member card to expand their deposit entries for this month"}
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full w-fit">
+            {data.history.length} {isBn ? "টি মোট এন্ট্রি" : "total entries"}
           </span>
         </div>
 
-        {data.history.length === 0 ? (
+        {filteredMembers.length === 0 ? (
           <div className="p-8 text-center bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
             <Boxes className="mx-auto text-gray-300 dark:text-slate-600 mb-2" size={32} />
             <p className="text-xs text-gray-500 dark:text-slate-400">
-              {isBn ? "এই মাসে কোনো চাল জমার রেকর্ড নেই" : "No rice deposits recorded for this month"}
+              {isBn ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
             </p>
           </div>
         ) : (
-          <>
-            {/* Mobile Cards for Deposit History (Fits perfectly on phone screen) */}
-            <div className="md:hidden space-y-2.5">
-              {data.history.map((h) => {
-                const isAdd = h.amount >= 0;
-                return (
+          <div className="space-y-3">
+            {filteredMembers.map((m) => {
+              const historyList = memberHistoryGrouped[m.userId] || [];
+              const isExpanded = expandedMemberId === m.userId;
+              const imgUrl = m.image || getCachedImageMap()[m.userId];
+              const isPositive = m.remaining >= 0;
+
+              return (
+                <div
+                  key={m.userId}
+                  className="rounded-2xl overflow-hidden bg-gray-50/70 dark:bg-slate-800/50 border border-gray-200/80 dark:border-slate-800 transition"
+                >
+                  {/* Member Accordion Header */}
                   <div
-                    key={h.id}
-                    className="p-3.5 rounded-xl bg-gray-50/70 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-800 space-y-2"
+                    onClick={() => setExpandedMemberId(isExpanded ? null : m.userId)}
+                    className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-gray-100/60 dark:hover:bg-slate-800/80 transition"
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    {/* Member Info */}
+                    <div className="flex items-center gap-3">
+                      <MemberAvatar src={imgUrl} name={m.name} size={40} />
                       <div>
-                        <p className="font-bold text-xs text-gray-900 dark:text-white">{h.userName}</p>
-                        <p className="text-[11px] text-gray-400 font-medium">{formatDate(h.date)}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className={`font-bold text-sm font-[family-name:var(--font-mono)] ${isAdd ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                          {isAdd ? `+${h.amount}` : h.amount} {unit}
-                        </span>
-
-                        <button
-                          onClick={() => setDeleteTargetId(h.id)}
-                          className="p-1.5 text-gray-400 hover:text-rose-500 transition rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                          title="Delete Deposit Entry"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm text-gray-900 dark:text-white">{m.name}</p>
+                          <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                            {m.role || "MEMBER"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400 font-medium mt-0.5 flex flex-wrap items-center gap-2">
+                          <span>{historyList.length} {isBn ? "টি এন্ট্রি" : "entries"}</span>
+                          <span>•</span>
+                          <span>{isBn ? "মোট জমা" : "Total Added"}: <strong className="text-emerald-600 dark:text-emerald-400">+{formatRice(m.totalAdded)} {unit}</strong></span>
+                        </p>
                       </div>
                     </div>
 
-                    {h.note && (
-                      <p className="text-[11px] text-gray-500 dark:text-slate-400 bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg border border-gray-100 dark:border-slate-700/50">
-                        💬 {h.note}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    {/* Status Badges & Accordion Toggle */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-slate-800">
+                      <div className="text-left sm:text-right">
+                        <span className="text-[10px] uppercase font-bold text-gray-400 block">{isBn ? "অবশিষ্ট ব্যালেন্স" : "Stock Balance"}</span>
+                        <span className={`text-sm font-extrabold font-[family-name:var(--font-mono)] ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                          {formatRice(m.remaining)} {unit}
+                        </span>
+                      </div>
 
-            {/* Desktop Table for Deposit History */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100 dark:border-slate-800 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50 dark:bg-slate-800/40">
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Member</th>
-                    <th className="py-3 px-4 text-center">Amount</th>
-                    <th className="py-3 px-4">Note</th>
-                    <th className="py-3 px-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-                  {data.history.map((h) => (
-                    <tr key={h.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-3.5 px-4 text-gray-600 dark:text-slate-300 font-medium">
-                        {formatDate(h.date)}
-                      </td>
-                      <td className="py-3.5 px-4 font-semibold text-gray-900 dark:text-white">{h.userName}</td>
-                      <td className={`py-3.5 px-4 text-center font-bold font-[family-name:var(--font-mono)] ${h.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
-                        {h.amount >= 0 ? `+${h.amount}` : h.amount} {unit}
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-gray-500 dark:text-slate-400">{h.note || "—"}</td>
-                      <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setDeleteTargetId(h.id)}
-                          className="p-1.5 text-gray-400 hover:text-rose-500 transition rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
-                          title="Delete Deposit Entry"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedMemberId(m.userId);
+                            setIsModalOpen(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                          title="Deposit Rice"
                         >
-                          <Trash2 size={16} />
+                          <Plus size={13} />
+                          <span className="hidden sm:inline">{isBn ? "জমা" : "Deposit"}</span>
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
+                        <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 text-gray-500 dark:text-slate-300 border border-gray-200 dark:border-slate-700 shadow-sm">
+                          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Content (Deposit Entries List for this Member) */}
+                  {isExpanded && (
+                    <div className="px-4 pb-4 pt-2 border-t border-dashed border-gray-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 space-y-3">
+                      <div className="flex items-center justify-between pt-2">
+                        <p className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                          {isBn ? `${m.name}-এর চাল জমার ইতিহাস` : `Deposit Records for ${m.name}`}
+                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedMemberId(m.userId);
+                            setIsModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                        >
+                          <Plus size={14} />
+                          <span>{isBn ? "নতুন চাল জমা" : "+ New Deposit"}</span>
+                        </button>
+                      </div>
+
+                      {historyList.length === 0 ? (
+                        <p className="text-xs text-center text-gray-400 py-4 italic bg-gray-50/50 dark:bg-slate-800/40 rounded-xl">
+                          {isBn ? "এই মাসে এই মেম্বারের কোনো চাল জমা রেকর্ড নেই" : "No deposit records for this member in this month"}
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {historyList.map((h) => {
+                            const isAdd = h.amount >= 0;
+                            return (
+                              <div
+                                key={h.id}
+                                className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700/60"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${isAdd ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400"}`}>
+                                    {isAdd ? "+" : "-"}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-gray-900 dark:text-white">
+                                      {formatDate(h.date)}
+                                    </p>
+                                    {h.note && (
+                                      <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                                        💬 {h.note}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <span className={`text-sm font-bold font-[family-name:var(--font-mono)] ${isAdd ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                                    {isAdd ? `+${formatRice(h.amount)}` : formatRice(h.amount)} {unit}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteTargetId(h.id);
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-rose-500 transition rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                                    title="Delete Deposit Entry"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
