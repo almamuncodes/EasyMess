@@ -19,7 +19,9 @@ export default function DashboardGuard({ children }) {
   const { data: session, isPending: isSessionLoading } = authClient.useSession();
   const userId = session?.user?.id;
 
-  const [isBanned, setIsBanned] = useState(false);
+  const isSessionBanned = session?.user?.status === "banned";
+  const [isServerBanned, setIsServerBanned] = useState(false);
+  const isBanned = isSessionBanned || isServerBanned;
 
   const [role, setRole] = useState(() => {
     if (typeof window !== "undefined" && userId) {
@@ -28,12 +30,6 @@ export default function DashboardGuard({ children }) {
     return null;
   });
   const [loading, setLoading] = useState(!role);
-
-  useEffect(() => {
-    if (session?.user?.status === "banned") {
-      setIsBanned(true);
-    }
-  }, [session]);
 
   useEffect(() => {
     if (!isSessionLoading && !session) {
@@ -68,7 +64,7 @@ export default function DashboardGuard({ children }) {
         
         if (res.status === 403) {
           if (isSubscribed) {
-            setIsBanned(true);
+            setIsServerBanned(true);
           }
           return;
         }
@@ -87,7 +83,7 @@ export default function DashboardGuard({ children }) {
         
         if (isSubscribed) {
           if (data.status === "banned") {
-            setIsBanned(true);
+            setIsServerBanned(true);
             return;
           }
           if (data.role) {
@@ -245,7 +241,10 @@ export default function DashboardGuard({ children }) {
 
   // ✅ USER HAS MESS ACCESS: Render normal sidebar + main layout children
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
+    <div
+      className="flex flex-col md:flex-row min-h-screen bg-gray-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+      suppressHydrationWarning
+    >
       {/* Sidebar */}
       <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900">
         <Sidebar />

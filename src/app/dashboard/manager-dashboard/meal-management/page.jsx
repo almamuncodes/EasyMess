@@ -40,22 +40,70 @@ export default function MealManagementPage() {
     members: [],
   });
 
+  const [mealWeights, setMealWeights] = useState({
+    breakfast: 0.5,
+    lunch: 1,
+    dinner: 1,
+  });
+
   const [editingMember, setEditingMember] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchData = async (showLoader = false) => {
+  const processMealResults = React.useCallback((result, targetDate) => {
+    if (result.mealSettings) {
+      const ms = result.mealSettings;
+      setMealWeights({
+        breakfast: ms.breakfastWeight !== undefined ? Number(ms.breakfastWeight) : 0.5,
+        lunch: ms.lunchWeight !== undefined ? Number(ms.lunchWeight) : 1,
+        dinner: ms.dinnerWeight !== undefined ? Number(ms.dinnerWeight) : 1,
+      });
+    }
+    const selectedDate = new Date(targetDate);
+    selectedDate.setUTCHours(0, 0, 0, 0);
+
+    const totalBreakfast = result.members.reduce((sum, m) => {
+      const joinDate = new Date(m.createdAt);
+      joinDate.setUTCHours(0, 0, 0, 0);
+      return joinDate <= selectedDate ? sum + (m.breakfast ? 1 : 0) + (m.guestBreakfast || 0) : sum;
+    }, 0);
+
+    const totalLunch = result.members.reduce((sum, m) => {
+      const joinDate = new Date(m.createdAt);
+      joinDate.setUTCHours(0, 0, 0, 0);
+      return joinDate <= selectedDate ? sum + (m.lunch ? 1 : 0) + (m.guestLunch || 0) : sum;
+    }, 0);
+
+    const totalDinner = result.members.reduce((sum, m) => {
+      const joinDate = new Date(m.createdAt);
+      joinDate.setUTCHours(0, 0, 0, 0);
+      return joinDate <= selectedDate ? sum + (m.dinner ? 1 : 0) + (m.guestDinner || 0) : sum;
+    }, 0);
+
+    const totalGuest = result.members.reduce((sum, m) => {
+      const joinDate = new Date(m.createdAt);
+      joinDate.setUTCHours(0, 0, 0, 0);
+      return joinDate <= selectedDate ? sum + (m.guestBreakfast + m.guestLunch + m.guestDinner) : sum;
+    }, 0);
+
+    const updatedData = {
+      summary: {
+        breakfast: totalBreakfast,
+        lunch: totalLunch,
+        dinner: totalDinner,
+        guestMeal: totalGuest,
+      },
+      members: result.members,
+    };
+
+    setData(updatedData);
+    if (typeof window !== "undefined" && userId) {
+      sessionStorage.setItem(`manager_meals_${userId}_${targetDate}`, JSON.stringify(updatedData));
+    }
+  }, [userId]);
+
+  const fetchData = React.useCallback(async (showLoader = false) => {
     if (!userId) return;
     if (showLoader) setLoading(true);
-
-    const cacheKey = `manager_meals_${userId}_${date}`;
-    if (typeof window !== "undefined" && showLoader) {
-      const cached = sessionStorage.getItem(cacheKey);
-      if (cached) {
-        try {
-          setData(JSON.parse(cached));
-        } catch (e) {}
-      }
-    }
 
     try {
       const res = await fetch(
@@ -64,47 +112,7 @@ export default function MealManagementPage() {
       const result = await res.json();
 
       if (result.success) {
-        const selectedDate = new Date(date);
-        selectedDate.setUTCHours(0, 0, 0, 0);
-
-        const totalBreakfast = result.members.reduce((sum, m) => {
-          const joinDate = new Date(m.createdAt);
-          joinDate.setUTCHours(0, 0, 0, 0);
-          return joinDate <= selectedDate ? sum + (m.breakfast ? 1 : 0) + (m.guestBreakfast || 0) : sum;
-        }, 0);
-
-        const totalLunch = result.members.reduce((sum, m) => {
-          const joinDate = new Date(m.createdAt);
-          joinDate.setUTCHours(0, 0, 0, 0);
-          return joinDate <= selectedDate ? sum + (m.lunch ? 1 : 0) + (m.guestLunch || 0) : sum;
-        }, 0);
-
-        const totalDinner = result.members.reduce((sum, m) => {
-          const joinDate = new Date(m.createdAt);
-          joinDate.setUTCHours(0, 0, 0, 0);
-          return joinDate <= selectedDate ? sum + (m.dinner ? 1 : 0) + (m.guestDinner || 0) : sum;
-        }, 0);
-
-        const totalGuest = result.members.reduce((sum, m) => {
-          const joinDate = new Date(m.createdAt);
-          joinDate.setUTCHours(0, 0, 0, 0);
-          return joinDate <= selectedDate ? sum + (m.guestBreakfast + m.guestLunch + m.guestDinner) : sum;
-        }, 0);
-
-        const updatedData = {
-          summary: {
-            breakfast: totalBreakfast,
-            lunch: totalLunch,
-            dinner: totalDinner,
-            guestMeal: totalGuest,
-          },
-          members: result.members,
-        };
-
-        setData(updatedData);
-        if (typeof window !== "undefined") {
-          sessionStorage.setItem(cacheKey, JSON.stringify(updatedData));
-        }
+        processMealResults(result, date);
       } else {
         toast.error(result.message || "Failed to load meal data");
       }
@@ -114,14 +122,61 @@ export default function MealManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, date, processMealResults]);
 
   useEffect(() => {
-    if (userId) fetchData(true);
-  }, [userId, date]);
+    if (!userId) return;
+    let ignore = false;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/manager/meals?userId=${userId}&date=${date}`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (ignore) return;
+        setLoading(false);
+        if (result.success) {
+          processMealResults(result, date);
+        } else {
+          toast.error(result.message || "Failed to load meal data");
+        }
+      })
+      .catch((err) => {
+        if (ignore) return;
+        console.error(err);
+        setLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [userId, date, processMealResults]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/mess-settings/${userId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.mealSettings) {
+          const ms = d.mealSettings;
+          setMealWeights({
+            breakfast: ms.breakfastWeight !== undefined ? Number(ms.breakfastWeight) : 0.5,
+            lunch: ms.lunchWeight !== undefined ? Number(ms.lunchWeight) : 1,
+            dinner: ms.dinnerWeight !== undefined ? Number(ms.dinnerWeight) : 1,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
 
   // Toggle individual meal for a member instantly
   const handleToggleMeal = async (member, mealType) => {
+    if (mealWeights[mealType] === 0) {
+      toast.error(
+        lang === "bn"
+          ? "এই মেসে এই বেলার মিল বন্ধ (Weight 0)"
+          : "This meal is disabled in this mess (Weight: 0)"
+      );
+      return;
+    }
     if (!userId) return;
     const cacheKey = `manager_meals_${userId}_${date}`;
     if (typeof window !== "undefined") {
@@ -205,12 +260,12 @@ export default function MealManagementPage() {
             managerId: userId,
             userId: editingMember.userId,
             date,
-            breakfast: editingMember.breakfast,
-            lunch: editingMember.lunch,
-            dinner: editingMember.dinner,
-            guestBreakfast: parseInt(editingMember.guestBreakfast) || 0,
-            guestLunch: parseInt(editingMember.guestLunch) || 0,
-            guestDinner: parseInt(editingMember.guestDinner) || 0,
+            breakfast: mealWeights.breakfast === 0 ? false : editingMember.breakfast,
+            lunch: mealWeights.lunch === 0 ? false : editingMember.lunch,
+            dinner: mealWeights.dinner === 0 ? false : editingMember.dinner,
+            guestBreakfast: mealWeights.breakfast === 0 ? 0 : (parseInt(editingMember.guestBreakfast) || 0),
+            guestLunch: mealWeights.lunch === 0 ? 0 : (parseInt(editingMember.guestLunch) || 0),
+            guestDinner: mealWeights.dinner === 0 ? 0 : (parseInt(editingMember.guestDinner) || 0),
           }),
         }
       );
@@ -279,49 +334,49 @@ export default function MealManagementPage() {
       {/* Liquid Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {/* Breakfast Card */}
-        <div className="relative overflow-hidden bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/80 dark:border-amber-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+        <div className={`relative overflow-hidden ${mealWeights.breakfast === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-amber-50/80 dark:bg-amber-950/25 border-amber-200/80 dark:border-amber-900/40"} border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
           <div className="w-12 h-12 bg-amber-500/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
             <Sun size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              Breakfast
+              Breakfast {mealWeights.breakfast === 0 && <span className="text-[10px] text-gray-400 font-normal">(Weight 0)</span>}
             </p>
             <p className="text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-0.5">
-              {data.summary.breakfast}
+              {mealWeights.breakfast === 0 ? "—" : data.summary.breakfast}
             </p>
           </div>
         </div>
 
         {/* Lunch Card */}
-        <div className="relative overflow-hidden bg-orange-50/80 dark:bg-orange-950/25 border border-orange-200/80 dark:border-orange-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+        <div className={`relative overflow-hidden ${mealWeights.lunch === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-orange-50/80 dark:bg-orange-950/25 border-orange-200/80 dark:border-orange-900/40"} border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
           <div className="w-12 h-12 bg-orange-500/15 dark:bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
             <Sunset size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-              Lunch
+              Lunch {mealWeights.lunch === 0 && <span className="text-[10px] text-gray-400 font-normal">(Weight 0)</span>}
             </p>
             <p className="text-2xl font-extrabold text-orange-950 dark:text-orange-100 mt-0.5">
-              {data.summary.lunch}
+              {mealWeights.lunch === 0 ? "—" : data.summary.lunch}
             </p>
           </div>
         </div>
 
         {/* Dinner Card */}
-        <div className="relative overflow-hidden bg-indigo-50/80 dark:bg-indigo-950/25 border border-indigo-200/80 dark:border-indigo-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+        <div className={`relative overflow-hidden ${mealWeights.dinner === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-indigo-50/80 dark:bg-indigo-950/25 border-indigo-200/80 dark:border-indigo-900/40"} border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent pointer-events-none" />
           <div className="w-12 h-12 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
             <Moon size={24} />
           </div>
           <div>
             <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
-              Dinner
+              Dinner {mealWeights.dinner === 0 && <span className="text-[10px] text-gray-400 font-normal">(Weight 0)</span>}
             </p>
             <p className="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-0.5">
-              {data.summary.dinner}
+              {mealWeights.dinner === 0 ? "—" : data.summary.dinner}
             </p>
           </div>
         </div>
@@ -438,43 +493,49 @@ export default function MealManagementPage() {
                         {/* Breakfast Toggle */}
                         <button
                           onClick={() => handleToggleMeal(m, "breakfast")}
-                          disabled={savingId === `${m.userId}-breakfast`}
-                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border cursor-pointer ${
-                            m.breakfast
-                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600"
-                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700"
+                          disabled={savingId === `${m.userId}-breakfast` || mealWeights.breakfast === 0}
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border ${
+                            mealWeights.breakfast === 0
+                              ? "bg-gray-100 dark:bg-slate-800/60 text-gray-400 dark:text-gray-600 border-dashed border-gray-300 dark:border-slate-700 cursor-not-allowed"
+                              : m.breakfast
+                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600 cursor-pointer"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700 cursor-pointer"
                           }`}
                         >
-                          <Sun size={14} className={m.breakfast ? "text-white" : "text-gray-400"} />
-                          <span>BF: {m.breakfast ? "ON" : "OFF"}</span>
+                          <Sun size={14} className={mealWeights.breakfast === 0 ? "text-gray-400 dark:text-gray-600" : m.breakfast ? "text-white" : "text-gray-400"} />
+                          <span>BF: {mealWeights.breakfast === 0 ? "—" : m.breakfast ? "ON" : "OFF"}</span>
                         </button>
 
                         {/* Lunch Toggle */}
                         <button
                           onClick={() => handleToggleMeal(m, "lunch")}
-                          disabled={savingId === `${m.userId}-lunch`}
-                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border cursor-pointer ${
-                            m.lunch
-                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600"
-                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700"
+                          disabled={savingId === `${m.userId}-lunch` || mealWeights.lunch === 0}
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border ${
+                            mealWeights.lunch === 0
+                              ? "bg-gray-100 dark:bg-slate-800/60 text-gray-400 dark:text-gray-600 border-dashed border-gray-300 dark:border-slate-700 cursor-not-allowed"
+                              : m.lunch
+                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600 cursor-pointer"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700 cursor-pointer"
                           }`}
                         >
-                          <Sunset size={14} className={m.lunch ? "text-white" : "text-gray-400"} />
-                          <span>Lunch: {m.lunch ? "ON" : "OFF"}</span>
+                          <Sunset size={14} className={mealWeights.lunch === 0 ? "text-gray-400 dark:text-gray-600" : m.lunch ? "text-white" : "text-gray-400"} />
+                          <span>Lunch: {mealWeights.lunch === 0 ? "—" : m.lunch ? "ON" : "OFF"}</span>
                         </button>
 
                         {/* Dinner Toggle */}
                         <button
                           onClick={() => handleToggleMeal(m, "dinner")}
-                          disabled={savingId === `${m.userId}-dinner`}
-                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border cursor-pointer ${
-                            m.dinner
-                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600"
-                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700"
+                          disabled={savingId === `${m.userId}-dinner` || mealWeights.dinner === 0}
+                          className={`py-2 px-2 rounded-xl text-[11px] font-bold transition flex flex-col items-center justify-center gap-1 border ${
+                            mealWeights.dinner === 0
+                              ? "bg-gray-100 dark:bg-slate-800/60 text-gray-400 dark:text-gray-600 border-dashed border-gray-300 dark:border-slate-700 cursor-not-allowed"
+                              : m.dinner
+                              ? "bg-orange-500 text-white shadow-sm shadow-orange-500/20 border-transparent hover:bg-orange-600 cursor-pointer"
+                              : "bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-gray-500 border-transparent hover:bg-gray-200 dark:hover:bg-slate-700 cursor-pointer"
                           }`}
                         >
-                          <Moon size={14} className={m.dinner ? "text-white" : "text-gray-400"} />
-                          <span>Dinner: {m.dinner ? "ON" : "OFF"}</span>
+                          <Moon size={14} className={mealWeights.dinner === 0 ? "text-gray-400 dark:text-gray-600" : m.dinner ? "text-white" : "text-gray-400"} />
+                          <span>Dinner: {mealWeights.dinner === 0 ? "—" : m.dinner ? "ON" : "OFF"}</span>
                         </button>
                       </div>
                     )}
@@ -489,9 +550,27 @@ export default function MealManagementPage() {
                 <thead>
                   <tr className="bg-gray-50/70 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     <th className="py-4 px-6">Member</th>
-                    <th className="py-4 px-4 text-center">Breakfast</th>
-                    <th className="py-4 px-4 text-center">Lunch</th>
-                    <th className="py-4 px-4 text-center">Dinner</th>
+                    <th className="py-4 px-4 text-center">
+                      {mealWeights.breakfast === 0 ? (
+                        <span className="line-through text-gray-400 opacity-60">Breakfast (0)</span>
+                      ) : (
+                        "Breakfast"
+                      )}
+                    </th>
+                    <th className="py-4 px-4 text-center">
+                      {mealWeights.lunch === 0 ? (
+                        <span className="line-through text-gray-400 opacity-60">Lunch (0)</span>
+                      ) : (
+                        "Lunch"
+                      )}
+                    </th>
+                    <th className="py-4 px-4 text-center">
+                      {mealWeights.dinner === 0 ? (
+                        <span className="line-through text-gray-400 opacity-60">Dinner (0)</span>
+                      ) : (
+                        "Dinner"
+                      )}
+                    </th>
                     <th className="py-4 px-4 text-center">Guest Meals</th>
                   </tr>
                 </thead>
@@ -550,6 +629,14 @@ export default function MealManagementPage() {
                         <td className="py-4 px-4 text-center">
                           {isBeforeJoining ? (
                             <span className="text-xs text-gray-400">N/A</span>
+                          ) : mealWeights.breakfast === 0 ? (
+                            <button
+                              disabled
+                              title="Disabled in this mess (Weight: 0)"
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto bg-gray-100 dark:bg-slate-800/60 text-gray-400 dark:text-gray-600 border border-dashed border-gray-300 dark:border-slate-700 cursor-not-allowed"
+                            >
+                              <span>—</span>
+                            </button>
                           ) : (
                             <button
                               onClick={() => handleToggleMeal(m, "breakfast")}
@@ -570,6 +657,14 @@ export default function MealManagementPage() {
                         <td className="py-4 px-4 text-center">
                           {isBeforeJoining ? (
                             <span className="text-xs text-gray-400">N/A</span>
+                          ) : mealWeights.lunch === 0 ? (
+                            <button
+                              disabled
+                              title="Disabled in this mess (Weight: 0)"
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto bg-gray-100 dark:bg-slate-800/60 text-gray-400 dark:text-gray-600 border border-dashed border-gray-300 dark:border-slate-700 cursor-not-allowed"
+                            >
+                              <span>—</span>
+                            </button>
                           ) : (
                             <button
                               onClick={() => handleToggleMeal(m, "lunch")}
@@ -590,6 +685,14 @@ export default function MealManagementPage() {
                         <td className="py-4 px-4 text-center">
                           {isBeforeJoining ? (
                             <span className="text-xs text-gray-400">N/A</span>
+                          ) : mealWeights.dinner === 0 ? (
+                            <button
+                              disabled
+                              title="Disabled in this mess (Weight: 0)"
+                              className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 mx-auto bg-gray-100 dark:bg-slate-800/60 text-gray-400 dark:text-gray-600 border border-dashed border-gray-300 dark:border-slate-700 cursor-not-allowed"
+                            >
+                              <span>—</span>
+                            </button>
                           ) : (
                             <button
                               onClick={() => handleToggleMeal(m, "dinner")}
@@ -645,46 +748,62 @@ export default function MealManagementPage() {
 
             <div className="space-y-3">
               {[
-                { label: "Guest Breakfast", key: "guestBreakfast", color: "amber" },
-                { label: "Guest Lunch", key: "guestLunch", color: "orange" },
-                { label: "Guest Dinner", key: "guestDinner", color: "indigo" },
-              ].map(({ label, key }) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between bg-gray-50 dark:bg-slate-800/60 p-3 rounded-xl border border-gray-100 dark:border-slate-800"
-                >
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {label}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() =>
-                        setEditingMember((prev) => ({
-                          ...prev,
-                          [key]: Math.max(0, (prev[key] || 0) - 1),
-                        }))
-                      }
-                      className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 flex items-center justify-center transition font-bold"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="w-8 text-center font-bold text-sm text-gray-900 dark:text-white">
-                      {editingMember[key] || 0}
-                    </span>
-                    <button
-                      onClick={() =>
-                        setEditingMember((prev) => ({
-                          ...prev,
-                          [key]: (prev[key] || 0) + 1,
-                        }))
-                      }
-                      className="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition font-bold shadow-sm shadow-orange-500/20"
-                    >
-                      <Plus size={14} />
-                    </button>
+                { label: "Guest Breakfast", key: "guestBreakfast", type: "breakfast", color: "amber" },
+                { label: "Guest Lunch", key: "guestLunch", type: "lunch", color: "orange" },
+                { label: "Guest Dinner", key: "guestDinner", type: "dinner", color: "indigo" },
+              ].map(({ label, key, type }) => {
+                const isWeightZero = mealWeights[type] === 0;
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center justify-between p-3 rounded-xl border ${
+                      isWeightZero
+                        ? "bg-gray-100/60 dark:bg-slate-800/30 border-dashed border-gray-300 dark:border-slate-800 opacity-60"
+                        : "bg-gray-50 dark:bg-slate-800/60 border-gray-100 dark:border-slate-800"
+                    }`}
+                  >
+                    <div>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                        {label}
+                      </span>
+                      {isWeightZero && (
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold">
+                          🚫 {lang === "bn" ? "বন্ধ (Weight 0)" : "Disabled (Weight 0)"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          setEditingMember((prev) => ({
+                            ...prev,
+                            [key]: Math.max(0, (prev[key] || 0) - 1),
+                          }))
+                        }
+                        disabled={isWeightZero}
+                        className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 flex items-center justify-center transition font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="w-8 text-center font-bold text-sm text-gray-900 dark:text-white">
+                        {isWeightZero ? 0 : editingMember[key] || 0}
+                      </span>
+                      <button
+                        onClick={() =>
+                          setEditingMember((prev) => ({
+                            ...prev,
+                            [key]: (prev[key] || 0) + 1,
+                          }))
+                        }
+                        disabled={isWeightZero}
+                        className="w-8 h-8 rounded-lg bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition font-bold shadow-sm shadow-orange-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex items-center gap-3 pt-2">

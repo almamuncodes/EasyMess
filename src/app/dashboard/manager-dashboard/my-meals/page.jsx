@@ -49,6 +49,13 @@ const MealCalendar = () => {
     dinner: "20:00",
   });
 
+  // Meal Weights state from mess settings (if 0, meal is disabled in this mess)
+  const [mealWeights, setMealWeights] = useState({
+    breakfast: 0.5,
+    lunch: 1,
+    dinner: 1,
+  });
+
   // Guest Meal Modal state
   const [selectedGuestDay, setSelectedGuestDay] = useState(null);
   const [guestCounts, setGuestCounts] = useState({ guestBreakfast: 0, guestLunch: 0, guestDinner: 0 });
@@ -110,7 +117,7 @@ const MealCalendar = () => {
       })
       .catch((err) => console.error("Error fetching messId:", err));
 
-    // Fetch mess settings for exact meal deadlines
+    // Fetch mess settings for exact meal deadlines and weights
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/mess-settings/${userId}`)
       .then((res) => res.json())
       .then((resData) => {
@@ -121,9 +128,14 @@ const MealCalendar = () => {
             lunch: ms.lunchDeadline || "12:00",
             dinner: ms.dinnerDeadline || "20:00",
           });
+          setMealWeights({
+            breakfast: typeof ms.breakfastWeight !== "undefined" ? Number(ms.breakfastWeight) : 0.5,
+            lunch: typeof ms.lunchWeight !== "undefined" ? Number(ms.lunchWeight) : 1,
+            dinner: typeof ms.dinnerWeight !== "undefined" ? Number(ms.dinnerWeight) : 1,
+          });
         }
       })
-      .catch((err) => console.error("Error fetching mess deadlines:", err));
+      .catch((err) => console.error("Error fetching mess deadlines and weights:", err));
   }, [userId]);
 
   const mealsByDay = React.useMemo(() => {
@@ -155,6 +167,11 @@ const MealCalendar = () => {
   };
 
   const handleUpdate = async (day, type, currentStatus) => {
+    if (mealWeights[type] === 0) {
+      toast.error(isBn ? "এই মেসে এই বেলার মিল বন্ধ (Weight: 0)" : "This meal is disabled in this mess (Weight: 0)");
+      return;
+    }
+
     const previousMeals = [...meals];
     const targetDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00.000Z`;
     let mealExists = false;
@@ -218,19 +235,9 @@ const MealCalendar = () => {
     const meal = mealsByDay[day] || {};
     setSelectedGuestDay(day);
     setGuestCounts({
-      guestBreakfast: Math.max(0, parseInt(meal.guestBreakfast) || 0),
-      guestLunch: Math.max(0, parseInt(meal.guestLunch) || 0),
-      guestDinner: Math.max(0, parseInt(meal.guestDinner) || 0),
-    });
-  };
-
-  const handleSelectModalDay = (newDay) => {
-    setSelectedGuestDay(newDay);
-    const meal = mealsByDay[newDay] || {};
-    setGuestCounts({
-      guestBreakfast: Math.max(0, parseInt(meal.guestBreakfast) || 0),
-      guestLunch: Math.max(0, parseInt(meal.guestLunch) || 0),
-      guestDinner: Math.max(0, parseInt(meal.guestDinner) || 0),
+      guestBreakfast: mealWeights.breakfast === 0 ? 0 : Math.max(0, parseInt(meal.guestBreakfast) || 0),
+      guestLunch: mealWeights.lunch === 0 ? 0 : Math.max(0, parseInt(meal.guestLunch) || 0),
+      guestDinner: mealWeights.dinner === 0 ? 0 : Math.max(0, parseInt(meal.guestDinner) || 0),
     });
   };
 
@@ -242,6 +249,12 @@ const MealCalendar = () => {
     const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const targetDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T00:00:00.000Z`;
 
+    const sanitizedCounts = {
+      guestBreakfast: mealWeights.breakfast === 0 ? 0 : guestCounts.guestBreakfast,
+      guestLunch: mealWeights.lunch === 0 ? 0 : guestCounts.guestLunch,
+      guestDinner: mealWeights.dinner === 0 ? 0 : guestCounts.guestDinner,
+    };
+
     const previousMeals = [...meals];
     let mealExists = false;
     const newMeals = meals.map((m) => {
@@ -249,7 +262,7 @@ const MealCalendar = () => {
         mealExists = true;
         return {
           ...m,
-          ...guestCounts,
+          ...sanitizedCounts,
         };
       }
       return m;
@@ -261,7 +274,7 @@ const MealCalendar = () => {
         breakfast: true,
         lunch: true,
         dinner: true,
-        ...guestCounts,
+        ...sanitizedCounts,
       });
     }
 
@@ -282,13 +295,13 @@ const MealCalendar = () => {
           userId,
           messId,
           date: dateStr,
-          ...guestCounts,
+          ...sanitizedCounts,
         }),
       });
       const data = await res.json();
       if (data.success) {
         toast.success(isBn ? "গেস্ট মিল সফলভাবে আপডেট হয়েছে!" : "Guest meals updated successfully!");
-        trackEvent("update_guest_meal", { day, ...guestCounts });
+        trackEvent("update_guest_meal", { day, ...sanitizedCounts });
         fetchMeals();
         setSelectedGuestDay(null);
       } else {
@@ -321,17 +334,17 @@ const MealCalendar = () => {
       <MealCountdownTimer userId={userId} />
 
       <div className="flex justify-between items-center mb-5">
-        <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded font-bold">←</button>
+        <button onClick={() => setMonth(m => m === 1 ? 12 : m - 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded font-bold cursor-pointer">←</button>
         <h2 className="font-bold text-xl">{month}/{year}</h2>
-        <button onClick={() => setMonth(m => m === 12 ? 1 : m + 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded font-bold">→</button>
+        <button onClick={() => setMonth(m => m === 12 ? 1 : m + 1)} className="px-4 py-2 bg-gray-200 dark:bg-slate-800 rounded font-bold cursor-pointer">→</button>
       </div>
 
       {/* Calendar Table Header */}
       <div className="grid grid-cols-5 font-bold mb-3 text-center text-xs sm:text-sm text-gray-700 dark:text-gray-300 px-1">
         <span>{isBn ? "তারিখ" : "Date"}</span>
-        <span>{isBn ? "সকাল" : "Morning"}</span>
-        <span>{isBn ? "দুপুর" : "Lunch"}</span>
-        <span>{isBn ? "রাত" : "Dinner"}</span>
+        <span className={mealWeights.breakfast === 0 ? "opacity-35 line-through" : ""}>{isBn ? "সকাল" : "Morning"}</span>
+        <span className={mealWeights.lunch === 0 ? "opacity-35 line-through" : ""}>{isBn ? "দুপুর" : "Lunch"}</span>
+        <span className={mealWeights.dinner === 0 ? "opacity-35 line-through" : ""}>{isBn ? "রাত" : "Dinner"}</span>
         <span className="text-amber-600 dark:text-amber-400">{isBn ? "গেস্ট" : "Guest"}</span>
       </div>
 
@@ -347,9 +360,9 @@ const MealCalendar = () => {
           const isBeforeJoining = joiningDateStr && dateStr < joiningDateStr;
           const meal = mealsByDay[day] || {};
 
-          const dayGuestBreakfast = meal.guestBreakfast || 0;
-          const dayGuestLunch = meal.guestLunch || 0;
-          const dayGuestDinner = meal.guestDinner || 0;
+          const dayGuestBreakfast = mealWeights.breakfast === 0 ? 0 : (meal.guestBreakfast || 0);
+          const dayGuestLunch = mealWeights.lunch === 0 ? 0 : (meal.guestLunch || 0);
+          const dayGuestDinner = mealWeights.dinner === 0 ? 0 : (meal.guestDinner || 0);
           const totalGuest = dayGuestBreakfast + dayGuestLunch + dayGuestDinner;
 
           return (
@@ -372,12 +385,15 @@ const MealCalendar = () => {
 
               {/* Breakfast, Lunch, Dinner Own Meal Buttons */}
               {["breakfast", "lunch", "dinner"].map((type) => {
-                const active = isBeforeJoining ? false : (meal[type] !== false);
+                const isWeightZero = mealWeights[type] === 0;
+                const active = (isBeforeJoining || isWeightZero) ? false : (meal[type] !== false);
                 const guestField = type === "breakfast" ? "guestBreakfast" : type === "lunch" ? "guestLunch" : "guestDinner";
-                const guestCountForThisMeal = meal[guestField] || 0;
+                const guestCountForThisMeal = isWeightZero ? 0 : (meal[guestField] || 0);
 
                 let bgColor;
-                if (isBeforeJoining) {
+                if (isWeightZero) {
+                  bgColor = "bg-gray-100 dark:bg-slate-800/50 border border-dashed border-gray-300 dark:border-slate-700/60 text-gray-400 dark:text-gray-600 cursor-not-allowed";
+                } else if (isBeforeJoining) {
                   bgColor = "bg-gray-100 dark:bg-slate-800/40 border-none text-transparent"; 
                 } else {
                   bgColor = !active
@@ -391,25 +407,37 @@ const MealCalendar = () => {
                   <div key={type} className="relative">
                     <button
                       onClick={() => {
+                        if (isWeightZero) {
+                          toast.error(isBn ? "এই মেসে এই বেলার মিল বন্ধ (Weight 0)" : "This meal is disabled in this mess (Weight: 0)");
+                          return;
+                        }
                         if (isBeforeJoining) return;
                         if (isPast) { toast.error(isBn ? "অতীতের মিল এডিট করা যাবে না" : "You can't edit past meals"); return; }
                         handleUpdate(day, type, active);
                       }}
-                      disabled={isBeforeJoining}
+                      disabled={isBeforeJoining || isWeightZero}
                       title={
-                        isBeforeJoining
+                        isWeightZero
+                          ? "Disabled in this mess (Weight: 0)"
+                          : isBeforeJoining
                           ? "Before joining"
                           : `${type.toUpperCase()} (${active ? "ON" : "OFF"})${guestCountForThisMeal > 0 ? ` +${guestCountForThisMeal} Guest` : ""}`
                       }
-                      className={`w-full h-10 rounded-lg ${bgColor} ${!isBeforeJoining && 'hover:cursor-pointer active:scale-95'} transition flex items-center justify-center relative font-semibold text-xs`}
+                      className={`w-full h-10 rounded-lg ${bgColor} ${!isBeforeJoining && !isWeightZero && 'hover:cursor-pointer active:scale-95'} transition flex items-center justify-center relative font-semibold text-xs`}
                     >
-                      {guestCountForThisMeal > 0 && (
-                        <span
-                          className="absolute -top-1.5 -right-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full shadow-xs border border-white dark:border-slate-900"
-                          title={`${guestCountForThisMeal} Guest for ${type}`}
-                        >
-                          +{guestCountForThisMeal}
+                      {isWeightZero ? (
+                        <span className="text-gray-400 dark:text-gray-600 font-bold text-xs select-none">
+                          —
                         </span>
+                      ) : (
+                        guestCountForThisMeal > 0 && (
+                          <span
+                            className="absolute -top-1.5 -right-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-full shadow-xs border border-white dark:border-slate-900"
+                            title={`${guestCountForThisMeal} Guest for ${type}`}
+                          >
+                            +{guestCountForThisMeal}
+                          </span>
+                        )
                       )}
                     </button>
                   </div>
@@ -514,8 +542,9 @@ const MealCalendar = () => {
                 },
               ].map((m) => {
                 const Icon = m.icon;
-                const isLocked = isMealDeadlinePassed(m.type, selectedDateStr);
-                const count = guestCounts[m.key] || 0;
+                const isWeightZero = mealWeights[m.type] === 0;
+                const isLocked = isWeightZero || isMealDeadlinePassed(m.type, selectedDateStr);
+                const count = isWeightZero ? 0 : (guestCounts[m.key] || 0);
                 const deadlineTime = deadlines[m.type] || "12:00";
 
                 return (
@@ -536,7 +565,11 @@ const MealCalendar = () => {
                           {isBn ? m.labelBn : m.labelEn}
                         </span>
                         <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          {isLocked ? (
+                          {isWeightZero ? (
+                            <span className="text-gray-400 dark:text-gray-500 font-medium">
+                              {isBn ? "🚫 এই বেলা বন্ধ (Weight 0)" : "🚫 Disabled (Weight: 0)"}
+                            </span>
+                          ) : isLocked ? (
                             <>
                               <Lock className="w-3 h-3 text-red-500" />
                               <span className="text-red-500 font-medium">

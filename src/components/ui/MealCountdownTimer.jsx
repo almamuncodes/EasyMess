@@ -15,11 +15,22 @@ export default function MealCountdownTimer({ userId: customUserId }) {
   const session = useUser();
   const userId = customUserId || session?.user?.id;
 
-  const [mounted, setMounted] = useState(false);
+  const emptySubscribe = () => () => {};
+  const mounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const [deadlines, setDeadlines] = useState({
     breakfast: "07:00",
     lunch: "11:00",
     dinner: "20:00",
+  });
+
+  const [weights, setWeights] = useState({
+    breakfast: 0.5,
+    lunch: 1,
+    dinner: 1,
   });
 
   const [state, setState] = useState({
@@ -29,11 +40,8 @@ export default function MealCountdownTimer({ userId: customUserId }) {
     minutes: 0,
     seconds: 0,
     iconType: "sun",
+    hasActiveMeal: true,
   });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Fetch Mess Settings dynamically for the mess
   useEffect(() => {
@@ -77,6 +85,11 @@ export default function MealCountdownTimer({ userId: customUserId }) {
           );
 
           setDeadlines({ breakfast: bTime, lunch: lTime, dinner: dTime });
+          setWeights({
+            breakfast: typeof ms.breakfastWeight !== "undefined" ? Number(ms.breakfastWeight) : 0.5,
+            lunch: typeof ms.lunchWeight !== "undefined" ? Number(ms.lunchWeight) : 1,
+            dinner: typeof ms.dinnerWeight !== "undefined" ? Number(ms.dinnerWeight) : 1,
+          });
         }
       })
       .catch((err) => console.error("Error fetching mess settings for timer:", err));
@@ -98,37 +111,55 @@ export default function MealCountdownTimer({ userId: customUserId }) {
       const lTime = parseTime(deadlines.lunch);
       const dTime = parseTime(deadlines.dinner);
 
+      const hasAnyActive = weights.breakfast > 0 || weights.lunch > 0 || weights.dinner > 0;
+      if (!hasAnyActive) {
+        setState((prev) => ({ ...prev, hasActiveMeal: false }));
+        return;
+      }
+
       // Construct target BD date object
       let targetBDDate = new Date(bdNow.bdDateObj);
       let mealNameBn = "";
       let mealNameEn = "";
       let iconType = "sun";
 
-      if (currentMinutes < bTime.totalMinutes) {
+      if (weights.breakfast > 0 && currentMinutes < bTime.totalMinutes) {
         // Next: Breakfast Today
         targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
         mealNameBn = "আজকের সকালের মিল";
         mealNameEn = "Today's Breakfast";
         iconType = "coffee";
-      } else if (currentMinutes < lTime.totalMinutes) {
+      } else if (weights.lunch > 0 && currentMinutes < lTime.totalMinutes) {
         // Next: Lunch Today
         targetBDDate.setUTCHours(lTime.hours, lTime.minutes, 0, 0);
         mealNameBn = "আজকের দুপুরের মিল";
         mealNameEn = "Today's Lunch";
         iconType = "sun";
-      } else if (currentMinutes < dTime.totalMinutes) {
+      } else if (weights.dinner > 0 && currentMinutes < dTime.totalMinutes) {
         // Next: Dinner Today
         targetBDDate.setUTCHours(dTime.hours, dTime.minutes, 0, 0);
         mealNameBn = "আজকের রাতের মিল";
         mealNameEn = "Today's Dinner";
         iconType = "moon";
       } else {
-        // Next: Tomorrow's Breakfast
+        // Next: Tomorrow's earliest active meal
         targetBDDate.setUTCDate(targetBDDate.getUTCDate() + 1);
-        targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
-        mealNameBn = "আগামীকাল সকালের মিল";
-        mealNameEn = "Tomorrow's Breakfast";
-        iconType = "coffee";
+        if (weights.breakfast > 0) {
+          targetBDDate.setUTCHours(bTime.hours, bTime.minutes, 0, 0);
+          mealNameBn = "আগামীকাল সকালের মিল";
+          mealNameEn = "Tomorrow's Breakfast";
+          iconType = "coffee";
+        } else if (weights.lunch > 0) {
+          targetBDDate.setUTCHours(lTime.hours, lTime.minutes, 0, 0);
+          mealNameBn = "আগামীকাল দুপুরের মিল";
+          mealNameEn = "Tomorrow's Lunch";
+          iconType = "sun";
+        } else {
+          targetBDDate.setUTCHours(dTime.hours, dTime.minutes, 0, 0);
+          mealNameBn = "আগামীকাল রাতের মিল";
+          mealNameEn = "Tomorrow's Dinner";
+          iconType = "moon";
+        }
       }
 
       const diffMs = targetBDDate.getTime() - bdNow.bdDateObj.getTime();
@@ -145,15 +176,16 @@ export default function MealCountdownTimer({ userId: customUserId }) {
         minutes,
         seconds,
         iconType,
+        hasActiveMeal: true,
       });
     }
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [mounted, deadlines]);
+  }, [mounted, deadlines, weights]);
 
-  if (!mounted) return null;
+  if (!mounted || !state.hasActiveMeal) return null;
 
   const pad = (n) => String(n).padStart(2, "0");
   const IconComponent =
