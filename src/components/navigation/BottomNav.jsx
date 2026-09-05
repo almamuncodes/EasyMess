@@ -2,13 +2,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, LayoutDashboard, MessageCircle, ClipboardList, User } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import { useSocket } from "@/components/providers/SocketProvider";
 
 export default function BottomNav() {
+  const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   const { chatUnreadCount } = useSocket();
@@ -74,6 +75,110 @@ export default function BottomNav() {
       }
     };
   }, []);
+
+  // Mobile Horizontal Swipe Navigation between BottomNav tabs (Facebook/Insta style)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth >= 768) return; // Only active on mobile devices
+    if (isKeyboardOpen) return; // Disabled while user is typing
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isIgnoredTouch = false;
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length !== 1) {
+        isIgnoredTouch = true;
+        return;
+      }
+
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartTime = Date.now();
+      isIgnoredTouch = false;
+
+      // Ignore if user is inside form elements, buttons, modals, sliders or dialogs
+      const target = e.target;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "BUTTON" ||
+        tag === "SELECT" ||
+        target?.isContentEditable ||
+        target?.closest?.("input, textarea, button, select, [role='dialog'], .modal, [data-no-swipe]")
+      ) {
+        isIgnoredTouch = true;
+        return;
+      }
+
+      // Avoid edge conflict with iOS/Android native back/forward gestures (edges < 28px)
+      if (touchStartX < 28 || touchStartX > window.innerWidth - 28) {
+        isIgnoredTouch = true;
+        return;
+      }
+    };
+
+    const handleTouchEnd = (e) => {
+      if (isIgnoredTouch) return;
+      if (e.changedTouches.length !== 1) return;
+
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      const deltaTime = Date.now() - touchStartTime;
+
+      // Must be a deliberate, brisk gesture (< 650ms)
+      if (deltaTime > 650) return;
+
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+
+      // Minimum swipe distance of 65px and predominantly horizontal movement
+      if (absX >= 65 && absX > absY * 1.8) {
+        const navList = [
+          "/",
+          dashboardHref,
+          "/chat",
+          "/notice",
+          "/profile",
+        ];
+
+        let activeIdx = navList.findIndex((href) => {
+          if (href === "/") return pathname === "/";
+          return pathname === href || pathname.startsWith(href);
+        });
+
+        if (activeIdx === -1 && pathname.startsWith("/dashboard")) {
+          activeIdx = 1;
+        }
+
+        if (activeIdx === -1) return;
+
+        if (deltaX < 0) {
+          // Swiped Left (finger moved right-to-left) -> Next Tab
+          if (activeIdx < navList.length - 1) {
+            router.push(navList[activeIdx + 1]);
+          }
+        } else {
+          // Swiped Right (finger moved left-to-right) -> Previous Tab
+          if (activeIdx > 0) {
+            router.push(navList[activeIdx - 1]);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [pathname, dashboardHref, isKeyboardOpen, router]);
 
   // Don't show bottom navigation if loading or not logged in
   if (isPending || !isLoggedIn) return null;

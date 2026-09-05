@@ -255,10 +255,46 @@ export default function MessChatPage() {
   const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
   const [showActionMenu, setShowActionMenu] = useState(false);
+  const actionMenuRef = useRef(null);
+  const actionBtnRef = useRef(null);
   const [highlightedMsgId, setHighlightedMsgId] = useState(null);
   const [viewSeenCandidate, setViewSeenCandidate] = useState(null);
   const [activeReactionMenuMsgId, setActiveReactionMenuMsgId] = useState(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Close Action Menu & Reaction Picker when clicking outside
+  useEffect(() => {
+    if (!showActionMenu && !activeReactionMenuMsgId) return;
+
+    const handleClickOutside = (e) => {
+      // Close Action Menu if click is outside both menu popover and + toggle button
+      if (
+        showActionMenu &&
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(e.target) &&
+        actionBtnRef.current &&
+        !actionBtnRef.current.contains(e.target)
+      ) {
+        setShowActionMenu(false);
+      }
+
+      // Close reaction picker if click is outside
+      if (
+        activeReactionMenuMsgId &&
+        !e.target.closest?.(".reaction-picker-popover") &&
+        !e.target.closest?.(".reaction-trigger-btn")
+      ) {
+        setActiveReactionMenuMsgId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [showActionMenu, activeReactionMenuMsgId]);
 
   // Sound Notification state (Task 4)
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -1019,9 +1055,10 @@ export default function MessChatPage() {
 
   // RENDER: Full Mess Chat Room
   return (
-    <div className="max-w-4xl mx-auto px-2 sm:px-4 py-2 sm:py-4 min-h-[92vh] flex flex-col">
-      {/* 1. CHAT HEADER */}
-      <div className="sticky top-16 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-gray-200/70 dark:border-slate-800/80 rounded-2xl p-2.5 sm:p-3.5 shadow-sm flex items-center justify-between mb-2.5 sm:mb-3 transition-all">
+    <div className="w-full flex-1 flex flex-col h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-5.5rem)] min-h-0 bg-gradient-to-br from-[#FAF2E8] via-[#FCF7F0] to-[#FFFDFB] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+      <div className="max-w-4xl w-full mx-auto px-2 sm:px-4 pt-1.5 pb-2 md:py-3 flex-1 flex flex-col min-h-0">
+        {/* 1. CHAT HEADER */}
+        <div className="shrink-0 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-[#EFE2D2]/90 dark:border-slate-800/80 rounded-2xl p-2.5 sm:p-3 shadow-xs flex items-center justify-between mb-2 transition-all">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           {/* Back button for mobile */}
           <Link
@@ -1130,7 +1167,7 @@ export default function MessChatPage() {
         }
 
         return (
-          <div className="mb-2.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-900/95 dark:to-amber-950/40 border border-amber-300/80 dark:border-amber-500/30 rounded-2xl px-3 py-2 shadow-xs flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="shrink-0 mb-2 bg-white/75 dark:bg-slate-900/75 backdrop-blur-xl border border-amber-300/70 dark:border-amber-500/30 rounded-2xl px-3.5 py-2 shadow-[0_4px_20px_rgba(245,158,11,0.12)] flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
             <button
               type="button"
               onClick={() => scrollToPinnedMessage(pinnedMsg._id)}
@@ -1173,8 +1210,11 @@ export default function MessChatPage() {
       <div
         ref={chatContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto rounded-2xl bg-gradient-to-b from-gray-50/50 to-white dark:from-slate-900/40 dark:to-slate-900/80 border border-gray-200/60 dark:border-slate-800/80 p-3 sm:p-5 space-y-4 shadow-inner min-h-[50vh] max-h-[66vh] sm:max-h-[70vh] relative"
+        className="flex-1 overflow-y-auto min-h-0 rounded-3xl bg-gradient-to-br from-[#FAF2E8]/75 via-white/80 to-[#FAF2E8]/55 dark:from-slate-900/70 dark:via-slate-900/85 dark:to-slate-950/90 border border-[#EFE2D2]/90 dark:border-slate-800/80 p-3 sm:p-5 space-y-4 shadow-inner relative"
       >
+        {/* Subtle Ambient Decorative Glows for Apple iOS Liquid Glass Refraction */}
+        <div className="pointer-events-none absolute -top-16 -left-16 w-72 h-72 bg-[#F6DFC8]/50 dark:bg-orange-500/10 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute top-1/2 -right-16 w-80 h-80 bg-[#FAEAD9]/60 dark:bg-amber-500/10 rounded-full blur-3xl" />
         {loading ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
@@ -1213,7 +1253,7 @@ export default function MessChatPage() {
                 {/* Date Divider */}
                 {showDateDivider && (
                   <div className="flex justify-center my-3">
-                    <span className="text-[11px] font-semibold tracking-wide text-gray-500 dark:text-gray-400 bg-gray-200/70 dark:bg-slate-800/80 px-3 py-0.5 rounded-full shadow-xs select-none">
+                    <span className="text-[11px] font-semibold tracking-wide text-gray-600 dark:text-gray-300 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-[#EAE0D2] dark:border-white/10 px-3.5 py-0.5 rounded-full shadow-xs select-none">
                       {formatDateDivider(msg.createdAt, isBn)}
                     </span>
                   </div>
@@ -1232,7 +1272,7 @@ export default function MessChatPage() {
                 >
                   {/* Other's Avatar */}
                   {!isMe && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-slate-800 flex-shrink-0 relative shadow-sm border border-gray-200 dark:border-slate-700">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-slate-800 flex-shrink-0 relative shadow-xs border border-white/60 dark:border-white/10">
                       {msg.sender?.avatar ? (
                         <Image
                           src={msg.sender.avatar}
@@ -1248,12 +1288,12 @@ export default function MessChatPage() {
                     </div>
                   )}
 
-                  {/* Bubble Content */}
+                  {/* Bubble Content - Apple iOS Liquid Glass Style */}
                   <div
-                    className={`relative max-w-[82%] sm:max-w-[70%] rounded-2xl p-3 sm:p-3.5 shadow-sm transition-all ${
+                    className={`relative max-w-[85%] sm:max-w-[72%] rounded-[20px] sm:rounded-[22px] p-3 sm:p-3.5 transition-all backdrop-blur-xl ${
                       isMe
-                        ? "bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-br-xs"
-                        : "bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-slate-700/70 rounded-bl-xs"
+                        ? "bg-gradient-to-br from-orange-500/90 via-orange-500/85 to-amber-500/90 text-white rounded-br-[4px] border border-white/35 dark:border-white/20 shadow-[0_6px_20px_-2px_rgba(249,115,22,0.32),inset_0_1px_1px_rgba(255,255,255,0.45)]"
+                        : "bg-white/85 dark:bg-slate-800/85 text-gray-900 dark:text-gray-100 rounded-bl-[4px] border border-white dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(180,140,110,0.08),inset_0_1px_1.5px_rgba(255,255,255,1)] dark:shadow-[0_6px_20px_-2px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.08)]"
                     }`}
                   >
                     {/* Pinned message indicator badge */}
@@ -1326,14 +1366,14 @@ export default function MessChatPage() {
                                   key={optIdx}
                                   type="button"
                                   onClick={() => handleVote(msg._id, optIdx)}
-                                  className={`relative w-full text-left p-2.5 rounded-xl border transition-all overflow-hidden flex items-center justify-between text-xs select-none ${
+                                  className={`relative w-full text-left p-2.5 rounded-xl border transition-all overflow-hidden flex items-center justify-between text-xs select-none backdrop-blur-sm ${
                                     isMe
                                       ? hasVoted
-                                        ? "bg-white/30 border-white text-white font-bold"
-                                        : "bg-white/10 hover:bg-white/20 border-white/20 text-white"
+                                        ? "bg-white/30 border-white/60 text-white font-bold shadow-2xs"
+                                        : "bg-white/15 hover:bg-white/25 border-white/20 text-white"
                                       : hasVoted
-                                      ? "bg-orange-50 dark:bg-orange-950/40 border-orange-400 dark:border-orange-500 font-bold text-orange-700 dark:text-orange-300"
-                                      : "bg-gray-50 dark:bg-slate-750 hover:bg-gray-100 dark:hover:bg-slate-700 border-gray-200 dark:border-slate-700 text-gray-800 dark:text-gray-200"
+                                      ? "bg-orange-500/15 dark:bg-orange-500/25 border-orange-400/50 dark:border-orange-500/50 font-bold text-orange-700 dark:text-orange-300 shadow-2xs"
+                                      : "bg-white/60 dark:bg-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-700/70 border-black/5 dark:border-white/10 text-gray-800 dark:text-gray-200"
                                   }`}
                                 >
                                   {/* Progress bar background fill */}
@@ -1401,10 +1441,10 @@ export default function MessChatPage() {
                                 key={itemIdx}
                                 type="button"
                                 onClick={() => handleToggleBazaarItem(msg._id, itemIdx)}
-                                className={`w-full text-left p-2 rounded-xl flex items-center gap-2.5 transition-all text-xs select-none ${
+                                className={`w-full text-left p-2 rounded-xl flex items-center gap-2.5 transition-all text-xs select-none backdrop-blur-sm ${
                                   isMe
-                                    ? isDone ? "bg-white/20 line-through opacity-80" : "bg-white/10 hover:bg-white/15 font-medium"
-                                    : isDone ? "bg-emerald-50/60 dark:bg-emerald-950/20 text-gray-400 line-through" : "bg-gray-50 dark:bg-slate-750/70 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-100 font-medium"
+                                    ? isDone ? "bg-white/20 line-through opacity-80" : "bg-white/15 hover:bg-white/25 font-medium"
+                                    : isDone ? "bg-emerald-500/10 dark:bg-emerald-950/20 text-gray-400 line-through" : "bg-white/60 dark:bg-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-700/70 border border-black/5 dark:border-white/10 text-gray-800 dark:text-gray-100 font-medium"
                                 }`}
                               >
                                 {isDone ? (
@@ -1539,8 +1579,8 @@ export default function MessChatPage() {
                           activeReactionMenuMsgId === msg._id
                             ? "opacity-100 text-yellow-300"
                             : isMe
-                            ? "opacity-0 group-hover:opacity-100 text-orange-100 hover:text-white"
-                            : "opacity-0 group-hover:opacity-100 text-gray-400 hover:text-yellow-500"
+                            ? "opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-orange-100 hover:text-white"
+                            : "opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-yellow-500"
                         }`}
                       >
                         <Smile size={12} />
@@ -1555,7 +1595,7 @@ export default function MessChatPage() {
                           className={`p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all ${
                             msg.isPinned
                               ? "text-amber-400 opacity-100"
-                              : "opacity-0 group-hover:opacity-100 text-gray-400 hover:text-amber-500"
+                              : "opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-amber-500"
                           }`}
                         >
                           {msg.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
@@ -1568,7 +1608,7 @@ export default function MessChatPage() {
                           type="button"
                           onClick={() => setDeleteCandidate(msg)}
                           title={isBn ? "মেসেজ মুছুন" : "Delete message"}
-                          className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 ${
+                          className={`opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 ${
                             isMe ? "text-orange-100 hover:text-white" : "text-gray-400 hover:text-red-500"
                           }`}
                         >
@@ -1577,11 +1617,11 @@ export default function MessChatPage() {
                       )}
                     </div>
 
-                    {/* Floating Reaction Picker Popover */}
+                    {/* Floating Reaction Picker Popover - iOS Glass */}
                     {activeReactionMenuMsgId === msg._id && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className={`absolute -top-11 z-30 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-full px-2.5 py-1 shadow-xl flex items-center gap-2 animate-in zoom-in-95 duration-150 ${
+                        className={`absolute -top-12 z-30 bg-white/85 dark:bg-slate-800/85 backdrop-blur-xl border border-white/70 dark:border-white/15 rounded-full px-2.5 py-1 shadow-2xl flex items-center gap-2 animate-in zoom-in-95 duration-150 ring-1 ring-black/5 ${
                           isMe ? "right-0" : "left-0"
                         }`}
                       >
@@ -1598,7 +1638,7 @@ export default function MessChatPage() {
                       </div>
                     )}
 
-                    {/* Active Reactions Pills */}
+                    {/* Active Reactions Pills - iOS Liquid Glass */}
                     {(() => {
                       const reactions = Array.isArray(msg.reactions) ? msg.reactions : [];
                       if (reactions.length === 0) return null;
@@ -1611,8 +1651,8 @@ export default function MessChatPage() {
                       });
 
                       return (
-                        <div className={`flex flex-wrap items-center gap-1 mt-1.5 pt-1 border-t ${
-                          isMe ? "border-white/15 justify-end" : "border-gray-100 dark:border-slate-700/60 justify-start"
+                        <div className={`flex flex-wrap items-center gap-1.5 mt-2 pt-1.5 border-t ${
+                          isMe ? "border-white/20 justify-end" : "border-black/5 dark:border-white/10 justify-start"
                         }`}>
                           {Object.entries(grouped).map(([emoji, userList]) => {
                             const hasReacted = userList.some((u) => String(u.userId) === String(currentUserId));
@@ -1627,14 +1667,14 @@ export default function MessChatPage() {
                                   handleToggleReaction(msg._id, emoji);
                                 }}
                                 title={userNames}
-                                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium border transition-all cursor-pointer select-none active:scale-95 ${
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-all cursor-pointer select-none active:scale-95 backdrop-blur-md ${
                                   hasReacted
                                     ? isMe
-                                      ? "bg-white/30 border-white text-white shadow-xs font-bold"
-                                      : "bg-orange-100 dark:bg-orange-950/70 border-orange-400 dark:border-orange-500/70 text-orange-800 dark:text-orange-200 shadow-xs font-bold"
+                                      ? "bg-white/35 border-white/60 text-white shadow-xs font-bold ring-1 ring-white/30"
+                                      : "bg-orange-500/15 dark:bg-orange-500/25 border-orange-400/50 dark:border-orange-500/50 text-orange-700 dark:text-orange-300 shadow-xs font-bold"
                                     : isMe
-                                    ? "bg-white/10 border-white/20 text-white/90 hover:bg-white/20"
-                                    : "bg-gray-100 dark:bg-slate-750 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700"
+                                    ? "bg-white/15 border-white/25 text-white hover:bg-white/25"
+                                    : "bg-white/60 dark:bg-slate-700/50 border-gray-200/60 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-white/90 dark:hover:bg-slate-700/80 shadow-2xs"
                                 }`}
                               >
                                 <span>{emoji}</span>
@@ -1684,10 +1724,21 @@ export default function MessChatPage() {
       </div>
 
       {/* 3. CHAT INPUT BAR WITH + ACTION MENU */}
-      <div className={`mt-2 md:mt-3 relative transition-all duration-300 ${isInputFocused ? "pb-2 md:pb-4" : "pb-24 md:pb-4"}`}>
-        {/* + Action Menu Popover */}
+      <div className="shrink-0 mt-2 relative">
+        {/* Backdrop to close Quick Actions menu when tapping outside */}
         {showActionMenu && (
-          <div className="absolute bottom-16 left-2 z-30 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl shadow-xl p-2 w-64 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div
+            className="fixed inset-0 z-25 bg-black/5 dark:bg-black/20 sm:bg-transparent cursor-default"
+            onClick={() => setShowActionMenu(false)}
+          />
+        )}
+
+        {/* + Action Menu Popover - iOS Glass */}
+        {showActionMenu && (
+          <div
+            ref={actionMenuRef}
+            className="absolute bottom-16 left-2 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl shadow-2xl p-2 w-64 animate-in fade-in slide-in-from-bottom-3 duration-200"
+          >
             <div className="px-2 py-1.5 text-[10px] font-bold tracking-wider uppercase text-gray-400 dark:text-gray-500">
               {isBn ? "কুইক অ্যাকশন" : "Quick Actions"}
             </div>
@@ -1748,17 +1799,18 @@ export default function MessChatPage() {
           </div>
         )}
 
-        {/* Form Container */}
+        {/* Form Container - iOS Glass */}
         <form
           onSubmit={handleSendMessage}
-          className="relative flex items-center gap-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-1.5 sm:p-2 shadow-sm focus-within:ring-2 focus-within:ring-orange-500/30 focus-within:border-orange-500 transition-all"
+          className="relative flex items-center gap-2 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-[#EFE2D2]/95 dark:border-white/10 rounded-2xl p-1.5 sm:p-2 shadow-[0_4px_20px_rgba(210,185,160,0.2)] focus-within:ring-2 focus-within:ring-orange-500/30 focus-within:border-orange-500 transition-all"
         >
           {/* + Action Trigger Button */}
           <button
+            ref={actionBtnRef}
             type="button"
             onClick={() => setShowActionMenu((prev) => !prev)}
             title={isBn ? "অ্যাকশন অপশন" : "Action options"}
-            className={`p-2 sm:p-2.5 rounded-xl transition-all flex-shrink-0 ${
+            className={`p-2 sm:p-2.5 rounded-xl transition-all flex-shrink-0 z-30 relative ${
               showActionMenu
                 ? "bg-orange-500 text-white rotate-45 scale-105"
                 : "text-gray-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-slate-800"
@@ -2222,6 +2274,7 @@ export default function MessChatPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
