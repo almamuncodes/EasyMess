@@ -10,7 +10,11 @@ const SocketContext = createContext({
   socket: null,
   notifications: [],
   unreadCount: 0,
+  chatUnreadCount: 0,
   fetchNotifications: async () => {},
+  fetchChatUnreadCount: async () => {},
+  setChatUnreadCount: () => {},
+  requestPushPermission: async () => {},
   markAllAsRead: async () => {},
   markAsRead: async () => {},
   deleteNotification: async () => {},
@@ -25,6 +29,7 @@ export default function SocketProvider({ children }) {
   const [messId, setMessId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
@@ -44,6 +49,23 @@ export default function SocketProvider({ children }) {
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
+    }
+  }, [API_BASE]);
+
+  // Fetch unread chat messages count for current mess
+  const fetchChatUnreadCount = React.useCallback(async (mId, uId) => {
+    if (!mId || !uId) {
+      setChatUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/mess/${mId}/messages/unread-count?userId=${uId}`);
+      const data = await res.json();
+      if (data.success && typeof data.count === "number") {
+        setChatUnreadCount(data.count);
+      }
+    } catch (error) {
+      console.error("Error fetching chat unread count:", error);
     }
   }, [API_BASE]);
 
@@ -146,6 +168,25 @@ export default function SocketProvider({ children }) {
     }
   };
 
+  // Request browser notification permission explicitly
+  const requestPushPermission = async () => {
+    if (!userId || typeof window === "undefined" || !("Notification" in window)) return false;
+    try {
+      let perm = Notification.permission;
+      if (perm === "default") {
+        perm = await Notification.requestPermission();
+      }
+      if (perm === "granted") {
+        await registerPushNotifications(userId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error requesting push notification permission:", error);
+      return false;
+    }
+  };
+
   // Load mess ID when user logs in
   useEffect(() => {
     const loadMessId = async () => {
@@ -158,6 +199,7 @@ export default function SocketProvider({ children }) {
         const data = await res.json();
         if (data.messId) {
           setMessId(data.messId);
+          fetchChatUnreadCount(data.messId, userId);
         }
       } catch (error) {
         console.error("Error loading messId:", error);
@@ -167,7 +209,7 @@ export default function SocketProvider({ children }) {
     loadMessId();
     fetchNotifications(userId);
     registerPushNotifications(userId);
-  }, [userId, API_BASE, fetchNotifications]);
+  }, [userId, API_BASE, fetchNotifications, fetchChatUnreadCount]);
 
   // Connect to Socket.io server
   useEffect(() => {
@@ -314,12 +356,45 @@ export default function SocketProvider({ children }) {
     };
   }, [socket, userId]);
 
+  // Listen to new-mess-message and mess-messages-seen to update chat unread counter live
+  useEffect(() => {
+    if (!socket || !messId || !userId) return;
+
+    const handleNewMessMsg = (newMsg) => {
+      if (!newMsg || String(newMsg.messId) !== String(messId)) return;
+      // If message is from someone else
+      if (String(newMsg.sender?.userId) !== String(userId)) {
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/chat")) {
+          setChatUnreadCount((prev) => prev + 1);
+        }
+      }
+    };
+
+    const handleMessSeen = (data) => {
+      if (data?.seenUser?.userId && String(data.seenUser.userId) === String(userId)) {
+        fetchChatUnreadCount(messId, userId);
+      }
+    };
+
+    socket.on("new-mess-message", handleNewMessMsg);
+    socket.on("mess-messages-seen", handleMessSeen);
+
+    return () => {
+      socket.off("new-mess-message", handleNewMessMsg);
+      socket.off("mess-messages-seen", handleMessSeen);
+    };
+  }, [socket, messId, userId, fetchChatUnreadCount]);
+
   return (
     <SocketContext.Provider
       value={{
         socket,
         notifications,
         unreadCount,
+        chatUnreadCount,
+        setChatUnreadCount,
+        fetchChatUnreadCount,
+        requestPushPermission,
         fetchNotifications,
         markAllAsRead,
         markAsRead,

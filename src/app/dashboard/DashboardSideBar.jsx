@@ -278,7 +278,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition relative ${
                 isActive
                   ? "bg-orange-500 text-white"
                   : "text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-slate-800"
@@ -306,14 +306,16 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                className={`flex items-center justify-between px-4 py-3 rounded-xl transition ${
                   isActive
                     ? "bg-orange-500 text-white shadow-lg shadow-orange-200/20"
                     : "text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-slate-800 hover:text-orange-600 dark:hover:text-orange-400"
                 }`}
               >
-                <Icon size={20} />
-                <span className="font-medium">{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <Icon size={20} />
+                  <span className="font-medium">{item.name}</span>
+                </div>
               </Link>
             );
           })}

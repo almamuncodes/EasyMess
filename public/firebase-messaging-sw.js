@@ -14,13 +14,16 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log("Received background message: ", payload);
   
-  const notificationTitle = payload.notification.title || "📢 New Notice";
+  const notificationTitle = payload.notification?.title || payload.data?.title || "💬 EasyMess";
   const notificationOptions = {
-    body: payload.notification.body || "A new announcement was posted.",
+    body: payload.notification?.body || payload.data?.body || "New message received.",
     icon: "/favicon.ico",
     badge: "/favicon.ico",
+    vibrate: [200, 100, 200],
+    tag: payload.data?.tag || "easymess-notification",
+    renotify: true,
     data: {
-      url: payload.data?.click_action || "/notice"
+      url: payload.data?.click_action || payload.data?.url || "/chat"
     }
   };
 
@@ -30,7 +33,7 @@ messaging.onBackgroundMessage((payload) => {
 // Click action handling
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data?.url || "/notice";
+  const urlToOpen = event.notification.data?.url || "/chat";
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {

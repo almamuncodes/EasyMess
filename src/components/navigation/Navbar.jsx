@@ -24,7 +24,7 @@ export default function Navbar() {
   const notificationRef = useRef(null);
   const mobileNotificationRef = useRef(null);
 
-  const { notifications, unreadCount, markAllAsRead, markAsRead, deleteNotification, clearAllNotifications } = useSocket();
+  const { notifications, unreadCount, chatUnreadCount, markAllAsRead, markAsRead, deleteNotification, clearAllNotifications } = useSocket();
 
   const { data: session, isPending } = authClient.useSession();
   const isLoggedIn = !!session;
@@ -67,6 +67,7 @@ export default function Navbar() {
 
   const loggedInMenu = [
     { name: themeMounted ? t("home") : "Home", href: "/" },
+    { name: themeMounted ? t("chat") : "Chat", href: "/chat" },
     { name: themeMounted ? t("notice") : "Notice", href: "/notice" },
     { name: themeMounted ? t("dashboard") : "Dashboard", href: dashboardHref },
   ];
@@ -113,7 +114,7 @@ export default function Navbar() {
               key={item.name}
               href={item.href}
               className={`
-      transition font-medium
+      transition font-medium relative flex items-center
       ${
         pathname === item.href
           ? "text-orange-500 border-b-2 border-orange-500 "
@@ -121,7 +122,12 @@ export default function Navbar() {
       }
     `}
             >
-              {item.name}
+              <span>{item.name}</span>
+              {item.href === "/chat" && pathname !== "/chat" && chatUnreadCount > 0 && (
+                <span className="ml-1.5 px-1.5 min-w-[18px] h-[18px] bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] font-black font-mono rounded-full flex items-center justify-center shadow-xs">
+                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                </span>
+              )}
             </Link>
           ))}
         </div>
