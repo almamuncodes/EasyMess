@@ -38,6 +38,7 @@ import {
   ChevronLeft,
   Bell,
   BellOff,
+  Reply,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -261,6 +262,15 @@ export default function MessChatPage() {
   const [viewSeenCandidate, setViewSeenCandidate] = useState(null);
   const [activeReactionMenuMsgId, setActiveReactionMenuMsgId] = useState(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState(null);
+  const inputRef = useRef(null);
+
+  const handleInitiateReply = (msg) => {
+    setReplyToMessage(msg);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
   // Close Action Menu & Reaction Picker when clicking outside
   useEffect(() => {
@@ -641,6 +651,21 @@ export default function MessChatPage() {
         text: trimmedText,
       };
 
+      if (replyToMessage) {
+        const replySnippet =
+          replyToMessage.text ||
+          (replyToMessage.poll ? (isBn ? "📊 পোল: " : "📊 Poll: ") + (replyToMessage.poll.question || "") : "") ||
+          (replyToMessage.bazaarList ? (isBn ? "🛒 বাজারের ফর্দ" : "🛒 Bazaar Checklist") : "") ||
+          (replyToMessage.emergencyAlert ? (isBn ? "🚨 জরুরি অ্যালার্ট" : "🚨 Emergency Alert") : "") ||
+          "";
+
+        payload.replyTo = {
+          messageId: replyToMessage._id,
+          senderName: replyToMessage.sender?.name || "Member",
+          text: replySnippet.length > 80 ? replySnippet.substring(0, 77) + "..." : replySnippet,
+        };
+      }
+
       // Stop typing
       if (socket) {
         socket.emit("typing-stop", { messId, userId: currentUserId });
@@ -672,8 +697,9 @@ export default function MessChatPage() {
         }
       }
 
-      // Clear input
+      // Clear input & reply state
       setInputText("");
+      setReplyToMessage(null);
       setTimeout(() => scrollToBottom("smooth"), 100);
     } catch (err) {
       console.error("Send message error:", err);
@@ -945,8 +971,8 @@ export default function MessChatPage() {
   };
 
   // 16. Toggle Emoji Reaction on a message
-  const handleToggleReaction = (messageId, emoji) => {
-    if (!socket || !messId || !currentUserId || !messageId || !emoji) return;
+  const handleToggleReaction = async (messageId, emoji) => {
+    if (!messId || !currentUserId || !messageId || !emoji) return;
 
     // Optimistic UI update
     setMessages((prev) =>
@@ -966,15 +992,32 @@ export default function MessChatPage() {
       })
     );
 
-    socket.emit("react-mess-message", {
-      messId,
-      messageId,
-      emoji,
-      userId: currentUserId,
-      userName: currentUser?.name || "Member",
-    });
-
     setActiveReactionMenuMsgId(null);
+
+    // Socket real-time emit or REST fallback
+    if (socket?.connected) {
+      socket.emit("react-mess-message", {
+        messId,
+        messageId,
+        emoji,
+        userId: currentUserId,
+        userName: currentUser?.name || "Member",
+      });
+    } else {
+      try {
+        await fetch(`${API_BASE}/api/mess/${messId}/messages/${messageId}/react`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            emoji,
+            userId: currentUserId,
+            userName: currentUser?.name || "Member",
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to toggle reaction via fallback:", err);
+      }
+    }
   };
 
   // Key press listener for Enter to send
@@ -1324,6 +1367,37 @@ export default function MessChatPage() {
                       </div>
                     )}
 
+                    {/* Replied / Quoted Message Card */}
+                    {msg.replyTo && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          scrollToPinnedMessage(msg.replyTo.messageId);
+                        }}
+                        title={isBn ? "মূল মেসেজে যান" : "Jump to original message"}
+                        className={`w-full text-left mb-2 p-2 rounded-xl text-xs transition-all flex items-start gap-2 select-none cursor-pointer border-l-4 ${
+                          isMe
+                            ? "bg-white/20 hover:bg-white/30 border-l-white text-white/95 shadow-2xs"
+                            : "bg-orange-50/70 dark:bg-slate-750/70 hover:bg-orange-100/70 dark:hover:bg-slate-700/80 border-l-orange-500 text-gray-800 dark:text-gray-200 shadow-2xs"
+                        }`}
+                      >
+                        <Reply size={12} className={`shrink-0 mt-0.5 ${isMe ? "text-white" : "text-orange-500"}`} />
+                        <div className="min-w-0 flex-1">
+                          <div className={`font-bold text-[11px] leading-tight truncate ${
+                            isMe ? "text-amber-100" : "text-orange-600 dark:text-orange-400"
+                          }`}>
+                            {msg.replyTo.senderName || (isBn ? "সদস্য" : "Member")}
+                          </div>
+                          <div className={`text-[11px] truncate leading-tight mt-0.5 ${
+                            isMe ? "text-white/85 font-medium" : "text-gray-600 dark:text-gray-300"
+                          }`}>
+                            {msg.replyTo.text || (isBn ? "মেসেজ" : "Message")}
+                          </div>
+                        </div>
+                      </button>
+                    )}
+
                     {/* 1. Regular Text Message */}
                     {msg.text && (
                       <div className="text-sm leading-relaxed">
@@ -1567,6 +1641,23 @@ export default function MessChatPage() {
                         </button>
                       )}
 
+                      {/* Reply button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInitiateReply(msg);
+                        }}
+                        title={isBn ? "রিপ্লাই দিন" : "Reply"}
+                        className={`p-1 sm:p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all cursor-pointer ${
+                          isMe
+                            ? "opacity-75 sm:opacity-0 sm:group-hover:opacity-100 text-orange-100 hover:text-white"
+                            : "opacity-75 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-orange-500"
+                        }`}
+                      >
+                        <Reply size={13} />
+                      </button>
+
                       {/* React button (Smile) */}
                       <button
                         type="button"
@@ -1575,15 +1666,15 @@ export default function MessChatPage() {
                           setActiveReactionMenuMsgId((prev) => (prev === msg._id ? null : msg._id));
                         }}
                         title={isBn ? "রিঅ্যাক্ট দিন" : "React"}
-                        className={`p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all ${
+                        className={`reaction-trigger-btn p-1 sm:p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all cursor-pointer ${
                           activeReactionMenuMsgId === msg._id
-                            ? "opacity-100 text-yellow-300"
+                            ? "opacity-100 text-yellow-400"
                             : isMe
-                            ? "opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-orange-100 hover:text-white"
-                            : "opacity-70 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-yellow-500"
+                            ? "opacity-75 sm:opacity-0 sm:group-hover:opacity-100 text-orange-100 hover:text-white"
+                            : "opacity-75 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-yellow-500"
                         }`}
                       >
-                        <Smile size={12} />
+                        <Smile size={13} />
                       </button>
 
                       {/* Pin button (Task 1) */}
@@ -1621,7 +1712,9 @@ export default function MessChatPage() {
                     {activeReactionMenuMsgId === msg._id && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className={`absolute -top-12 z-30 bg-white/85 dark:bg-slate-800/85 backdrop-blur-xl border border-white/70 dark:border-white/15 rounded-full px-2.5 py-1 shadow-2xl flex items-center gap-2 animate-in zoom-in-95 duration-150 ring-1 ring-black/5 ${
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        className={`reaction-picker-popover absolute -top-12 z-30 bg-white/90 dark:bg-slate-850/90 backdrop-blur-xl border border-white/80 dark:border-white/15 rounded-full px-2 py-1 shadow-xl flex items-center gap-1.5 animate-in zoom-in-95 duration-150 ring-1 ring-black/5 select-none ${
                           isMe ? "right-0" : "left-0"
                         }`}
                       >
@@ -1629,7 +1722,10 @@ export default function MessChatPage() {
                           <button
                             key={emoji}
                             type="button"
-                            onClick={() => handleToggleReaction(msg._id, emoji)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleReaction(msg._id, emoji);
+                            }}
                             className="w-7 h-7 flex items-center justify-center text-base hover:scale-125 active:scale-95 transition-transform cursor-pointer"
                           >
                             {emoji}
@@ -1799,6 +1895,40 @@ export default function MessChatPage() {
           </div>
         )}
 
+        {/* Active Reply Banner */}
+        {replyToMessage && (
+          <div className="mb-2 px-3 py-2 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-orange-300/80 dark:border-orange-500/40 backdrop-blur-xl shadow-md flex items-center justify-between gap-2.5 animate-in slide-in-from-bottom-2 duration-150">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="w-7 h-7 rounded-xl bg-orange-100 dark:bg-orange-950/70 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 shadow-2xs">
+                <Reply size={14} />
+              </div>
+              <div className="min-w-0 flex-1 text-xs">
+                <p className="font-bold text-orange-600 dark:text-orange-400 truncate leading-tight">
+                  {isBn ? "রিপ্লাই করা হচ্ছে:" : "Replying to:"}{" "}
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {replyToMessage.sender?.name || (isBn ? "সদস্য" : "Member")}
+                  </span>
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 truncate text-[11px] leading-tight mt-0.5">
+                  {replyToMessage.text ||
+                    (replyToMessage.poll && (isBn ? "📊 পোল: " + (replyToMessage.poll.question || "") : "📊 Poll: " + (replyToMessage.poll.question || ""))) ||
+                    (replyToMessage.bazaarList && (isBn ? "🛒 বাজারের ফর্দ" : "🛒 Bazaar Checklist")) ||
+                    (replyToMessage.emergencyAlert && (isBn ? "🚨 জরুরি অ্যালার্ট" : "🚨 Emergency Alert")) ||
+                    (isBn ? "মেসেজ" : "Message")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyToMessage(null)}
+              title={isBn ? "রিপ্লাই বাতিল করুন" : "Cancel reply"}
+              className="p-1 rounded-lg text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+            >
+              <X size={15} />
+            </button>
+          </div>
+        )}
+
         {/* Form Container - iOS Glass */}
         <form
           onSubmit={handleSendMessage}
@@ -1821,6 +1951,7 @@ export default function MessChatPage() {
 
           {/* Text Input */}
           <textarea
+            ref={inputRef}
             rows={1}
             value={inputText}
             onChange={handleInputChange}

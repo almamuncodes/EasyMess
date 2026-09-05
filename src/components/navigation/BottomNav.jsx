@@ -99,7 +99,7 @@ export default function BottomNav() {
       touchStartTime = Date.now();
       isIgnoredTouch = false;
 
-      // Ignore if user is inside form elements, buttons, modals, sliders or dialogs
+      // Ignore if user is inside form elements, buttons, modals, sliders, nav bars, or horizontally scrollable containers
       const target = e.target;
       const tag = target?.tagName;
       if (
@@ -108,10 +108,38 @@ export default function BottomNav() {
         tag === "BUTTON" ||
         tag === "SELECT" ||
         target?.isContentEditable ||
-        target?.closest?.("input, textarea, button, select, [role='dialog'], .modal, [data-no-swipe]")
+        target?.closest?.(
+          "input, textarea, button, select, [role='dialog'], .modal, [data-no-swipe], nav, header, .overflow-x-auto, .overflow-x-scroll, .scrollbar-hide"
+        )
       ) {
         isIgnoredTouch = true;
         return;
+      }
+
+      // Check if target or any ancestor is horizontally scrollable
+      let curEl = target;
+      while (curEl && curEl !== document.body && curEl !== document.documentElement) {
+        if (
+          curEl.hasAttribute?.("data-no-swipe") ||
+          curEl.classList?.contains("overflow-x-auto") ||
+          curEl.classList?.contains("overflow-x-scroll") ||
+          curEl.classList?.contains("scrollbar-hide") ||
+          curEl.tagName === "NAV"
+        ) {
+          isIgnoredTouch = true;
+          return;
+        }
+        try {
+          const style = window.getComputedStyle(curEl);
+          if (
+            (style.overflowX === "auto" || style.overflowX === "scroll") &&
+            curEl.scrollWidth > curEl.clientWidth
+          ) {
+            isIgnoredTouch = true;
+            return;
+          }
+        } catch (err) {}
+        curEl = curEl.parentElement;
       }
 
       // Avoid edge conflict with iOS/Android native back/forward gestures (edges < 28px)

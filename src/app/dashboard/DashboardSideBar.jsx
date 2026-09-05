@@ -270,7 +270,13 @@ export default function Sidebar() {
   return (
     <>
       {/*  Horizontal Scrollable Menu */}
-      <nav className="md:hidden flex overflow-x-auto w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-2 gap-2 scrollbar-hide">
+      <nav
+        data-no-swipe="true"
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        className="md:hidden flex overflow-x-auto w-full bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 p-2 gap-2 scrollbar-hide touch-pan-x"
+      >
         {filteredItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
