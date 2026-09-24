@@ -64,7 +64,15 @@ export default function AdminBulkEmailPage() {
     return allUsers.filter(u => u.messInfo?.messId?.toString() === targetMess.toString()).length;
   }, [allUsers, targetMess]);
 
-  const handleSendEmail = async (e) => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const selectedMessName = React.useMemo(() => {
+    if (targetMess === "all") return null;
+    const found = messes.find((m) => m._id === targetMess);
+    return found ? (found.messName || found.name) : null;
+  }, [messes, targetMess]);
+
+  const handleSendEmail = (e) => {
     e.preventDefault();
     if (!subject.trim()) {
       toast.error(isBn ? "ইমেইলের সাবজেক্ট লিখুন!" : "Please enter email subject!");
@@ -80,13 +88,11 @@ export default function AdminBulkEmailPage() {
       return;
     }
 
-    const confirmSend = window.confirm(
-      isBn
-        ? `আপনি কি নিশ্চিত যে সকল ইউজারকে এই ইমেইলটি পাঠাতে চান?`
-        : `Are you sure you want to send this email to all users?`
-    );
+    setShowConfirmModal(true);
+  };
 
-    if (!confirmSend) return;
+  const executeSendEmail = async () => {
+    setShowConfirmModal(false);
 
     try {
       setLoading(true);
@@ -331,7 +337,7 @@ export default function AdminBulkEmailPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? (
                   <>
@@ -341,7 +347,15 @@ export default function AdminBulkEmailPage() {
                 ) : (
                   <>
                     <Send size={18} />
-                    <span>{isBn ? "সকল ইউজারকে ইমেইল পাঠান" : "Send Email to All Users"}</span>
+                    <span>
+                      {targetMess === "all"
+                        ? isBn
+                          ? "সকল ইউজারকে ইমেইল পাঠান"
+                          : "Send Email to All Users"
+                        : isBn
+                        ? "টার্গেট মেসে ইমেইল পাঠান"
+                        : "Send Email to Target Mess"}
+                    </span>
                   </>
                 )}
               </button>
@@ -351,6 +365,60 @@ export default function AdminBulkEmailPage() {
         </div>
 
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center mx-auto mb-4">
+                <Mail size={32} />
+              </div>
+              <h3 className="text-xl font-black text-center text-gray-900 dark:text-white mb-2">
+                {isBn ? "ইমেইল কনফার্মেশন" : "Confirm Email Broadcast"}
+              </h3>
+              <p className="text-center text-gray-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                {isBn ? (
+                  <>
+                    আপনি কি নিশ্চিত যে{" "}
+                    {selectedMessName ? (
+                      <span className="text-orange-600 font-bold">[{selectedMessName}]</span>
+                    ) : (
+                      "সকল"
+                    )}{" "}
+                    মেসের মোট <strong>{filteredCount} জন</strong> ব্যবহারকারীর ইমেইলে এই মেসেজটি পাঠাতে চান?
+                  </>
+                ) : (
+                  <>
+                    Are you sure you want to broadcast this email to{" "}
+                    <strong>{filteredCount} users</strong>
+                    {selectedMessName ? ` in [${selectedMessName}]` : ""}?
+                  </>
+                )}
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 font-bold text-sm transition cursor-pointer"
+                >
+                  {isBn ? "বাতিল করুন" : "Cancel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={executeSendEmail}
+                  className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-lg shadow-orange-500/30 transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Send size={16} />
+                  <span>{isBn ? "হ্যাঁ, পাঠান" : "Yes, Send"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
