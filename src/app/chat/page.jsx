@@ -260,6 +260,8 @@ export default function MessChatPage() {
   const actionBtnRef = useRef(null);
   const [highlightedMsgId, setHighlightedMsgId] = useState(null);
   const [viewSeenCandidate, setViewSeenCandidate] = useState(null);
+  const [viewReactionsCandidate, setViewReactionsCandidate] = useState(null);
+  const [reactionsActiveTab, setReactionsActiveTab] = useState("all");
   const [activeReactionMenuMsgId, setActiveReactionMenuMsgId] = useState(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
@@ -974,6 +976,9 @@ export default function MessChatPage() {
   const handleToggleReaction = async (messageId, emoji) => {
     if (!messId || !currentUserId || !messageId || !emoji) return;
 
+    const userAvatar = currentUser?.image || currentUser?.avatar || null;
+    const userName = currentUser?.name || "Member";
+
     // Optimistic UI update
     setMessages((prev) =>
       prev.map((m) => {
@@ -985,7 +990,7 @@ export default function MessChatPage() {
           );
           const updated = hasReacted
             ? existing.filter((r) => !(r.emoji === emoji && String(r.userId) === uIdStr))
-            : [...existing, { emoji, userId: uIdStr, userName: currentUser?.name || "Member" }];
+            : [...existing, { emoji, userId: uIdStr, userName, userAvatar }];
           return { ...m, reactions: updated };
         }
         return m;
@@ -1001,7 +1006,8 @@ export default function MessChatPage() {
         messageId,
         emoji,
         userId: currentUserId,
-        userName: currentUser?.name || "Member",
+        userName,
+        userAvatar,
       });
     } else {
       try {
@@ -1011,7 +1017,8 @@ export default function MessChatPage() {
           body: JSON.stringify({
             emoji,
             userId: currentUserId,
-            userName: currentUser?.name || "Member",
+            userName,
+            userAvatar,
           }),
         });
       } catch (err) {
@@ -1760,10 +1767,11 @@ export default function MessChatPage() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleToggleReaction(msg._id, emoji);
+                                  setViewReactionsCandidate(msg);
+                                  setReactionsActiveTab(emoji);
                                 }}
-                                title={userNames}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-all cursor-pointer select-none active:scale-95 backdrop-blur-md ${
+                                title={isBn ? `${userNames} (রিঅ্যাকশন দেখতে ক্লিক করুন)` : `${userNames} (Click to see reactions)`}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border transition-all cursor-pointer select-none active:scale-95 backdrop-blur-md hover:scale-105 ${
                                   hasReacted
                                     ? isMe
                                       ? "bg-white/35 border-white/60 text-white shadow-xs font-bold ring-1 ring-white/30"
@@ -1774,7 +1782,7 @@ export default function MessChatPage() {
                                 }`}
                               >
                                 <span>{emoji}</span>
-                                <span className="font-mono text-[10px] font-bold">{userList.length}</span>
+                                <span className="font-mono text-[10px] font-bold">{toBnNumber(userList.length)}</span>
                               </button>
                             );
                           })}
@@ -2405,6 +2413,205 @@ export default function MessChatPage() {
           </div>
         </div>
       )}
+
+      {/* 9. MESSAGE REACTIONS DETAILS MODAL */}
+      {viewReactionsCandidate && (() => {
+        const liveMsg =
+          messages.find((m) => String(m._id) === String(viewReactionsCandidate._id)) ||
+          viewReactionsCandidate;
+        const allReactions = Array.isArray(liveMsg.reactions) ? liveMsg.reactions : [];
+
+        // Group reactions by emoji
+        const grouped = {};
+        allReactions.forEach((r) => {
+          if (!grouped[r.emoji]) grouped[r.emoji] = [];
+          grouped[r.emoji].push(r);
+        });
+
+        const emojiTabs = Object.keys(grouped);
+
+        // Filter list based on selected tab
+        const displayReactions =
+          reactionsActiveTab === "all"
+            ? allReactions
+            : grouped[reactionsActiveTab] || [];
+
+        return (
+          <div
+            onClick={() => setViewReactionsCandidate(null)}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl p-5 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center text-base">
+                    <span>❤️</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+                      {isBn ? "মেসেজ রিঅ্যাকশন" : "Message Reactions"}
+                    </h3>
+                    <p className="text-[11px] text-gray-400">
+                      {isBn
+                        ? `মোট ${toBnNumber(allReactions.length)} জন রিঅ্যাক্ট করেছেন`
+                        : `${allReactions.length} ${allReactions.length === 1 ? "reaction" : "reactions"}`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewReactionsCandidate(null)}
+                  className="w-7 h-7 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 flex items-center justify-center cursor-pointer transition-colors"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Message Snippet Preview */}
+              <div className="my-2.5 p-2 rounded-xl bg-gray-50 dark:bg-slate-800/70 text-xs text-gray-600 dark:text-gray-300 italic truncate border border-gray-100 dark:border-slate-750">
+                &quot;{liveMsg.text || liveMsg.poll?.question || liveMsg.bazaarList?.title || liveMsg.emergencyAlert?.title || (isBn ? "মেসেজ" : "Message")}&quot;
+              </div>
+
+              {/* Emoji Filter Tabs */}
+              {emojiTabs.length > 1 && (
+                <div className="flex items-center gap-1.5 pb-2.5 overflow-x-auto no-scrollbar border-b border-gray-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setReactionsActiveTab("all")}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                      reactionsActiveTab === "all"
+                        ? "bg-orange-500 text-white shadow-xs"
+                        : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {isBn ? "সব" : "All"} ({toBnNumber(allReactions.length)})
+                  </button>
+
+                  {emojiTabs.map((em) => (
+                    <button
+                      key={em}
+                      type="button"
+                      onClick={() => setReactionsActiveTab(em)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1 transition-all cursor-pointer ${
+                        reactionsActiveTab === em
+                          ? "bg-orange-500 text-white shadow-xs"
+                          : "bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700"
+                      }`}
+                    >
+                      <span>{em}</span>
+                      <span>{toBnNumber(grouped[em]?.length || 0)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Members who reacted List */}
+              <div className="space-y-1.5 overflow-y-auto my-2 pr-1 divide-y divide-gray-100 dark:divide-slate-800/60 flex-1 min-h-[120px] max-h-60">
+                {displayReactions.length > 0 ? (
+                  displayReactions.map((r, idx) => {
+                    const isCurrentUser = String(r.userId) === String(currentUserId);
+                    const memberInfo = messDetails?.members?.find((m) => String(m.userId) === String(r.userId));
+                    const displayName = r.userName || memberInfo?.name || (isBn ? "সদস্য" : "Member");
+                    const displayAvatar = r.userAvatar || memberInfo?.image || null;
+
+                    return (
+                      <div
+                        key={`${r.userId}-${r.emoji}-${idx}`}
+                        className="flex items-center justify-between pt-2 first:pt-0 pb-2 hover:bg-gray-50/80 dark:hover:bg-slate-800/50 px-2 rounded-xl transition-colors"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-slate-700 flex-shrink-0 relative">
+                            {displayAvatar ? (
+                              <Image
+                                src={displayAvatar}
+                                alt={displayName}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-xs bg-orange-100 dark:bg-orange-950/50 text-orange-600 dark:text-orange-300">
+                                {displayName?.[0]?.toUpperCase() || "M"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
+                              {displayName}{" "}
+                              {isCurrentUser && (
+                                <span className="text-[10px] text-orange-500 font-semibold">
+                                  ({isBn ? "আপনি" : "You"})
+                                </span>
+                              )}
+                            </p>
+                            {isCurrentUser && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleReaction(liveMsg._id, r.emoji)}
+                                className="text-[10px] text-red-500 hover:text-red-600 dark:hover:text-red-400 font-medium hover:underline cursor-pointer block text-left"
+                              >
+                                {isBn ? "রিঅ্যাকশন মুছুন" : "Click to remove"}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Reaction Emoji Badge */}
+                        <div className="flex-shrink-0 text-xl pl-2">
+                          <span>{r.emoji}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    {isBn ? "কোনো রিঅ্যাকশন নেই" : "No reactions"}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Quick Reaction & Close Footer */}
+              <div className="pt-3 border-t border-gray-100 dark:border-slate-800 space-y-2 mt-auto">
+                <div className="flex items-center justify-between gap-1 bg-gray-50 dark:bg-slate-800/50 p-1.5 rounded-2xl">
+                  <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 pl-1.5">
+                    {isBn ? "রিঅ্যাক্ট:" : "React:"}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {QUICK_EMOJIS.map((emoji) => {
+                      const hasThis = allReactions.some(
+                        (r) => r.emoji === emoji && String(r.userId) === String(currentUserId)
+                      );
+                      return (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => handleToggleReaction(liveMsg._id, emoji)}
+                          className={`w-7 h-7 flex items-center justify-center text-base rounded-full hover:scale-125 active:scale-95 transition-all cursor-pointer ${
+                            hasThis ? "bg-orange-500/20 ring-1 ring-orange-400" : ""
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setViewReactionsCandidate(null)}
+                  className="w-full py-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 text-xs font-semibold hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                >
+                  {isBn ? "বন্ধ করুন" : "Close"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       </div>
     </div>
   );
