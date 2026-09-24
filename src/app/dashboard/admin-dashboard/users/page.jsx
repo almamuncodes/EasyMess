@@ -17,6 +17,7 @@ import {
   Check,
   X,
   Building,
+  Phone,
 } from "lucide-react";
 
 export default function AdminUsersPage() {
@@ -27,7 +28,7 @@ export default function AdminUsersPage() {
 
   const [users, setUsers] = useState(() => {
     if (typeof window !== "undefined" && adminUserId) {
-      const cached = sessionStorage.getItem(`admin_all_users_${adminUserId}`);
+      const cached = sessionStorage.getItem(`admin_all_users_v2_${adminUserId}`);
       if (cached) {
         try { return JSON.parse(cached); } catch (e) {}
       }
@@ -41,6 +42,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   // Modal states
+  const [selectedProfileUser, setSelectedProfileUser] = useState(null);
   const [roleModalUser, setRoleModalUser] = useState(null);
   const [newRole, setNewRole] = useState("member");
   const [statusModalUser, setStatusModalUser] = useState(null);
@@ -51,17 +53,17 @@ export default function AdminUsersPage() {
     if (!adminUserId) return;
 
     if (!force && typeof window !== "undefined") {
-      const cached = sessionStorage.getItem(`admin_all_users_${adminUserId}`);
+      const cached = sessionStorage.getItem(`admin_all_users_v2_${adminUserId}`);
       if (cached) {
         try {
           setUsers(JSON.parse(cached));
           setLoading(false);
-          return;
         } catch (e) {}
       }
+    } else {
+      setLoading(true);
     }
 
-    setLoading(true);
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users?userId=${adminUserId}`
@@ -71,7 +73,7 @@ export default function AdminUsersPage() {
         const newUsers = data.data || [];
         setUsers(newUsers);
         if (typeof window !== "undefined") {
-          sessionStorage.setItem(`admin_all_users_${adminUserId}`, JSON.stringify(newUsers));
+          sessionStorage.setItem(`admin_all_users_v2_${adminUserId}`, JSON.stringify(newUsers));
         }
       } else {
         toast.error(data.message || (isBn ? "ইউজার লোড করতে ব্যর্থ" : "Failed to load users"));
@@ -96,6 +98,7 @@ export default function AdminUsersPage() {
       const matchesSearch =
         u.name?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
         u.email?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
+        u.whatsappNumber?.toLowerCase().includes(deferredSearchQuery.toLowerCase()) ||
         u.messInfo?.messName?.toLowerCase().includes(deferredSearchQuery.toLowerCase());
 
       const matchesRole =
@@ -294,7 +297,11 @@ export default function AdminUsersPage() {
                   return (
                     <tr key={u._id} className={`${rowBg} hover:bg-gray-50/60 dark:hover:bg-slate-800/40 transition`}>
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
+                        <div
+                          onClick={() => setSelectedProfileUser(u)}
+                          className="flex items-center gap-3 cursor-pointer group w-fit"
+                          title={isBn ? "প্রোফাইল দেখতে ক্লিক করুন" : "Click to view profile"}
+                        >
                           {u.image ? (
                             <Image
                               src={u.image}
@@ -302,16 +309,19 @@ export default function AdminUsersPage() {
                               width={40}
                               height={40}
                               quality={40}
-                              className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                              className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700 group-hover:ring-2 group-hover:ring-orange-500/50 transition shrink-0"
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400 flex items-center justify-center font-bold text-sm">
+                            <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400 flex items-center justify-center font-bold text-sm group-hover:ring-2 group-hover:ring-orange-500/50 transition shrink-0">
                               {u.name?.[0]?.toUpperCase() || "U"}
                             </div>
                           )}
                           <div>
-                            <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                              {u.name}
+                            <p className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-orange-500 transition flex items-center gap-1.5">
+                              <span>{u.name}</span>
+                              {u.whatsappNumber && (
+                                <span className="inline-block w-2 h-2 rounded-full bg-[#25D366]" title="WhatsApp available" />
+                              )}
                             </p>
                             <p className="text-xs text-gray-400">{u.email}</p>
                           </div>
@@ -402,7 +412,11 @@ export default function AdminUsersPage() {
                   className={`p-4 rounded-2xl border border-gray-100 dark:border-slate-800 space-y-3 ${cardBg}`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div
+                      onClick={() => setSelectedProfileUser(u)}
+                      className="flex items-center gap-3 cursor-pointer group"
+                      title={isBn ? "প্রোফাইল দেখতে ক্লিক করুন" : "Click to view profile"}
+                    >
                       {u.image ? (
                         <Image
                           src={u.image}
@@ -410,16 +424,19 @@ export default function AdminUsersPage() {
                           width={40}
                           height={40}
                           quality={40}
-                          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-slate-700 group-hover:ring-2 group-hover:ring-orange-500/50 transition shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400 flex items-center justify-center font-bold text-sm">
+                        <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 dark:bg-orange-950 dark:text-orange-400 flex items-center justify-center font-bold text-sm group-hover:ring-2 group-hover:ring-orange-500/50 transition shrink-0">
                           {u.name?.[0]?.toUpperCase() || "U"}
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                          {u.name}
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-orange-500 transition flex items-center gap-1.5">
+                          <span>{u.name}</span>
+                          {u.whatsappNumber && (
+                            <span className="inline-block w-2 h-2 rounded-full bg-[#25D366]" title="WhatsApp available" />
+                          )}
                         </p>
                         <p className="text-xs text-gray-400">{u.email}</p>
                         <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5 font-medium">
@@ -573,6 +590,187 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      {/* User Profile Modal */}
+      {selectedProfileUser && (
+        <UserProfileModal
+          user={selectedProfileUser}
+          onClose={() => setSelectedProfileUser(null)}
+          isBn={isBn}
+        />
+      )}
+    </div>
+  );
+}
+
+function UserProfileModal({ user, onClose, isBn }) {
+  const [whatsapp, setWhatsapp] = useState(user.whatsappNumber || null);
+  const [loading, setLoading] = useState(!user.whatsappNumber);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (user.whatsappNumber) return;
+    let ignore = false;
+    fetch(`/api/user/whatsapp?userId=${user._id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!ignore && data.whatsappNumber) {
+          setWhatsapp(data.whatsappNumber);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [user._id, user.whatsappNumber]);
+
+  const handleCopyNumber = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!whatsapp) return;
+    navigator.clipboard.writeText(whatsapp);
+    setCopied(true);
+    toast.success(isBn ? "নাম্বার কপি করা হয়েছে!" : "Phone number copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-300"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center relative border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-lg font-bold transition-colors cursor-pointer w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
+          onClick={onClose}
+          aria-label="Close modal"
+        >
+          ✕
+        </button>
+
+        {user.image ? (
+          <Image
+            src={user.image}
+            alt={user.name || "User"}
+            width={160}
+            height={160}
+            unoptimized={typeof user.image === "string" && user.image.startsWith("http")}
+            className="w-36 h-36 rounded-2xl object-cover mb-3.5 shadow-md border border-gray-100 dark:border-slate-800"
+          />
+        ) : (
+          <div className="w-36 h-36 rounded-2xl bg-orange-50 dark:bg-slate-800 flex items-center justify-center mb-3.5 border border-orange-100 dark:border-slate-700 shadow-inner">
+            <span className="text-4xl font-black text-orange-500">
+              {user.name?.charAt(0)?.toUpperCase() || "U"}
+            </span>
+          </div>
+        )}
+
+        <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-0.5">
+          {user.name}
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-slate-400 font-meta mb-3">
+          {user.email}
+        </p>
+
+        {/* Badges */}
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-3">
+          <span
+            className={`px-2.5 py-0.5 rounded-full font-bold text-xs capitalize ${
+              user.role === "admin"
+                ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                : user.role === "manager"
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+            }`}
+          >
+            {user.role}
+          </span>
+          {user.messInfo?.messName && (
+            <span className="px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 font-semibold text-xs flex items-center gap-1 border border-orange-200/50 dark:border-orange-900/30">
+              <Building size={12} />
+              <span>{user.messInfo.messName}</span>
+            </span>
+          )}
+          <span
+            className={`px-2.5 py-0.5 rounded-full font-bold text-xs uppercase ${
+              user.status === "banned"
+                ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
+                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+            }`}
+          >
+            {user.status}
+          </span>
+        </div>
+
+        {/* Joined Date */}
+        {user.createdAt && (
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-3">
+            {isBn ? "যোগদানের তারিখ: " : "Joined: "}
+            <span className="font-medium text-gray-600 dark:text-slate-300">
+              {new Date(user.createdAt).toLocaleDateString(isBn ? "bn-BD" : "en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </p>
+        )}
+
+        {/* WhatsApp & Contact Section */}
+        <div className="w-full pt-3.5 border-t border-gray-100 dark:border-slate-800">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-xs text-slate-400 font-meta">
+              <div className="h-4 w-4 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+              <span>{isBn ? "যোগাযোগ তথ্য লোড হচ্ছে..." : "Loading contact..."}</span>
+            </div>
+          ) : whatsapp ? (
+            <div className="space-y-2.5 w-full animate-in fade-in duration-200">
+              {/* WhatsApp direct chat link */}
+              <a
+                href={`https://wa.me/${whatsapp.replace(/[^\d]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[#25D366]/25 transition hover:shadow-[#25D366]/35 active:scale-[0.98] cursor-pointer"
+              >
+                <svg className="h-5 w-5 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.19 8.19 0 01-5.82 2.41c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.25-4.37c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.49-1.4-1.74-.14-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.3z" />
+                </svg>
+                <span>WhatsApp Chat</span>
+              </a>
+
+              {/* Call button & Copy button */}
+              <div className="flex gap-2 w-full">
+                <a
+                  href={`tel:${whatsapp}`}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/60 py-2.5 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+                  title={isBn ? "সরাসরি কল করুন" : "Direct Call"}
+                >
+                  <Phone size={13} className="text-orange-500" />
+                  <span>{whatsapp}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyNumber}
+                  className="px-3.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/60 hover:bg-gray-100 dark:hover:bg-slate-800 transition text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer"
+                  title={isBn ? "নাম্বার কপি করুন" : "Copy number"}
+                >
+                  {copied ? "✓" : "📋"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-slate-800 text-xs text-gray-400">
+              {isBn ? "হোয়াটসঅ্যাপ নাম্বার যুক্ত নেই" : "WhatsApp number not added yet"}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

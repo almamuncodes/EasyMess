@@ -8,14 +8,22 @@ import { trackEvent } from "@/lib/analytics";
 import dynamic from "next/dynamic";
 import PageLoader from "@/components/ui/PageLoader";
 import { useTranslation } from "@/lib/useTranslation";
+import { toast } from "sonner";
 
 const ImageCropModal = dynamic(
   () => import("@/components/ui/ImageCropModal"),
   { ssr: false }
 );
 
-
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 2MB
+
+function extractTenDigits(num) {
+  if (!num) return "";
+  let cleaned = String(num).trim().replace(/\D/g, "");
+  if (cleaned.startsWith("880")) cleaned = cleaned.substring(3);
+  if (cleaned.startsWith("0")) cleaned = cleaned.substring(1);
+  return cleaned.slice(0, 10);
+}
 
 
 
@@ -31,8 +39,10 @@ export default function ProfilePage() {
 
   // Edit profile state
   const { lang } = useTranslation();
+  const isBn = lang === "bn";
   const [name, setName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappError, setWhatsappError] = useState("");
   const [imagePreview, setImagePreview] = useState(""); // দেখানোর জন্য
   const [imageFile, setImageFile] = useState(null); // upload করার জন্য
   const [imageWarning, setImageWarning] = useState("");
@@ -74,7 +84,7 @@ export default function ProfilePage() {
             }
           } catch (e) {}
         }
-        setWhatsappNumber(initialWhatsapp);
+        setWhatsappNumber(extractTenDigits(initialWhatsapp));
 
         const { data: accounts } = await authClient.listAccounts();
         const hasCredential = accounts?.some(
@@ -128,11 +138,47 @@ export default function ProfilePage() {
     return data.secure_url;
   }
 
+  function handleWhatsappChange(e) {
+    let val = e.target.value;
+    val = val.replace(/\D/g, "");
+    if (val.startsWith("880")) val = val.substring(3);
+    if (val.startsWith("0")) val = val.substring(1);
+    val = val.slice(0, 10);
+    setWhatsappNumber(val);
+    setWhatsappError("");
+  }
+
   // Save button - name এবং/অথবা image update করে
   async function handleSaveProfile() {
     try {
       setSavingProfile(true);
       setProfileMessage("");
+      setWhatsappError("");
+
+      let cleaned = whatsappNumber.trim().replace(/\D/g, "");
+      if (cleaned.startsWith("880")) cleaned = cleaned.substring(3);
+      if (cleaned.startsWith("0")) cleaned = cleaned.substring(1);
+
+      // Validation: must be 10 digits starting with 1 (e.g. 1994810914)
+      const bdRegex = /^1[3-9]\d{8}$/;
+      if (!cleaned) {
+        setWhatsappError(
+          isBn
+            ? "হোয়াটসঅ্যাপ নাম্বার দেওয়া বাধ্যতামূলক"
+            : "WhatsApp number is required"
+        );
+        setSavingProfile(false);
+        return;
+      }
+      if (!bdRegex.test(cleaned)) {
+        setWhatsappError(
+          isBn
+            ? "সঠিক ১০ ডিজিটের মোবাইল নাম্বার দিন (যেমন: 1994810914)"
+            : "Please enter a valid 10-digit mobile number (e.g., 1994810914)"
+        );
+        setSavingProfile(false);
+        return;
+      }
 
       let imageUrl = user.image;
 
@@ -149,29 +195,30 @@ export default function ProfilePage() {
       if (error) throw new Error(error.message);
 
       let updatedWhatsapp = user.whatsappNumber;
-      if (whatsappNumber.trim()) {
-        try {
-          const wRes = await fetch("/api/user/whatsapp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ whatsappNumber: whatsappNumber.trim(), userId: user.id }),
-          });
-          const wData = await wRes.json();
-          if (wRes.ok && wData.whatsappNumber) {
-            updatedWhatsapp = wData.whatsappNumber;
-          }
-        } catch (e) {
-          console.error("Failed to update whatsapp:", e);
-        }
+      const wRes = await fetch("/api/user/whatsapp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappNumber: cleaned, userId: user.id }),
+      });
+      const wData = await wRes.json();
+      if (!wRes.ok || !wData.success) {
+        throw new Error(
+          wData.message || (isBn ? "WhatsApp নাম্বার সংরক্ষণ ব্যর্থ হয়েছে" : "Failed to update WhatsApp number")
+        );
+      }
+      if (wData.whatsappNumber) {
+        updatedWhatsapp = wData.whatsappNumber;
       }
 
       setUser((prev) => ({ ...prev, name, image: imageUrl, whatsappNumber: updatedWhatsapp }));
       setImageFile(null);
-      setProfileMessage("Profile updated successfully.");
+      toast.success(isBn ? "প্রোফাইল সফলভাবে আপডেট করা হয়েছে!" : "Profile updated successfully!");
+      setProfileMessage(isBn ? "প্রোফাইল সফলভাবে আপডেট করা হয়েছে।" : "Profile updated successfully.");
       setIsEditing(false); // save হয়ে গেলে view mode এ ফিরে যাওয়া
     } catch (err) {
       console.error("Update profile failed:", err);
-      setProfileMessage("Failed to update profile. Please try again.");
+      toast.error(err.message || (isBn ? "আপডেট করতে ব্যর্থ হয়েছে" : "Failed to update profile"));
+      setProfileMessage(err.message || (isBn ? "প্রোফাইল আপডেট করতে ব্যর্থ হয়েছে।" : "Failed to update profile. Please try again."));
     } finally {
       setSavingProfile(false);
     }
@@ -180,7 +227,8 @@ export default function ProfilePage() {
   // Edit বাতিল করলে সব field আগের অবস্থায় ফিরিয়ে আনা
   function handleCancelEdit() {
     setName(user.name || "");
-    setWhatsappNumber(user.whatsappNumber || "");
+    setWhatsappNumber(extractTenDigits(user.whatsappNumber || ""));
+    setWhatsappError("");
     setImagePreview(user.image || "");
     setImageFile(null);
     setImageWarning("");
@@ -305,7 +353,12 @@ export default function ProfilePage() {
                 </div>
 
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => {
+                    setWhatsappNumber(extractTenDigits(user.whatsappNumber || ""));
+                    setWhatsappError("");
+                    setProfileMessage("");
+                    setIsEditing(true);
+                  }}
                   className="shrink-0 rounded-full border border-[#16181D]/10 px-4 py-2 font-display text-xs font-semibold text-[#16181D] transition hover:border-[#FF6900] hover:text-[#FF6900]"
                 >
                   Edit
@@ -385,15 +438,40 @@ export default function ProfilePage() {
 
               <div className="mt-4">
                 <label className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
-                  WhatsApp Number
+                  {isBn ? "হোয়াটসঅ্যাপ মোবাইল নাম্বার" : "WhatsApp Number"}
                 </label>
-                <input
-                  type="tel"
-                  value={whatsappNumber}
-                  onChange={(e) => setWhatsappNumber(e.target.value)}
-                  placeholder="01994810914"
-                  className="mt-1.5 w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 text-[#16181D] outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
-                />
+                <div
+                  className={`mt-1.5 relative flex items-center rounded-xl border bg-white shadow-2xs transition focus-within:ring-2 ${
+                    whatsappError
+                      ? "border-[#D4453A] focus-within:border-[#D4453A] focus-within:ring-[#D4453A]/15"
+                      : "border-[#E7E5E1] focus-within:border-[#FF6900] focus-within:ring-[#FF6900]/15"
+                  }`}
+                >
+                  {/* Country Prefix Badge */}
+                  <div className="flex select-none items-center gap-1.5 border-r border-[#E7E5E1] py-2.5 pl-3 pr-2.5 text-xs font-bold text-[#16181D]">
+                    <span className="text-sm" role="img" aria-label="Bangladesh">
+                      🇧🇩
+                    </span>
+                    <span>+880</span>
+                  </div>
+                  <input
+                    type="tel"
+                    value={whatsappNumber}
+                    onChange={handleWhatsappChange}
+                    placeholder="1994810914"
+                    maxLength={10}
+                    className="w-full bg-transparent px-3 py-2.5 text-sm font-medium text-[#16181D] placeholder-[#9a9691] outline-none"
+                  />
+                </div>
+                {whatsappError ? (
+                  <p className="mt-1 font-meta text-xs text-[#D4453A]">{whatsappError}</p>
+                ) : (
+                  <p className="mt-1 font-meta text-[11px] text-[#9a9691]">
+                    {isBn
+                      ? "০ ছাড়া ১০ ডিজিটের নম্বর দিন (যেমন: 1994810914)"
+                      : "Enter 10 digits without leading 0 (e.g., 1994810914)"}
+                  </p>
+                )}
               </div>
 
               <div className="mt-6 flex gap-3">
