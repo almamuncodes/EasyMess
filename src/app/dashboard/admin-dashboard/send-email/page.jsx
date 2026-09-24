@@ -23,8 +23,10 @@ export default function AdminBulkEmailPage() {
 
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [targetMess, setTargetMess] = useState("all");
+  const [messes, setMesses] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [userCount, setUserCount] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
   const [fetchingCount, setFetchingCount] = useState(true);
   const [activeTab, setActiveTab] = useState("compose"); // "compose" | "preview"
 
@@ -34,19 +36,33 @@ export default function AdminBulkEmailPage() {
       try {
         setFetchingCount(true);
         const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
-        const res = await fetch(`${apiBase}/api/admin/overview?userId=${userId}`);
+        const res = await fetch(`${apiBase}/api/admin/users?userId=${userId}`);
         const data = await res.json();
-        if (data.success && data.summary) {
-          setUserCount(data.summary.totalUsers || data.summary.totalMembersAcrossMesses || 0);
+        if (data.success && data.data) {
+          // Filter to only include users with emails
+          const withEmail = data.data.filter((u) => Boolean(u.email));
+          setAllUsers(withEmail);
+        }
+
+        // Fetch messes for target selection
+        const messRes = await fetch(`${apiBase}/api/admin/all-mess-details?userId=${userId}`);
+        const messData = await messRes.json();
+        if (messRes.ok && messData.success) {
+          setMesses(messData.data || []);
         }
       } catch (err) {
-        console.error("Failed to fetch user stats:", err);
+        console.error("Failed to fetch data:", err);
       } finally {
         setFetchingCount(false);
       }
     }
     fetchUserStats();
   }, [userId]);
+
+  const filteredCount = React.useMemo(() => {
+    if (targetMess === "all") return allUsers.length;
+    return allUsers.filter(u => u.messInfo?.messId?.toString() === targetMess.toString()).length;
+  }, [allUsers, targetMess]);
 
   const handleSendEmail = async (e) => {
     e.preventDefault();
@@ -84,6 +100,7 @@ export default function AdminBulkEmailPage() {
           userId: userId,
           subject: subject.trim(),
           message: message.trim(),
+          targetMess: targetMess,
         }),
       });
 
@@ -160,7 +177,7 @@ export default function AdminBulkEmailPage() {
                   {fetchingCount ? (
                     <RefreshCw size={20} className="animate-spin" />
                   ) : (
-                    userCount ?? "--"
+                    filteredCount
                   )}
                 </p>
               </div>
@@ -221,6 +238,26 @@ export default function AdminBulkEmailPage() {
 
           <form onSubmit={handleSendEmail} className="p-6 md:p-8 space-y-6">
             
+            {/* Target Specific Mess Selector */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
+                {isBn ? "নির্দিষ্ট কোনো মেসে পাঠাতে চান? (ঐচ্ছিক)" : "Target Specific Mess? (Optional)"}
+              </label>
+              <select
+                value={targetMess}
+                onChange={(e) => setTargetMess(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all text-sm cursor-pointer appearance-none"
+                style={{ backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23f97316%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem top 50%', backgroundSize: '0.65rem auto' }}
+              >
+                <option value="all">{isBn ? "সব মেস (All Messes)" : "All Messes"}</option>
+                {messes.map((m) => (
+                  <option key={m._id} value={m._id}>
+                    {m.messName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Subject Input */}
             <div>
               <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
