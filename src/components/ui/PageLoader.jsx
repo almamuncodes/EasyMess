@@ -3,7 +3,7 @@ import React from "react";
 
 export default function PageLoader({ text = "Loading EasyMess...", fullScreen = true }) {
   const content = (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div suppressHydrationWarning className="flex flex-col items-center justify-center gap-4">
       <div className="relative flex items-center justify-center">
         {/* Outer glowing ring */}
         <div className="w-16 h-16 rounded-full border-4 border-orange-200 border-t-orange-500 animate-spin dark:border-slate-800 dark:border-t-orange-400" />
@@ -24,11 +24,11 @@ export default function PageLoader({ text = "Loading EasyMess...", fullScreen = 
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50/80 dark:bg-slate-950/80 backdrop-blur-sm transition-all duration-300">
+      <div suppressHydrationWarning className="min-h-screen w-full flex items-center justify-center bg-gray-50/80 dark:bg-slate-950/80 backdrop-blur-sm transition-all duration-300">
         {content}
       </div>
     );
   }
 
-  return <div className="py-12 w-full flex items-center justify-center">{content}</div>;
+  return <div suppressHydrationWarning className="py-12 w-full flex items-center justify-center">{content}</div>;
 }
