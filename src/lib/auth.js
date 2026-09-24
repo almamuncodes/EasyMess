@@ -38,6 +38,10 @@ export const auth = betterAuth({
         type: "string",
         defaultValue: "active",
       },
+      whatsappNumber: {
+        type: "string",
+        required: false,
+      },
     },
   },
 });

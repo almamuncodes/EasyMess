@@ -1,5 +1,5 @@
 import dns from "node:dns/promises";
- dns.setServers(["1.1.1.1", "8.8.8.8"]);
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 import { Geist, Geist_Mono, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -11,6 +11,7 @@ import ThemeProvider from "@/components/providers/ThemeProvider";
 import SocketProvider from "@/components/providers/SocketProvider";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import BroadcastModalListener from "@/components/BroadcastModalListener";
+import WhatsAppRequiredModal from "@/components/auth/WhatsAppRequiredModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -193,15 +194,16 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <QueryProvider>
             <SocketProvider>
-              <Navbar/>
-              <Toaster  position="top-left" />
+              <Navbar />
+              <Toaster position="top-left" />
               <div className="flex-1 pb-16 md:pb-0" suppressHydrationWarning>
                 {children}
               </div>
-              <Footer/>
+              <Footer />
               <BottomNav />
               <PWAInstallPrompt />
               <BroadcastModalListener />
+              <WhatsAppRequiredModal />
             </SocketProvider>
           </QueryProvider>
         </ThemeProvider>

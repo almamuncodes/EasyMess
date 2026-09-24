@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useTranslation } from "@/lib/useTranslation";
 import PageLoader from "@/components/ui/PageLoader";
 import { preloadImage, getOptimizedImageUrl, shimmerBlurDataUrl } from "@/lib/image-utils";
+import { toast } from "sonner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -1037,51 +1038,142 @@ export default function LandingPage() {
 
       {/* Enlarged Member Profile Detail Modal */}
       {selectedMember && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4 backdrop-blur-sm transition-all duration-300"
-          onClick={() => setSelectedMember(null)}
-        >
-          <div 
-            className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center relative border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button 
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl font-bold transition-colors"
-              onClick={() => setSelectedMember(null)}
-              aria-label="Close modal"
-            >
-              ✕
-            </button>
-            
-            {selectedMember.image ? (
-              <Image 
-                src={getOptimizedImageUrl(selectedMember.image, { width: 400, height: 400 })} 
-                alt={selectedMember.name} 
-                width={192}
-                height={192}
-                unoptimized={typeof selectedMember.image === "string" && selectedMember.image.startsWith("http")}
-                sizes="(max-width: 640px) 150px, (max-width: 1024px) 300px, 400px"
-                className="w-48 h-48 rounded-2xl object-cover mb-4 shadow-lg border border-gray-100 dark:border-slate-800"
-              />
-            ) : (
-              <div className="w-48 h-48 rounded-2xl bg-orange-50 dark:bg-slate-850 flex items-center justify-center mb-4 border border-orange-100 dark:border-slate-800">
-                <span className="text-5xl font-bold text-orange-500">
-                  {selectedMember.name?.charAt(0) || "?"}
-                </span>
-              </div>
-            )}
-            
-            <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">
-              {selectedMember.name}
-            </h3>
-            {selectedMember.role && (
-              <span className="px-3 py-1 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-600 dark:text-orange-400 font-semibold text-xs capitalize mt-1">
-                {selectedMember.role}
-              </span>
-            )}
-          </div>
-        </div>
+        <MemberProfileModal
+          member={selectedMember}
+          onClose={() => setSelectedMember(null)}
+          isBn={isBn}
+        />
       )}
+    </div>
+  );
+}
+
+function MemberProfileModal({ member, onClose, isBn }) {
+  const [whatsapp, setWhatsapp] = useState(member.whatsappNumber || null);
+  const [loading, setLoading] = useState(!member.whatsappNumber);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (member.whatsappNumber) return;
+    let ignore = false;
+    fetch(`/api/user/whatsapp?userId=${member.userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!ignore && data.whatsappNumber) {
+          setWhatsapp(data.whatsappNumber);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!ignore) setLoading(false);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [member.userId, member.whatsappNumber]);
+
+  const handleCopyNumber = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!whatsapp) return;
+    navigator.clipboard.writeText(whatsapp);
+    setCopied(true);
+    toast.success(isBn ? "নাম্বার কপি করা হয়েছে!" : "Phone number copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4 backdrop-blur-sm transition-all duration-300"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center relative border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl font-bold transition-colors cursor-pointer"
+          onClick={onClose}
+          aria-label="Close modal"
+        >
+          ✕
+        </button>
+        
+        {member.image ? (
+          <Image 
+            src={getOptimizedImageUrl(member.image, { width: 400, height: 400 })} 
+            alt={member.name} 
+            width={192}
+            height={192}
+            unoptimized={typeof member.image === "string" && member.image.startsWith("http")}
+            sizes="(max-width: 640px) 150px, (max-width: 1024px) 300px, 400px"
+            className="w-48 h-48 rounded-2xl object-cover mb-4 shadow-lg border border-gray-100 dark:border-slate-800"
+          />
+        ) : (
+          <div className="w-48 h-48 rounded-2xl bg-orange-50 dark:bg-slate-850 flex items-center justify-center mb-4 border border-orange-100 dark:border-slate-800">
+            <span className="text-5xl font-bold text-orange-500">
+              {member.name?.charAt(0) || "?"}
+            </span>
+          </div>
+        )}
+        
+        <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">
+          {member.name}
+        </h3>
+        {member.role && (
+          <span className="px-3 py-1 rounded-full bg-orange-50 dark:bg-slate-800 text-orange-600 dark:text-orange-400 font-semibold text-xs capitalize mt-1 mb-2">
+            {member.role}
+          </span>
+        )}
+
+        {/* WhatsApp & Contact Section */}
+        <div className="w-full mt-3 pt-3 border-t border-gray-100 dark:border-slate-800">
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-xs text-slate-400 font-meta">
+              <div className="h-4 w-4 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
+              <span>{isBn ? "যোগাযোগ তথ্য লোড হচ্ছে..." : "Loading contact..."}</span>
+            </div>
+          ) : whatsapp ? (
+            <div className="space-y-2 w-full animate-in fade-in duration-200">
+              {/* WhatsApp direct chat link */}
+              <a
+                href={`https://wa.me/${whatsapp.replace(/[^\d]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[#25D366]/25 transition hover:shadow-[#25D366]/35 active:scale-[0.98] cursor-pointer"
+              >
+                <svg className="h-5 w-5 fill-current shrink-0" viewBox="0 0 24 24">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0012.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.19 8.19 0 01-5.82 2.41c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 01-1.25-4.37c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.49-1.4-1.74-.14-.25-.02-.39.11-.51.11-.11.25-.29.38-.44.13-.15.17-.25.25-.42.08-.17.04-.32-.02-.45-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.7 4.29 3.79.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.15-1.18-.06-.11-.23-.17-.48-.3z" />
+                </svg>
+                <span>WhatsApp Chat</span>
+              </a>
+
+              {/* Call button & Copy button */}
+              <div className="flex gap-2 w-full">
+                <a
+                  href={`tel:${whatsapp}`}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/60 py-2.5 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition"
+                  title={isBn ? "সরাসরি কল করুন" : "Direct Call"}
+                >
+                  <span>📞 {whatsapp}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyNumber}
+                  className="px-3.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/60 hover:bg-gray-100 dark:hover:bg-slate-800 transition text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer"
+                  title={isBn ? "নাম্বার কপি করুন" : "Copy number"}
+                >
+                  {copied ? "✓" : "📋"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-meta py-2">
+              {isBn ? "WhatsApp নাম্বার যুক্ত নেই" : "WhatsApp number not added"}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

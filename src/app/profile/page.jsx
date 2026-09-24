@@ -32,6 +32,7 @@ export default function ProfilePage() {
   // Edit profile state
   const { lang } = useTranslation();
   const [name, setName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [imagePreview, setImagePreview] = useState(""); // দেখানোর জন্য
   const [imageFile, setImageFile] = useState(null); // upload করার জন্য
   const [imageWarning, setImageWarning] = useState("");
@@ -60,6 +61,20 @@ export default function ProfilePage() {
         setUser(session.user);
         setName(session.user.name || "");
         setImagePreview(session.user.image || "");
+        let initialWhatsapp = session.user.whatsappNumber || "";
+        if (!initialWhatsapp) {
+          try {
+            const wRes = await fetch("/api/user/whatsapp");
+            if (wRes.ok) {
+              const wData = await wRes.json();
+              if (wData.whatsappNumber) {
+                initialWhatsapp = wData.whatsappNumber;
+                setUser((prev) => ({ ...prev, whatsappNumber: initialWhatsapp }));
+              }
+            }
+          } catch (e) {}
+        }
+        setWhatsappNumber(initialWhatsapp);
 
         const { data: accounts } = await authClient.listAccounts();
         const hasCredential = accounts?.some(
@@ -133,7 +148,24 @@ export default function ProfilePage() {
 
       if (error) throw new Error(error.message);
 
-      setUser((prev) => ({ ...prev, name, image: imageUrl }));
+      let updatedWhatsapp = user.whatsappNumber;
+      if (whatsappNumber.trim()) {
+        try {
+          const wRes = await fetch("/api/user/whatsapp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ whatsappNumber: whatsappNumber.trim(), userId: user.id }),
+          });
+          const wData = await wRes.json();
+          if (wRes.ok && wData.whatsappNumber) {
+            updatedWhatsapp = wData.whatsappNumber;
+          }
+        } catch (e) {
+          console.error("Failed to update whatsapp:", e);
+        }
+      }
+
+      setUser((prev) => ({ ...prev, name, image: imageUrl, whatsappNumber: updatedWhatsapp }));
       setImageFile(null);
       setProfileMessage("Profile updated successfully.");
       setIsEditing(false); // save হয়ে গেলে view mode এ ফিরে যাওয়া
@@ -148,6 +180,7 @@ export default function ProfilePage() {
   // Edit বাতিল করলে সব field আগের অবস্থায় ফিরিয়ে আনা
   function handleCancelEdit() {
     setName(user.name || "");
+    setWhatsappNumber(user.whatsappNumber || "");
     setImagePreview(user.image || "");
     setImageFile(null);
     setImageWarning("");
@@ -263,6 +296,12 @@ export default function ProfilePage() {
                   <p className="font-meta truncate text-sm text-[#6b6f76]">
                     {user.email}
                   </p>
+                  {user.whatsappNumber && (
+                    <p className="mt-1 flex items-center gap-1.5 font-meta text-xs text-emerald-600">
+                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                      <span>WhatsApp: {user.whatsappNumber}</span>
+                    </p>
+                  )}
                 </div>
 
                 <button
@@ -340,6 +379,19 @@ export default function ProfilePage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 text-[#16181D] outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691]">
+                  WhatsApp Number
+                </label>
+                <input
+                  type="tel"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  placeholder="01994810914"
                   className="mt-1.5 w-full rounded-xl border border-[#E7E5E1] px-4 py-2.5 text-[#16181D] outline-none transition focus:border-[#FF6900] focus:ring-2 focus:ring-[#FF6900]/15"
                 />
               </div>
