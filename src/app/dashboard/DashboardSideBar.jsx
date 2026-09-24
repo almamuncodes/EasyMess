@@ -20,6 +20,7 @@ import {
   Megaphone,
   Activity,
   Mail,
+  MessageSquare,
   Boxes,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -151,6 +152,12 @@ export default function Sidebar() {
       name: lang === "bn" ? "ইমেইল ব্রডকাস্ট" : "Bulk Email",
       href: "/dashboard/admin-dashboard/send-email",
       icon: Mail,
+      roles: ["admin"],
+    },
+    {
+      name: lang === "bn" ? "হোয়াটসঅ্যাপ ব্রডকাস্ট" : "WhatsApp Broadcast",
+      href: "/dashboard/admin-dashboard/send-whatsapp",
+      icon: MessageSquare,
       roles: ["admin"],
     },
     {
