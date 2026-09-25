@@ -107,6 +107,11 @@ export default function Sidebar() {
       icon: LayoutDashboard,
       roles: ["member"],
     },
+    ...(riceConfig?.enableRiceManagement === true
+      ? [
+          { name: lang === "bn" ? "রাইস ওভারভিউ" : "Rice Overview", href: "/dashboard/user-dashboard/rice-overview", icon: BarChart3, roles: ["member"] },
+        ]
+      : []),
     {
       name: t("overview"),
       href: "/dashboard/manager-dashboard/overview",
@@ -197,7 +202,7 @@ export default function Sidebar() {
     },
     ...(riceConfig?.enableRiceManagement === true
       ? [
-          { name: t("riceOverview"), href: "/dashboard/user-dashboard/rice-management", icon: Boxes, roles: ["member"] },
+          { name: lang === "bn" ? "আমার চালের হিসাব" : "My Rice Log", href: "/dashboard/user-dashboard/rice-management", icon: Boxes, roles: ["member"] },
         ]
       : []),
     {

@@ -154,7 +154,7 @@ export default function ManagerRiceOverviewPage() {
 
   async function handleDownloadPdf() {
     if (!data || data.members.length === 0) {
-      toast.error("No member data to export");
+      toast.error(isBn ? "এক্সপোর্ট করার জন্য কোনো তথ্য নেই" : "No member data to export");
       return;
     }
     setExporting(true);
@@ -164,45 +164,154 @@ export default function ManagerRiceOverviewPage() {
       const autoTable = (await import("jspdf-autotable")).default;
 
       const doc = new jsPDF();
-      const englishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const englishMonths = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
       const monthName = englishMonths[selectedMonth - 1] || selectedMonth;
       const unitStr = data.config.riceUnitName || "Unit";
 
+      // 1. Title & Header info
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text("EasyMess - Manager Rice Overview Report", 14, 18);
+      doc.setTextColor(234, 88, 12); // EasyMess Brand Orange
+      doc.text(data.messName || "EasyMess", 14, 18);
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139); // Slate-500
       doc.text(`Month: ${monthName} ${selectedYear}`, 14, 25);
-      doc.text(`Generated Date: ${new Date().toLocaleDateString()}`, 14, 30);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
 
+      // 2. Summary stats row
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42); // Slate-900
       doc.text(
-        `Total Added: ${formatRice(data.summary.totalMessStockAdded)} ${unitStr}   |   Consumed: ${formatRice(data.summary.totalMessConsumed)} ${unitStr}   |   Stock Balance: ${formatRice(data.summary.totalMessRemaining)} ${unitStr}`,
+        `Total Added: ${formatRice(data.summary.totalMessStockAdded)} ${unitStr}    Total Consumed: ${formatRice(data.summary.totalMessConsumed)} ${unitStr}    Stock Balance: ${formatRice(data.summary.totalMessRemaining)} ${unitStr}`,
         14,
         38
       );
 
+      // 3. Main Member Table with Status
       autoTable(doc, {
         startY: 44,
-        head: [["Member Name", "Role", "Total Added", "Consumed", "Remaining Balance"]],
-        body: data.members.map((m) => [
-          m.name,
-          m.role ? m.role.toUpperCase() : "MEMBER",
-          `${formatRice(m.totalAdded)} ${unitStr}`,
-          `${formatRice(m.totalConsumed)} ${unitStr}`,
-          `${formatRice(m.remaining)} ${unitStr}`,
-        ]),
-        headStyles: { fillColor: [217, 119, 6] },
+        head: [["Name", "Role", "Added", "Consumed", "Balance", "Status"]],
+        body: data.members.map((m) => {
+          const bal = Number(m.remaining) || 0;
+          const isSurplus = bal > 0;
+          const isDeficit = bal < 0;
+          return [
+            m.name,
+            m.role ? m.role.toUpperCase() : "MEMBER",
+            `${formatRice(m.totalAdded)} ${unitStr}`,
+            `${formatRice(m.totalConsumed)} ${unitStr}`,
+            (isSurplus ? "+" : "") + `${formatRice(bal)} ${unitStr}`,
+            isSurplus ? "Surplus" : isDeficit ? "Deficit" : "Settled",
+          ];
+        }),
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] }, // Sleek Modern Slate
         styles: { fontSize: 9 },
+        didParseCell: function (cellData) {
+          if (cellData.section === "body") {
+            // Style Status column (index 5)
+            if (cellData.column.index === 5) {
+              const status = cellData.cell.raw;
+              if (status === "Surplus") {
+                cellData.cell.styles.textColor = [16, 185, 129]; // Emerald 500
+                cellData.cell.styles.fontStyle = "bold";
+              } else if (status === "Deficit") {
+                cellData.cell.styles.textColor = [239, 68, 68]; // Rose 500
+                cellData.cell.styles.fontStyle = "bold";
+              }
+            }
+            // Style Balance column (index 4)
+            if (cellData.column.index === 4) {
+              const balVal = String(cellData.cell.raw || "");
+              if (balVal.startsWith("+")) {
+                cellData.cell.styles.textColor = [16, 185, 129];
+              } else if (balVal.startsWith("-")) {
+                cellData.cell.styles.textColor = [239, 68, 68];
+              }
+            }
+          }
+        },
       });
 
-      doc.save(`Rice_Overview_${monthName}_${selectedYear}.pdf`);
-      toast.success("PDF report downloaded successfully!");
+      // 4. Prepare Clearance Summary Table (Surplus vs Deficit)
+      const surplusMembers = data.members.filter((m) => (Number(m.remaining) || 0) > 0);
+      const deficitMembers = data.members.filter((m) => (Number(m.remaining) || 0) < 0);
+
+      const totalSurplus = surplusMembers.reduce((sum, m) => sum + (Number(m.remaining) || 0), 0);
+      const totalDeficit = deficitMembers.reduce((sum, m) => sum + Math.abs(Number(m.remaining) || 0), 0);
+
+      const maxRows = Math.max(surplusMembers.length, deficitMembers.length);
+      const summaryRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        const surp = surplusMembers[i];
+        const def = deficitMembers[i];
+        summaryRows.push([
+          surp ? surp.name : "",
+          surp ? `${formatRice(surp.remaining)} ${unitStr}` : "",
+          "",
+          def ? def.name : "",
+          def ? `${formatRice(Math.abs(def.remaining))} ${unitStr}` : "",
+        ]);
+      }
+      // Add totals footer row
+      summaryRows.push([
+        "Total Surplus (To Return)",
+        `${formatRice(totalSurplus)} ${unitStr}`,
+        "",
+        "Total Deficit (To Pay)",
+        `${formatRice(totalDeficit)} ${unitStr}`,
+      ]);
+
+      // Draw Clearance Summary title
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(234, 88, 12); // EasyMess Brand Orange
+      doc.text("Clearance Summary", 14, doc.lastAutoTable.finalY + 12);
+
+      // Draw Clearance Summary Table
+      autoTable(doc, {
+        startY: doc.lastAutoTable.finalY + 16,
+        head: [["To Receive (Surplus)", "Amount", "", "To Pay (Deficit)", "Amount"]],
+        body: summaryRows,
+        headStyles: { fillColor: [234, 88, 12], textColor: [255, 255, 255] }, // EasyMess Brand Orange
+        styles: { fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 55 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 10, fillColor: [255, 255, 255] }, // Separator
+          3: { cellWidth: 55 },
+          4: { cellWidth: 30 },
+        },
+        didParseCell: function (cellData) {
+          if (cellData.column.index === 2) {
+            cellData.cell.styles.lineWidth = 0;
+            cellData.cell.styles.cellPadding = 0;
+          }
+          if (cellData.row.index === maxRows) {
+            cellData.cell.styles.fontStyle = "bold";
+            if (cellData.column.index < 2) {
+              cellData.cell.styles.textColor = [16, 185, 129]; // Emerald
+            } else if (cellData.column.index > 2) {
+              cellData.cell.styles.textColor = [239, 68, 68]; // Rose
+            }
+          }
+        },
+      });
+
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(148, 163, 184); // Slate-400
+      doc.text("Generated By EasyMess", 14, doc.lastAutoTable.finalY + 10);
+
+      doc.save(`${(data.messName || "EasyMess").replace(/\s+/g, "_")}_Rice_Report_${monthName}_${selectedYear}.pdf`);
+      toast.success(isBn ? "পিডিএফ রিপোর্ট ডাউনলোড হয়েছে!" : "PDF report downloaded successfully!");
     } catch (err) {
       console.error("PDF Export Error:", err);
-      toast.error("Failed to generate PDF report");
+      toast.error(isBn ? "পিডিএফ তৈরিতে সমস্যা হয়েছে" : "Failed to generate PDF report");
     } finally {
       setExporting(false);
     }
@@ -278,6 +387,24 @@ export default function ManagerRiceOverviewPage() {
     );
   }, [data.members, searchQuery]);
 
+  const surplusMembers = useMemo(() => {
+    if (!data.members) return [];
+    return data.members.filter((m) => (Number(m.remaining) || 0) > 0);
+  }, [data.members]);
+
+  const deficitMembers = useMemo(() => {
+    if (!data.members) return [];
+    return data.members.filter((m) => (Number(m.remaining) || 0) < 0);
+  }, [data.members]);
+
+  const totalSurplus = useMemo(() => {
+    return surplusMembers.reduce((sum, m) => sum + (Number(m.remaining) || 0), 0);
+  }, [surplusMembers]);
+
+  const totalDeficit = useMemo(() => {
+    return deficitMembers.reduce((sum, m) => sum + Math.abs(Number(m.remaining) || 0), 0);
+  }, [deficitMembers]);
+
   const memberHistoryGrouped = useMemo(() => {
     if (!data.history || !Array.isArray(data.history)) return {};
     const map = {};
@@ -320,12 +447,12 @@ export default function ManagerRiceOverviewPage() {
 
   return (
     <div
-      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 font-[family-name:var(--font-body)] text-[#1B2A26] dark:text-slate-200 rounded-2xl p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6`}
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-slate-50/60 dark:bg-slate-950 font-[family-name:var(--font-body)] text-gray-900 dark:text-slate-100 rounded-2xl p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 border border-gray-200/80 dark:border-slate-800`}
     >
       {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-[#1B2A26]/10 dark:border-slate-800 pb-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-gray-200/80 dark:border-slate-800 pb-5">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[#C99A3E] font-semibold flex items-center gap-1.5">
+          <p className="text-xs uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
             <Boxes size={15} /> <span>{isBn ? "ম্যানেজার রাইস প্যানেল" : "Manager Rice Panel"}</span>
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
@@ -344,7 +471,7 @@ export default function ManagerRiceOverviewPage() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="rounded-xl border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
+            className="rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
           >
             {monthsList.map((m) => (
               <option key={m.value} value={m.value}>
@@ -357,7 +484,7 @@ export default function ManagerRiceOverviewPage() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="rounded-xl border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
+            className="rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
           >
             {[2024, 2025, 2026, 2027].map((y) => (
               <option key={y} value={y}>
@@ -368,7 +495,7 @@ export default function ManagerRiceOverviewPage() {
 
           <button
             onClick={() => fetchData(true)}
-            className="p-2 bg-white dark:bg-slate-900 border border-[#1B2A26]/15 dark:border-slate-800 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-sm"
+            className="p-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-sm"
             title="Refresh Data"
           >
             <RefreshCw size={16} />
@@ -407,19 +534,19 @@ export default function ManagerRiceOverviewPage() {
         {/* Total Remaining */}
         <div className={`col-span-2 sm:col-span-1 relative overflow-hidden rounded-2xl backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all border ${
           data.summary.totalMessRemaining >= 0
-            ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-900/40"
+            ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-900/40"
             : "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200/60 dark:border-rose-900/40"
         }`}>
           <div className="flex items-center justify-between mb-1">
             <span className={`text-[10px] font-bold uppercase tracking-wider ${
-              data.summary.totalMessRemaining >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"
+              data.summary.totalMessRemaining >= 0 ? "text-amber-700 dark:text-amber-300" : "text-rose-700 dark:text-rose-300"
             }`}>
               {isBn ? "অবশিষ্ট মেস স্টক" : "Stock Balance"}
             </span>
             <span className="text-base">⚖️</span>
           </div>
           <p className={`text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] ${
-            data.summary.totalMessRemaining >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+            data.summary.totalMessRemaining >= 0 ? "text-amber-700 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"
           }`}>
             {formatRice(data.summary.totalMessRemaining)} <span className="text-xs font-normal text-gray-500">{unit}</span>
           </p>
@@ -427,7 +554,7 @@ export default function ManagerRiceOverviewPage() {
       </div>
 
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200/80 dark:border-slate-800 pb-4">
         <p className="font-[family-name:var(--font-display)] text-lg font-semibold">
           {isBn ? "মেম্বার চালের বিবরণী" : "Member Rice Balances"}
         </p>
@@ -436,10 +563,10 @@ export default function ManagerRiceOverviewPage() {
           <button
             onClick={handleDownloadPdf}
             disabled={exporting}
-            className="rounded-xl bg-[#ff6900] px-3.5 py-2 text-xs font-semibold text-white transition-all duration-150 hover:bg-[#ff6900]/90 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm flex items-center gap-1.5"
+            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-bold text-white transition-all duration-150 hover:from-amber-600 hover:to-orange-600 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm flex items-center gap-1.5"
           >
             <Download size={14} />
-            <span>{exporting ? (isBn ? "তৈরি হচ্ছে..." : "Preparing...") : (isBn ? "📄 Download PDF" : "📄 Download PDF")}</span>
+            <span>{exporting ? (isBn ? "ডাউনলোড হচ্ছে..." : "Preparing...") : (isBn ? "📄 Download PDF" : "📄 Download PDF")}</span>
           </button>
 
           <button
@@ -447,7 +574,7 @@ export default function ManagerRiceOverviewPage() {
               if (data.members.length > 0) setSelectedMemberId(data.members[0].userId);
               setIsModalOpen(true);
             }}
-            className="rounded-xl border border-[#1B2A26]/15 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold transition hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5"
+            className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold transition hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5"
           >
             <Plus size={14} />
             <span>{isBn ? "চাল জমা/বিয়োগ (+/-)" : "Add/Deduct Rice"}</span>
@@ -489,10 +616,10 @@ export default function ManagerRiceOverviewPage() {
             return (
               <div
                 key={m.userId}
-                className={`p-3.5 rounded-xl border transition space-y-3 ${
+                className={`p-3.5 rounded-xl border transition space-y-3 bg-white dark:bg-slate-900 ${
                   isPositive
-                    ? "bg-emerald-50/30 border-emerald-200/50 dark:bg-emerald-950/10 dark:border-emerald-900/30"
-                    : "bg-rose-50/30 border-rose-200/50 dark:bg-rose-950/10 dark:border-rose-900/30"
+                    ? "border-amber-200/60 dark:border-amber-900/30"
+                    : "border-rose-200/60 dark:border-rose-900/30"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -507,15 +634,15 @@ export default function ManagerRiceOverviewPage() {
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-extrabold font-[family-name:var(--font-mono)] ${
                       isPositive
-                        ? "bg-emerald-100/70 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                        : "bg-rose-100/70 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
+                        ? "bg-amber-100/80 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        : "bg-rose-100/80 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
                     }`}
                   >
-                    {formatRice(m.remaining)} {unit}
+                    {isPositive ? "+" : ""}{formatRice(m.remaining)} {unit}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 bg-white/70 dark:bg-slate-800/60 p-2.5 rounded-xl text-center text-xs">
+                <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-center text-xs">
                   <div>
                     <span className="text-[10px] text-gray-400 block font-bold uppercase">{isBn ? "মোট জমা" : "Total Added"}</span>
                     <span className="font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">{formatRice(m.totalAdded)} {unit}</span>
@@ -531,7 +658,7 @@ export default function ManagerRiceOverviewPage() {
                     setSelectedMemberId(m.userId);
                     setIsModalOpen(true);
                   }}
-                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-sm"
+                  className="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-sm"
                 >
                   <Plus size={14} />
                   <span>{isBn ? "চাল জমা দিন" : "Deposit Rice"}</span>
@@ -560,11 +687,7 @@ export default function ManagerRiceOverviewPage() {
                 return (
                   <tr
                     key={m.userId}
-                    className={`transition ${
-                      isPositive
-                        ? "hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20"
-                        : "hover:bg-rose-50/30 dark:hover:bg-rose-950/20"
-                    }`}
+                    className="hover:bg-amber-50/30 dark:hover:bg-slate-800/40 transition"
                   >
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
@@ -588,11 +711,11 @@ export default function ManagerRiceOverviewPage() {
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-extrabold font-[family-name:var(--font-mono)] ${
                           isPositive
-                            ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
-                            : "bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400"
+                            ? "bg-amber-100/70 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                            : "bg-rose-100/70 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
                         }`}
                       >
-                        {formatRice(m.remaining)} {unit}
+                        {isPositive ? "+" : ""}{formatRice(m.remaining)} {unit}
                       </span>
                     </td>
 
@@ -602,7 +725,7 @@ export default function ManagerRiceOverviewPage() {
                           setSelectedMemberId(m.userId);
                           setIsModalOpen(true);
                         }}
-                        className="px-3 py-1.5 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition inline-flex items-center gap-1 cursor-pointer shadow-sm"
+                        className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer shadow-sm"
                       >
                         <Plus size={14} />
                         <span>Deposit</span>
@@ -613,6 +736,103 @@ export default function ManagerRiceOverviewPage() {
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Clearance Summary Section (Reconciliation) */}
+      <div className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
+          <div>
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <Scale size={18} className="text-amber-500" />
+              <span>{isBn ? "ক্লিয়ারেন্স সামারি (চালের সমন্বয় বিবরণী)" : "Clearance Summary (Stock Reconciliation)"}</span>
+            </h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {isBn
+                ? "কার কত চাল উদ্বৃত্ত (ফেরত পাবে) এবং কার কত চাল বকেয়া (জমা দিতে হবে)"
+                : "Breakdown of members with surplus rice (to return) vs deficit rice (due to pay)"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold">
+            <span className="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40">
+              {isBn ? `মোট উদ্বৃত্ত: ${formatRice(totalSurplus)} ${unit}` : `Total Surplus: ${formatRice(totalSurplus)} ${unit}`}
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40">
+              {isBn ? `মোট বকেয়া: ${formatRice(totalDeficit)} ${unit}` : `Total Deficit: ${formatRice(totalDeficit)} ${unit}`}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Surplus Rice Card (To Return / Refund) */}
+          <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-50/10 dark:bg-amber-950/10 overflow-hidden shadow-sm">
+            <div className="p-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-between">
+              <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <span>{isBn ? "উদ্বৃত্ত চাল (ফেরত পাবে)" : "To Receive (Surplus Rice)"}</span>
+              </span>
+              <span className="text-xs font-bold font-[family-name:var(--font-mono)]">
+                {formatRice(totalSurplus)} {unit}
+              </span>
+            </div>
+            <div className="divide-y divide-amber-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+              {surplusMembers.length === 0 ? (
+                <div className="p-4 text-center text-xs text-gray-400">
+                  {isBn ? "কারো চাল উদ্বৃত্ত নেই" : "No surplus members"}
+                </div>
+              ) : (
+                surplusMembers.map((m) => (
+                  <div key={m.userId} className="p-3 flex items-center justify-between hover:bg-amber-50/40 dark:hover:bg-slate-800/30 transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <MemberAvatar src={m.image || getCachedImageMap()[m.userId]} name={m.name} size={30} />
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{m.name}</span>
+                    </div>
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-[family-name:var(--font-mono)] shrink-0">
+                      +{formatRice(m.remaining)} {unit}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="p-3 bg-amber-50 dark:bg-slate-800/80 border-t border-amber-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-300">
+              <span>{isBn ? "মোট ফেরতযোগ্য চাল" : "Total To Receive"}</span>
+              <span className="font-[family-name:var(--font-mono)]">{formatRice(totalSurplus)} {unit}</span>
+            </div>
+          </div>
+
+          {/* Deficit Rice Card (To Pay / Due) */}
+          <div className="rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-rose-50/10 dark:bg-rose-950/10 overflow-hidden shadow-sm">
+            <div className="p-3.5 bg-gradient-to-r from-rose-500 to-red-600 text-white flex items-center justify-between">
+              <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
+                <span>{isBn ? "বকেয়া চাল (জমা দিতে হবে)" : "To Pay (Deficit Rice)"}</span>
+              </span>
+              <span className="text-xs font-bold font-[family-name:var(--font-mono)]">
+                {formatRice(totalDeficit)} {unit}
+              </span>
+            </div>
+            <div className="divide-y divide-rose-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+              {deficitMembers.length === 0 ? (
+                <div className="p-4 text-center text-xs text-gray-400">
+                  {isBn ? "কারো চাল বকেয়া নেই" : "No deficit members"}
+                </div>
+              ) : (
+                deficitMembers.map((m) => (
+                  <div key={m.userId} className="p-3 flex items-center justify-between hover:bg-rose-50/40 dark:hover:bg-slate-800/30 transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <MemberAvatar src={m.image || getCachedImageMap()[m.userId]} name={m.name} size={30} />
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{m.name}</span>
+                    </div>
+                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400 font-[family-name:var(--font-mono)] shrink-0">
+                      -{formatRice(Math.abs(m.remaining))} {unit}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="p-3 bg-rose-50 dark:bg-slate-800/80 border-t border-rose-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-rose-900 dark:text-rose-300">
+              <span>{isBn ? "মোট বকেয়া চাল" : "Total To Pay"}</span>
+              <span className="font-[family-name:var(--font-mono)]">{formatRice(totalDeficit)} {unit}</span>
+            </div>
+          </div>
         </div>
       </div>
 
