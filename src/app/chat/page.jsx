@@ -39,6 +39,9 @@ import {
   Bell,
   BellOff,
   Reply,
+  Search,
+  Clock,
+  AtSign,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -145,6 +148,47 @@ function toBnNumber(n) {
   return String(n).replace(/\d/g, (d) => bnDigits[d]);
 }
 
+// Helper: Format Last Seen timestamp
+function formatLastSeen(dateString, isBn) {
+  if (!dateString) return isBn ? "অফলাইন" : "Offline";
+  try {
+    const d = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    if (isNaN(diffMs) || diffMs < 0) return isBn ? "সবেমাত্র সক্রিয়" : "Active just now";
+
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHour = Math.floor(diffMin / 60);
+
+    if (diffMin < 1) {
+      return isBn ? "সবেমাত্র সক্রিয়" : "Active just now";
+    }
+    if (diffMin < 60) {
+      return isBn ? `${toBnNumber(diffMin)} মিনিট আগে সক্রিয়` : `Active ${diffMin}m ago`;
+    }
+    if (diffHour < 12) {
+      return isBn ? `${toBnNumber(diffHour)} ঘণ্টা আগে সক্রিয়` : `Active ${diffHour}h ago`;
+    }
+    if (d.toDateString() === now.toDateString()) {
+      const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return isBn ? `আজ ${timeStr} এ সক্রিয়` : `Active today at ${timeStr}`;
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) {
+      const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return isBn ? `গতকাল ${timeStr} এ সক্রিয়` : `Active yesterday at ${timeStr}`;
+    }
+    const formatted = d.toLocaleDateString(isBn ? "bn-BD" : "en-US", {
+      day: "numeric",
+      month: "short",
+    });
+    return isBn ? `${formatted} এ সক্রিয় ছিল` : `Active on ${formatted}`;
+  } catch (e) {
+    return isBn ? "অফলাইন" : "Offline";
+  }
+}
+
 // Auto linkify text
 function LinkifiedText({ text }) {
   if (!text) return null;
@@ -244,6 +288,9 @@ export default function MessChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [activeCount, setActiveCount] = useState(1);
+  const [activeUserIds, setActiveUserIds] = useState(new Set());
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [memberSearchTerm, setMemberSearchTerm] = useState("");
 
   // Input state
   const [inputText, setInputText] = useState("");
@@ -441,15 +488,21 @@ export default function MessChatPage() {
     // Ensure user has joined mess room with userId for active tracking
     socket.emit("join-mess", { messId, userId: currentUserId });
 
-    // Request initial active count
+    // Request initial active count and active userIds
     socket.emit("get-mess-active-count", messId, (res) => {
       if (res?.activeCount) setActiveCount(res.activeCount);
+      if (Array.isArray(res?.activeUserIds)) {
+        setActiveUserIds(new Set(res.activeUserIds.map(String)));
+      }
     });
 
     // Active count listener
     const handleActiveCount = (data) => {
       if (data && String(data.messId) === String(messId)) {
         setActiveCount(data.activeCount || 1);
+        if (Array.isArray(data.activeUserIds)) {
+          setActiveUserIds(new Set(data.activeUserIds.map(String)));
+        }
       }
     };
 
@@ -1146,12 +1199,17 @@ export default function MessChatPage() {
               </span>
             </div>
 
-            <p className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium whitespace-nowrap mt-0.5">
+            <button
+              type="button"
+              onClick={() => setShowMembersModal(true)}
+              className="group text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium whitespace-nowrap mt-0.5 hover:opacity-85 transition-all cursor-pointer text-left focus:outline-none"
+              title={isBn ? "মেস সদস্যদের উপস্থিতি ও লাস্ট সিন দেখতে ক্লিক করুন" : "Click to view members live presence & last seen"}
+            >
               <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="whitespace-nowrap">
+              <span className="whitespace-nowrap font-bold group-hover:underline">
                 {isBn
                   ? `${toBnNumber(activeCount)} জন অ্যাক্টিভ`
                   : `${activeCount} Active`}
@@ -1161,7 +1219,8 @@ export default function MessChatPage() {
                   • {isBn ? `মোট ${toBnNumber(messDetails.totalMembers)} জন` : `${messDetails.totalMembers} members`}
                 </span>
               ) : null}
-            </p>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 group-hover:text-emerald-500 transition-colors">▾</span>
+            </button>
           </div>
         </div>
 
@@ -2612,6 +2671,193 @@ export default function MessChatPage() {
           </div>
         );
       })()}
+      {/* 8. ACTIVE MEMBERS & PRESENCE MODAL */}
+      {showMembersModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-gradient-to-r from-orange-50/60 to-amber-50/40 dark:from-slate-900 dark:to-slate-800/80">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                  <Users size={20} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-base leading-tight truncate">
+                    {isBn ? "মেস সদস্য উপস্থিতি" : "Mess Member Presence"}
+                  </h3>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1.5 mt-0.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span>
+                      {isBn
+                        ? `${toBnNumber(activeCount)} জন এখন অ্যাপে সক্রিয়`
+                        : `${activeCount} online in app now`}
+                    </span>
+                    <span className="text-gray-400 font-normal">
+                      • {isBn ? `মোট ${toBnNumber(messDetails?.members?.length || 0)} জন` : `${messDetails?.members?.length || 0} total`}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMembersModal(false);
+                  setMemberSearchTerm("");
+                }}
+                className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
+              <div className="relative flex items-center">
+                <Search size={15} className="absolute left-3 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={memberSearchTerm}
+                  onChange={(e) => setMemberSearchTerm(e.target.value)}
+                  placeholder={isBn ? "মেম্বার খুঁজুন..." : "Search members..."}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                />
+              </div>
+            </div>
+
+            {/* Members List */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 divide-y divide-gray-50 dark:divide-slate-800/40">
+              {(() => {
+                const members = Array.isArray(messDetails?.members) ? [...messDetails.members] : [];
+                const filtered = members.filter((m) => {
+                  if (!memberSearchTerm.trim()) return true;
+                  return m.name?.toLowerCase().includes(memberSearchTerm.toLowerCase());
+                });
+
+                // Sort: currently online first, then by lastSeen descending
+                filtered.sort((a, b) => {
+                  const aActive = activeUserIds.has(String(a.userId)) || (activeUserIds.size === 0 && a.isActive);
+                  const bActive = activeUserIds.has(String(b.userId)) || (activeUserIds.size === 0 && b.isActive);
+                  if (aActive && !bActive) return -1;
+                  if (!aActive && bActive) return 1;
+                  const aTime = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+                  const bTime = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
+                  return bTime - aTime;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="py-8 text-center text-xs text-gray-400">
+                      {isBn ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
+                    </div>
+                  );
+                }
+
+                return filtered.map((m) => {
+                  const isMe = String(m.userId) === String(currentUserId);
+                  const isOnline = activeUserIds.has(String(m.userId)) || (activeUserIds.size === 0 && m.isActive);
+
+                  return (
+                    <div
+                      key={m.userId}
+                      className="pt-2 first:pt-0 flex items-center justify-between gap-3 p-2 rounded-2xl hover:bg-orange-50/50 dark:hover:bg-slate-800/60 transition-all"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {/* Avatar with Status Ring */}
+                        <div className="relative w-10 h-10 rounded-full shrink-0 bg-gradient-to-tr from-amber-200 to-orange-300 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center overflow-hidden">
+                          {m.image ? (
+                            <Image
+                              src={m.image}
+                              alt={m.name || "Member"}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <span className="font-bold text-sm text-gray-700 dark:text-gray-200">
+                              {m.name?.[0]?.toUpperCase() || "M"}
+                            </span>
+                          )}
+                          {/* Live Online Badge */}
+                          <span
+                            className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${
+                              isOnline ? "bg-emerald-500 animate-pulse" : "bg-gray-300 dark:bg-slate-600"
+                            }`}
+                          />
+                        </div>
+
+                        {/* Name and Presence */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs sm:text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
+                              {m.name || "Member"}
+                            </span>
+                            {isMe && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400">
+                                {isBn ? "আপনি" : "You"}
+                              </span>
+                            )}
+                            {m.role === "manager" && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center gap-0.5">
+                                <ShieldCheck size={10} />
+                                {isBn ? "ম্যানেজার" : "Manager"}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Status text */}
+                          <div className="flex items-center gap-1.5 text-[11px] mt-0.5">
+                            {isOnline ? (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                {isBn ? "এখন সক্রিয়" : "Active now"}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                                <Clock size={11} className="opacity-70" />
+                                {formatLastSeen(m.lastSeen, isBn)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Quick Mention Button */}
+                      {!isMe && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInputText((prev) => `${prev ? prev + " " : ""}@${m.name} `);
+                            setShowMembersModal(false);
+                            if (inputRef.current) inputRef.current.focus();
+                          }}
+                          title={isBn ? "চ্যাটে মেনশন করুন" : "Mention in chat"}
+                          className="px-2.5 py-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 flex items-center gap-1 transition-colors cursor-pointer text-xs font-semibold shrink-0"
+                        >
+                          <AtSign size={13} />
+                          <span>{isBn ? "মেনশন" : "Mention"}</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-800 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowMembersModal(false)}
+                className="px-4 py-1.5 rounded-xl bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors cursor-pointer text-xs"
+              >
+                {isBn ? "বন্ধ করুন" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

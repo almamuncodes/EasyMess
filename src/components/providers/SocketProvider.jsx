@@ -233,7 +233,7 @@ export default function SocketProvider({ children }) {
         newSocket.emit("join-user", userId);
       }
       if (messId) {
-        newSocket.emit("join-mess", messId);
+        newSocket.emit("join-mess", { messId, userId });
       }
     });
 
@@ -242,6 +242,13 @@ export default function SocketProvider({ children }) {
       newSocket.disconnect();
     };
   }, [userId, messId, API_BASE]);
+
+  // Ensure mess room is joined across all pages once messId is resolved
+  useEffect(() => {
+    if (socket?.connected && messId && userId) {
+      socket.emit("join-mess", { messId, userId });
+    }
+  }, [socket, messId, userId]);
 
   // Listen to new-notice event
   useEffect(() => {

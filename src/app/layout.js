@@ -152,6 +152,50 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning
     >
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // Filter out bis_skin_checked hydration errors caused by Bitdefender extension
+                const origError = console.error;
+                console.error = function(...args) {
+                  for (let i = 0; i < args.length; i++) {
+                    const arg = args[i];
+                    if (typeof arg === "string" && arg.includes("bis_skin_checked")) return;
+                    if (arg && typeof arg === "object" && typeof arg.message === "string" && arg.message.includes("bis_skin_checked")) return;
+                  }
+                  origError.apply(console, args);
+                };
+
+                const clean = () => {
+                  try {
+                    const nodes = document.querySelectorAll("[bis_skin_checked]");
+                    for (let i = 0; i < nodes.length; i++) {
+                      nodes[i].removeAttribute("bis_skin_checked");
+                    }
+                  } catch (e) {}
+                };
+                clean();
+
+                if (typeof MutationObserver !== "undefined") {
+                  const observer = new MutationObserver((mutations) => {
+                    for (let i = 0; i < mutations.length; i++) {
+                      const m = mutations[i];
+                      if (m.type === "attributes" && m.attributeName === "bis_skin_checked" && m.target) {
+                        m.target.removeAttribute("bis_skin_checked");
+                      }
+                    }
+                  });
+                  observer.observe(document.documentElement, {
+                    attributes: true,
+                    subtree: true,
+                    attributeFilter: ["bis_skin_checked"],
+                  });
+                }
+              })();
+            `,
+          }}
+        />
         {isProd && gaId && (
           <>
             <Script
