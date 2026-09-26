@@ -4,26 +4,20 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { GetUser } from "@/components/action/action";
 import { toast } from "sonner";
-import Image from "next/image";
-import { getOptimizedImageUrl, getCachedImageMap, setCachedImageMap } from "@/lib/image-utils";
-import MemberAvatar from "@/components/ui/MemberAvatar";
+import { setCachedImageMap } from "@/lib/image-utils";
 
 export const dynamic = "force-dynamic";
+
 import {
   Boxes,
   Plus,
   Trash2,
-  Calendar,
   Search,
-  TrendingDown,
-  ArrowUpRight,
   RefreshCw,
   FileText,
   Scale,
   Download,
   X,
-  User,
-  Sparkles,
   AlertTriangle,
   ChevronDown,
   ChevronUp,
@@ -52,7 +46,7 @@ function formatDate(dateStr) {
 
       const monthsShort = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
       ];
       if (!isNaN(day) && !isNaN(monthIdx) && monthIdx >= 0 && monthIdx < 12 && !isNaN(year)) {
         return `${day} ${monthsShort[monthIdx]} ${year}`;
@@ -71,6 +65,74 @@ function formatDate(dateStr) {
   }
 }
 
+// SummaryCard matching overview/page.jsx design language
+function SummaryCard({ label, value, mono: useMono = true, icon = "📊", isNegative = false }) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl ${
+        isNegative
+          ? "bg-rose-50/80 dark:bg-rose-950/25 border border-rose-200/70 dark:border-rose-900/40"
+          : "bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/70 dark:border-amber-900/40"
+      } backdrop-blur-xl p-3.5 min-[375px]:p-4 sm:p-5 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}
+    >
+      <div
+        className={`absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent ${
+          isNegative ? "via-rose-400/40" : "via-orange-400/40"
+        } to-transparent pointer-events-none`}
+      />
+      <div className="flex items-center justify-between mb-1">
+        <p
+          className={`text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider ${
+            isNegative ? "text-rose-600 dark:text-rose-400" : "text-[#EA580C] dark:text-orange-400"
+          }`}
+        >
+          {label}
+        </p>
+        <span className="text-sm">{icon}</span>
+      </div>
+      <p
+        className={`mt-0.5 text-sm min-[375px]:text-base sm:text-xl md:text-2xl font-bold ${
+          isNegative ? "text-rose-700 dark:text-rose-400" : "text-gray-950 dark:text-slate-100"
+        } whitespace-nowrap ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// StatusBadge matching overview/page.jsx
+function StatusBadge({ status, isBn }) {
+  const isSurplus = status === "surplus";
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+        isSurplus
+          ? "bg-[#3F7D5C]/10 text-[#3F7D5C] dark:text-emerald-400"
+          : "bg-[#B5533C]/10 text-[#B5533C] dark:text-rose-400"
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          isSurplus ? "bg-[#3F7D5C] dark:bg-emerald-400" : "bg-[#B5533C] dark:bg-rose-400"
+        }`}
+      />
+      {isSurplus ? (isBn ? "উদ্বৃত্ত (Surplus)" : "Surplus") : isBn ? "বকেয়া (Deficit)" : "Deficit"}
+    </span>
+  );
+}
+
+// Receipt-style LeaderRow matching overview/page.jsx
+function LeaderRow({ left, right, rightClass = "" }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="whitespace-nowrap">{left}</span>
+      <span className="flex-1 border-b border-dotted border-current/20 translate-y-[-3px]" />
+      <span className={`whitespace-nowrap font-[family-name:var(--font-mono)] ${rightClass}`}>{right}</span>
+    </div>
+  );
+}
+
 export default function ManagerRiceOverviewPage() {
   const user = GetUser();
   const userId = user?.user?.id;
@@ -78,7 +140,6 @@ export default function ManagerRiceOverviewPage() {
   const isBn = lang === "bn";
 
   const bdNow = getBDDateStr();
-  const defaultDateObj = new Date(bdNow);
   const [selectedMonth, setSelectedMonth] = useState(() => getBDNow().month);
   const [selectedYear, setSelectedYear] = useState(() => getBDNow().year);
 
@@ -86,7 +147,9 @@ export default function ManagerRiceOverviewPage() {
     if (typeof window !== "undefined" && userId) {
       const cached = sessionStorage.getItem(`rice_summary_${userId}_${selectedMonth}_${selectedYear}`);
       if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
       }
     }
     return {
@@ -166,7 +229,7 @@ export default function ManagerRiceOverviewPage() {
       const doc = new jsPDF();
       const englishMonths = [
         "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        "July", "August", "September", "October", "November", "December",
       ];
       const monthName = englishMonths[selectedMonth - 1] || selectedMonth;
       const unitStr = data.config.riceUnitName || "Unit";
@@ -174,7 +237,7 @@ export default function ManagerRiceOverviewPage() {
       // 1. Title & Header info
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(234, 88, 12); // EasyMess Brand Orange
+      doc.setTextColor(27, 42, 38); // Forest Dark
       doc.text(data.messName || "EasyMess", 14, 18);
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -187,7 +250,9 @@ export default function ManagerRiceOverviewPage() {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(15, 23, 42); // Slate-900
       doc.text(
-        `Total Added: ${formatRice(data.summary.totalMessStockAdded)} ${unitStr}    Total Consumed: ${formatRice(data.summary.totalMessConsumed)} ${unitStr}    Stock Balance: ${formatRice(data.summary.totalMessRemaining)} ${unitStr}`,
+        `Total Added: ${formatRice(data.summary.totalMessStockAdded)} ${unitStr}    Total Consumed: ${formatRice(
+          data.summary.totalMessConsumed
+        )} ${unitStr}    Stock Balance: ${formatRice(data.summary.totalMessRemaining)} ${unitStr}`,
         14,
         38
       );
@@ -209,7 +274,7 @@ export default function ManagerRiceOverviewPage() {
             isSurplus ? "Surplus" : isDeficit ? "Deficit" : "Settled",
           ];
         }),
-        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] }, // Sleek Modern Slate
+        headStyles: { fillColor: [27, 42, 38], textColor: [255, 255, 255] }, // Signature #1B2A26
         styles: { fontSize: 9 },
         didParseCell: function (cellData) {
           if (cellData.section === "body") {
@@ -217,10 +282,10 @@ export default function ManagerRiceOverviewPage() {
             if (cellData.column.index === 5) {
               const status = cellData.cell.raw;
               if (status === "Surplus") {
-                cellData.cell.styles.textColor = [16, 185, 129]; // Emerald 500
+                cellData.cell.styles.textColor = [63, 125, 92]; // Emerald #3F7D5C
                 cellData.cell.styles.fontStyle = "bold";
               } else if (status === "Deficit") {
-                cellData.cell.styles.textColor = [239, 68, 68]; // Rose 500
+                cellData.cell.styles.textColor = [181, 83, 60]; // Rose #B5533C
                 cellData.cell.styles.fontStyle = "bold";
               }
             }
@@ -228,9 +293,9 @@ export default function ManagerRiceOverviewPage() {
             if (cellData.column.index === 4) {
               const balVal = String(cellData.cell.raw || "");
               if (balVal.startsWith("+")) {
-                cellData.cell.styles.textColor = [16, 185, 129];
+                cellData.cell.styles.textColor = [63, 125, 92];
               } else if (balVal.startsWith("-")) {
-                cellData.cell.styles.textColor = [239, 68, 68];
+                cellData.cell.styles.textColor = [181, 83, 60];
               }
             }
           }
@@ -269,7 +334,7 @@ export default function ManagerRiceOverviewPage() {
       // Draw Clearance Summary title
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(234, 88, 12); // EasyMess Brand Orange
+      doc.setTextColor(27, 42, 38);
       doc.text("Clearance Summary", 14, doc.lastAutoTable.finalY + 12);
 
       // Draw Clearance Summary Table
@@ -277,7 +342,7 @@ export default function ManagerRiceOverviewPage() {
         startY: doc.lastAutoTable.finalY + 16,
         head: [["To Receive (Surplus)", "Amount", "", "To Pay (Deficit)", "Amount"]],
         body: summaryRows,
-        headStyles: { fillColor: [234, 88, 12], textColor: [255, 255, 255] }, // EasyMess Brand Orange
+        headStyles: { fillColor: [63, 125, 92], textColor: [255, 255, 255] }, // Emerald Green
         styles: { fontSize: 9 },
         columnStyles: {
           0: { cellWidth: 55 },
@@ -294,9 +359,9 @@ export default function ManagerRiceOverviewPage() {
           if (cellData.row.index === maxRows) {
             cellData.cell.styles.fontStyle = "bold";
             if (cellData.column.index < 2) {
-              cellData.cell.styles.textColor = [16, 185, 129]; // Emerald
+              cellData.cell.styles.textColor = [63, 125, 92]; // Emerald
             } else if (cellData.column.index > 2) {
-              cellData.cell.styles.textColor = [239, 68, 68]; // Rose
+              cellData.cell.styles.textColor = [181, 83, 60]; // Rose
             }
           }
         },
@@ -434,12 +499,15 @@ export default function ManagerRiceOverviewPage() {
 
   if (loading) {
     return (
-      <div className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-pulse`}>
-        <div className="h-10 bg-amber-200/50 dark:bg-slate-800 rounded-2xl w-1/3"></div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
-          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
-          <div className="h-28 bg-white dark:bg-slate-900 rounded-2xl"></div>
+      <div
+        className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 p-4 md:p-8 max-w-5xl mx-auto space-y-6 border dark:border-slate-800 rounded-2xl animate-pulse`}
+      >
+        <div className="h-10 bg-[#1B2A26]/10 dark:bg-slate-800 rounded-2xl w-1/3" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="h-24 bg-white dark:bg-slate-900 rounded-2xl" />
+          <div className="h-24 bg-white dark:bg-slate-900 rounded-2xl" />
+          <div className="h-24 bg-white dark:bg-slate-900 rounded-2xl" />
+          <div className="h-24 bg-white dark:bg-slate-900 rounded-2xl" />
         </div>
       </div>
     );
@@ -447,442 +515,394 @@ export default function ManagerRiceOverviewPage() {
 
   return (
     <div
-      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-slate-50/60 dark:bg-slate-950 font-[family-name:var(--font-body)] text-gray-900 dark:text-slate-100 rounded-2xl p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 border border-gray-200/80 dark:border-slate-800`}
+      className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 font-[family-name:var(--font-body)] text-[#1B2A26] dark:text-slate-200 border dark:border-slate-800 rounded-2xl`}
     >
-      {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-gray-200/80 dark:border-slate-800 pb-5">
-        <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
-            <Boxes size={15} /> <span>{isBn ? "ম্যানেজার রাইস প্যানেল" : "Manager Rice Panel"}</span>
-          </p>
-          <h1 className="mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-bold">
-            {isBn ? "রাইস ওভারভিউ" : "Rice Overview"}
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-            {isBn
-              ? `মাসিক চাল জমা, মোট খরচ ও অবশিষ্টাংশ রিপোর্ট (১ মিল = ${data.config.ricePerMeal} ${unit})`
-              : `Monthly rice deposit summary & member stock balance (1 Meal = ${data.config.ricePerMeal} ${unit})`}
-          </p>
-        </div>
-
-        {/* Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Month Selector */}
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-            className="rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-          >
-            {monthsList.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-
-          {/* Year Selector */}
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            className="rounded-xl border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-xs sm:text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
-          >
-            {[2024, 2025, 2026, 2027].map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => fetchData(true)}
-            className="p-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-sm"
-            title="Refresh Data"
-          >
-            <RefreshCw size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        {/* Total Stock */}
-        <div className="relative overflow-hidden rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-              {isBn ? "মোট চাল জমা" : "Total Stock Added"}
-            </span>
-            <span className="text-base">🌾</span>
-          </div>
-          <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
-            {formatRice(data.summary.totalMessStockAdded)} <span className="text-xs font-normal text-gray-500">{unit}</span>
-          </p>
-        </div>
-
-        {/* Total Consumed */}
-        <div className="relative overflow-hidden rounded-2xl bg-orange-50/70 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40 backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300">
-              {isBn ? "মোট ব্যবহৃত চাল" : "Total Consumed"}
-            </span>
-            <span className="text-base">🍲</span>
-          </div>
-          <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
-            {formatRice(data.summary.totalMessConsumed)} <span className="text-xs font-normal text-gray-500">{unit}</span>
-          </p>
-        </div>
-
-        {/* Total Remaining */}
-        <div className={`col-span-2 sm:col-span-1 relative overflow-hidden rounded-2xl backdrop-blur-xl p-4 shadow-sm hover:scale-[1.01] transition-all border ${
-          data.summary.totalMessRemaining >= 0
-            ? "bg-amber-50/70 dark:bg-amber-950/20 border-amber-200/60 dark:border-amber-900/40"
-            : "bg-rose-50/70 dark:bg-rose-950/20 border-rose-200/60 dark:border-rose-900/40"
-        }`}>
-          <div className="flex items-center justify-between mb-1">
-            <span className={`text-[10px] font-bold uppercase tracking-wider ${
-              data.summary.totalMessRemaining >= 0 ? "text-amber-700 dark:text-amber-300" : "text-rose-700 dark:text-rose-300"
-            }`}>
-              {isBn ? "অবশিষ্ট মেস স্টক" : "Stock Balance"}
-            </span>
-            <span className="text-base">⚖️</span>
-          </div>
-          <p className={`text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] ${
-            data.summary.totalMessRemaining >= 0 ? "text-amber-700 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"
-          }`}>
-            {formatRice(data.summary.totalMessRemaining)} <span className="text-xs font-normal text-gray-500">{unit}</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200/80 dark:border-slate-800 pb-4">
-        <p className="font-[family-name:var(--font-display)] text-lg font-semibold">
-          {isBn ? "মেম্বার চালের বিবরণী" : "Member Rice Balances"}
-        </p>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleDownloadPdf}
-            disabled={exporting}
-            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-bold text-white transition-all duration-150 hover:from-amber-600 hover:to-orange-600 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm flex items-center gap-1.5"
-          >
-            <Download size={14} />
-            <span>{exporting ? (isBn ? "ডাউনলোড হচ্ছে..." : "Preparing...") : (isBn ? "📄 Download PDF" : "📄 Download PDF")}</span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (data.members.length > 0) setSelectedMemberId(data.members[0].userId);
-              setIsModalOpen(true);
-            }}
-            className="rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 px-3.5 py-2 text-xs font-semibold transition hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5"
-          >
-            <Plus size={14} />
-            <span>{isBn ? "চাল জমা/বিয়োগ (+/-)" : "Add/Deduct Rice"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Member Stock List / Table */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden p-4 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-800 pb-4">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 space-y-6">
+        {/* Header Bar */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-base font-bold">
-              {isBn ? "মেম্বারভিত্তিক চালের হিসাব" : "Member Rice Balances Overview"}
-            </h2>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs uppercase tracking-[0.18em] text-[#C99A3E] font-medium flex items-center gap-1.5">
+              <Boxes size={14} /> <span>{isBn ? "ম্যানেজার · রাইস প্যানেল" : "Manager · Rice Overview"}</span>
+            </p>
+            <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-semibold">
+              {data?.messName || (isBn ? "রাইস ওভারভিউ" : "Rice Overview")}
+            </h1>
+            <p className="text-xs text-[#1B2A26]/70 dark:text-slate-400 mt-1">
               {isBn
-                ? "চলতি মাসের সদস্যভিত্তিক চাল জমা, ব্যবহার ও অবশিষ্টাংশ"
-                : "Monthly breakdown of rice deposits, consumption, and balance per member"}
+                ? `মাসিক চাল জমা, মোট খরচ ও অবশিষ্টাংশ রিপোর্ট (১ মিল = ${data.config.ricePerMeal} ${unit})`
+                : `Monthly rice deposit summary & member stock balance (1 Meal = ${data.config.ricePerMeal} ${unit})`}
             </p>
           </div>
 
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          {/* Month, Year & Refresh Controls */}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
+            >
+              {monthsList.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E] cursor-pointer"
+            >
+              {[2024, 2025, 2026, 2027].map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => fetchData(true)}
+              className="rounded-md p-2 border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-[#1B2A26] dark:text-slate-200 hover:bg-gray-100/80 dark:hover:bg-slate-800 transition shadow-sm cursor-pointer"
+              title="Refresh Data"
+            >
+              <RefreshCw size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <SummaryCard
+            label={isBn ? "মোট চাল জমা" : "Total Stock Added"}
+            value={`${formatRice(data.summary.totalMessStockAdded)} ${unit}`}
+            icon="🌾"
+          />
+          <SummaryCard
+            label={isBn ? "মোট ব্যবহৃত চাল" : "Total Consumed"}
+            value={`${formatRice(data.summary.totalMessConsumed)} ${unit}`}
+            icon="🍲"
+          />
+          <SummaryCard
+            label={isBn ? "অবশিষ্ট মেস স্টক" : "Stock Balance"}
+            value={`${data.summary.totalMessRemaining >= 0 ? "+" : ""}${formatRice(data.summary.totalMessRemaining)} ${unit}`}
+            icon="⚖️"
+            isNegative={data.summary.totalMessRemaining < 0}
+          />
+          <SummaryCard
+            label={isBn ? "মিল প্রতি চাল" : "Per Meal Rate"}
+            value={`${data.config.ricePerMeal} ${unit}`}
+            icon="🍚"
+            mono
+          />
+        </div>
+
+        {/* Action Bar */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
+          <div className="flex items-center gap-2">
+            <p className="font-[family-name:var(--font-display)] text-lg">
+              {isBn ? "মেম্বার চালের বিবরণী" : "Member Rice Balances"}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={exporting}
+              className="rounded-md bg-[#ff6900] px-3 py-2 text-sm font-medium text-[#F2F4F1] transition-all duration-150 hover:bg-[#1B2A26]/90 active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm flex items-center gap-1.5"
+            >
+              <Download size={14} />
+              <span>{exporting ? (isBn ? "তৈরি হচ্ছে…" : "Preparing…") : isBn ? "📄 Download PDF" : "📄 Download PDF"}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (data.members.length > 0) setSelectedMemberId(data.members[0].userId);
+                setIsModalOpen(true);
+              }}
+              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-[#1B2A26] dark:text-slate-200 px-3 py-2 text-sm font-medium transition hover:bg-gray-100/80 dark:hover:bg-slate-800 active:scale-95 cursor-pointer shadow-sm flex items-center gap-1.5"
+            >
+              <Plus size={14} />
+              <span>{isBn ? "চাল জমা/বিয়োগ (+/-)" : "Add/Deduct Rice"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
             <input
               type="text"
+              placeholder={isBn ? "মেম্বার খুঁজুন..." : "Search member..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isBn ? "মেম্বার খুঁজুন..." : "Search member..."}
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition"
+              className="w-full pl-10 pr-8 py-2.5 bg-white/60 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition backdrop-blur-sm"
             />
-          </div>
-        </div>
-
-        {/* Mobile View - Cards */}
-        <div className="md:hidden space-y-2.5">
-          {filteredMembers.map((m) => {
-            const isPositive = m.remaining >= 0;
-            const imgUrl = m.image || getCachedImageMap()[m.userId];
-            return (
-              <div
-                key={m.userId}
-                className={`p-3.5 rounded-xl border transition space-y-3 bg-white dark:bg-slate-900 ${
-                  isPositive
-                    ? "border-amber-200/60 dark:border-amber-900/30"
-                    : "border-rose-200/60 dark:border-rose-900/30"
-                }`}
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-0.5 rounded-full"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <MemberAvatar src={imgUrl} name={m.name} size={36} />
-                    <div>
-                      <p className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">{m.name}</p>
-                      <span className="text-[10px] uppercase font-bold text-gray-400">{m.role || "MEMBER"}</span>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-extrabold font-[family-name:var(--font-mono)] ${
-                      isPositive
-                        ? "bg-amber-100/80 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                        : "bg-rose-100/80 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                    }`}
-                  >
-                    {isPositive ? "+" : ""}{formatRice(m.remaining)} {unit}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-center text-xs">
-                  <div>
-                    <span className="text-[10px] text-gray-400 block font-bold uppercase">{isBn ? "মোট জমা" : "Total Added"}</span>
-                    <span className="font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">{formatRice(m.totalAdded)} {unit}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-gray-400 block font-bold uppercase">{isBn ? "ব্যবহৃত" : "Consumed"}</span>
-                    <span className="font-bold font-[family-name:var(--font-mono)] text-orange-500">{formatRice(m.totalConsumed)} {unit}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setSelectedMemberId(m.userId);
-                    setIsModalOpen(true);
-                  }}
-                  className="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer shadow-sm"
-                >
-                  <Plus size={14} />
-                  <span>{isBn ? "চাল জমা দিন" : "Deposit Rice"}</span>
-                </button>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Desktop View - Table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-gray-400 bg-gray-50/50 dark:bg-slate-800/40">
-                <th className="py-3 px-4">Member</th>
-                <th className="py-3 px-4 text-center">Total Added</th>
-                <th className="py-3 px-4 text-center">Consumed</th>
-                <th className="py-3 px-4 text-center">Remaining Balance</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-              {filteredMembers.map((m) => {
-                const isPositive = m.remaining >= 0;
-                const imgUrl = m.image || getCachedImageMap()[m.userId];
-                return (
-                  <tr
-                    key={m.userId}
-                    className="hover:bg-amber-50/30 dark:hover:bg-slate-800/40 transition"
-                  >
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <MemberAvatar src={imgUrl} name={m.name} size={36} />
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white text-sm">{m.name}</p>
-                          <span className="text-[10px] uppercase font-bold text-gray-400">{m.role || "MEMBER"}</span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-center font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
-                      {formatRice(m.totalAdded)} {unit}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-center font-bold font-[family-name:var(--font-mono)] text-orange-500">
-                      {formatRice(m.totalConsumed)} {unit}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-center">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-extrabold font-[family-name:var(--font-mono)] ${
-                          isPositive
-                            ? "bg-amber-100/70 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                            : "bg-rose-100/70 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                        }`}
-                      >
-                        {isPositive ? "+" : ""}{formatRice(m.remaining)} {unit}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedMemberId(m.userId);
-                          setIsModalOpen(true);
-                        }}
-                        className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer shadow-sm"
-                      >
-                        <Plus size={14} />
-                        <span>Deposit</span>
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Clearance Summary Section (Reconciliation) */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
-          <div>
-            <h2 className="text-base font-bold flex items-center gap-2">
-              <Scale size={18} className="text-amber-500" />
-              <span>{isBn ? "ক্লিয়ারেন্স সামারি (চালের সমন্বয় বিবরণী)" : "Clearance Summary (Stock Reconciliation)"}</span>
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {isBn
-                ? "কার কত চাল উদ্বৃত্ত (ফেরত পাবে) এবং কার কত চাল বকেয়া (জমা দিতে হবে)"
-                : "Breakdown of members with surplus rice (to return) vs deficit rice (due to pay)"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <span className="px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40">
-              {isBn ? `মোট উদ্বৃত্ত: ${formatRice(totalSurplus)} ${unit}` : `Total Surplus: ${formatRice(totalSurplus)} ${unit}`}
-            </span>
-            <span className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40">
-              {isBn ? `মোট বকেয়া: ${formatRice(totalDeficit)} ${unit}` : `Total Deficit: ${formatRice(totalDeficit)} ${unit}`}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Surplus Rice Card (To Return / Refund) */}
-          <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-50/10 dark:bg-amber-950/10 overflow-hidden shadow-sm">
-            <div className="p-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-between">
-              <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <span>{isBn ? "উদ্বৃত্ত চাল (ফেরত পাবে)" : "To Receive (Surplus Rice)"}</span>
-              </span>
-              <span className="text-xs font-bold font-[family-name:var(--font-mono)]">
-                {formatRice(totalSurplus)} {unit}
-              </span>
-            </div>
-            <div className="divide-y divide-amber-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
-              {surplusMembers.length === 0 ? (
-                <div className="p-4 text-center text-xs text-gray-400">
-                  {isBn ? "কারো চাল উদ্বৃত্ত নেই" : "No surplus members"}
-                </div>
-              ) : (
-                surplusMembers.map((m) => (
-                  <div key={m.userId} className="p-3 flex items-center justify-between hover:bg-amber-50/40 dark:hover:bg-slate-800/30 transition-colors">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <MemberAvatar src={m.image || getCachedImageMap()[m.userId]} name={m.name} size={30} />
-                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{m.name}</span>
-                    </div>
-                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-[family-name:var(--font-mono)] shrink-0">
-                      +{formatRice(m.remaining)} {unit}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="p-3 bg-amber-50 dark:bg-slate-800/80 border-t border-amber-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-300">
-              <span>{isBn ? "মোট ফেরতযোগ্য চাল" : "Total To Receive"}</span>
-              <span className="font-[family-name:var(--font-mono)]">{formatRice(totalSurplus)} {unit}</span>
-            </div>
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          {/* Deficit Rice Card (To Pay / Due) */}
-          <div className="rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-rose-50/10 dark:bg-rose-950/10 overflow-hidden shadow-sm">
-            <div className="p-3.5 bg-gradient-to-r from-rose-500 to-red-600 text-white flex items-center justify-between">
-              <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5">
-                <span>{isBn ? "বকেয়া চাল (জমা দিতে হবে)" : "To Pay (Deficit Rice)"}</span>
-              </span>
-              <span className="text-xs font-bold font-[family-name:var(--font-mono)]">
-                {formatRice(totalDeficit)} {unit}
-              </span>
-            </div>
-            <div className="divide-y divide-rose-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
-              {deficitMembers.length === 0 ? (
-                <div className="p-4 text-center text-xs text-gray-400">
-                  {isBn ? "কারো চাল বকেয়া নেই" : "No deficit members"}
-                </div>
-              ) : (
-                deficitMembers.map((m) => (
-                  <div key={m.userId} className="p-3 flex items-center justify-between hover:bg-rose-50/40 dark:hover:bg-slate-800/30 transition-colors">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <MemberAvatar src={m.image || getCachedImageMap()[m.userId]} name={m.name} size={30} />
-                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{m.name}</span>
-                    </div>
-                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400 font-[family-name:var(--font-mono)] shrink-0">
-                      -{formatRice(Math.abs(m.remaining))} {unit}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="p-3 bg-rose-50 dark:bg-slate-800/80 border-t border-rose-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-rose-900 dark:text-rose-300">
-              <span>{isBn ? "মোট বকেয়া চাল" : "Total To Pay"}</span>
-              <span className="font-[family-name:var(--font-mono)]">{formatRice(totalDeficit)} {unit}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Monthly Deposit History - Grouped by Member (Accordion Layout) */}
-      <div className="bg-white dark:bg-slate-900 border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
-          <div>
-            <h2 className="text-base font-bold flex items-center gap-2">
-              <FileText size={18} className="text-amber-500" />
-              <span>{isBn ? "সদস্যভিত্তিক চাল জমার ইতিহাস" : "Monthly Deposit History"}</span>
-            </h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              {isBn
-                ? "সদস্যভিত্তিক চাল জমার হিস্ট্রি দেখতে যেকোনো মেম্বারের ওপর ক্লিক করুন"
-                : "Click on any member card to expand their deposit entries for this month"}
-            </p>
-          </div>
-          <span className="text-xs font-semibold text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full w-fit">
-            {data.history.length} {isBn ? "টি মোট এন্ট্রি" : "total entries"}
+          <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 self-end sm:self-center shrink-0">
+            {filteredMembers.length} {isBn ? "মেম্বার" : filteredMembers.length === 1 ? "Member" : "Members"}
           </span>
         </div>
 
+        {/* Main Member List */}
         {filteredMembers.length === 0 ? (
-          <div className="p-8 text-center bg-gray-50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
-            <Boxes className="mx-auto text-gray-300 dark:text-slate-600 mb-2" size={32} />
-            <p className="text-xs text-gray-500 dark:text-slate-400">
-              {isBn ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
-            </p>
+          <div className="mt-4 p-8 text-center text-gray-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-gray-200/80 dark:border-slate-800">
+            {isBn ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredMembers.map((m) => {
-              const historyList = memberHistoryGrouped[m.userId] || [];
-              const isExpanded = expandedMemberId === m.userId;
-              const imgUrl = m.image || getCachedImageMap()[m.userId];
-              const isPositive = m.remaining >= 0;
+          <>
+            {/* Desktop Table View */}
+            <div className="mt-4 hidden overflow-hidden rounded-2xl border border-gray-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] sm:block">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-slate-800 text-left text-xs uppercase tracking-wide text-[#1B2A26]/50 dark:text-slate-400 bg-gray-50/50 dark:bg-slate-800/40">
+                    <th className="px-4 py-3 font-medium">Member</th>
+                    <th className="px-4 py-3 font-medium text-center">Total Added</th>
+                    <th className="px-4 py-3 font-medium text-center">Consumed</th>
+                    <th className="px-4 py-3 font-medium text-center">Remaining Balance</th>
+                    <th className="px-4 py-3 font-medium text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMembers.map((m) => {
+                    const isPositive = m.remaining >= 0;
+                    const statusType = isPositive ? "surplus" : "deficit";
+                    return (
+                      <tr
+                        key={m.userId}
+                        className={`border-b border-gray-100 dark:border-slate-800/50 last:border-0 transition-colors ${
+                          isPositive
+                            ? "bg-emerald-50/20 hover:bg-emerald-50/40 dark:bg-emerald-950/10 dark:hover:bg-emerald-950/20"
+                            : "bg-rose-50/20 hover:bg-rose-50/40 dark:bg-rose-950/10 dark:hover:bg-rose-950/20"
+                        }`}
+                      >
+                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                          <div>
+                            <p className="font-semibold text-sm text-gray-900 dark:text-white">{m.name}</p>
+                            <span className="text-[10px] uppercase font-bold text-gray-400">{m.role || "MEMBER"}</span>
+                          </div>
+                        </td>
 
-              return (
-                <div
-                  key={m.userId}
-                  className="rounded-2xl overflow-hidden bg-gray-50/70 dark:bg-slate-800/50 border border-gray-200/80 dark:border-slate-800 transition"
-                >
-                  {/* Member Accordion Header */}
+                        <td className="px-4 py-3 font-[family-name:var(--font-mono)] text-center">
+                          {formatRice(m.totalAdded)} {unit}
+                        </td>
+
+                        <td className="px-4 py-3 font-[family-name:var(--font-mono)] text-center text-[#EA580C] dark:text-orange-400 font-medium">
+                          {formatRice(m.totalConsumed)} {unit}
+                        </td>
+
+                        <td
+                          className={`px-4 py-3 font-[family-name:var(--font-mono)] text-center font-bold ${
+                            isPositive ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"
+                          }`}
+                        >
+                          {isPositive ? "+" : ""}
+                          {formatRice(m.remaining)} {unit}
+                        </td>
+
+                        <td className="px-4 py-3 text-center">
+                          <StatusBadge status={statusType} isBn={isBn} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Receipt-style Cards */}
+            <div className="mt-4 space-y-3 sm:hidden">
+              {filteredMembers.map((m) => {
+                const isPositive = m.remaining >= 0;
+                const statusType = isPositive ? "surplus" : "deficit";
+
+                return (
                   <div
-                    onClick={() => setExpandedMemberId(isExpanded ? null : m.userId)}
-                    className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-gray-100/60 dark:hover:bg-slate-800/80 transition"
+                    key={m.userId}
+                    className={`rounded-2xl border backdrop-blur-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 ${
+                      isPositive
+                        ? "border-emerald-200/50 bg-emerald-50/25 dark:border-emerald-900/30 dark:bg-emerald-950/15"
+                        : "border-rose-200/50 bg-rose-50/25 dark:border-rose-900/30 dark:bg-rose-950/15"
+                    }`}
                   >
-                    {/* Member Info */}
-                    <div className="flex items-center gap-3">
-                      <MemberAvatar src={imgUrl} name={m.name} size={40} />
+                    <div className="mb-2 flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white">{m.name}</p>
+                        <span className="text-[9px] uppercase font-bold text-gray-400">{m.role || "MEMBER"}</span>
+                      </div>
+                      <StatusBadge status={statusType} isBn={isBn} />
+                    </div>
+
+                    <div className="space-y-1 text-sm text-[#1B2A26]/80 dark:text-slate-300 my-2">
+                      <LeaderRow left={isBn ? "মোট জমা" : "Total Added"} right={`${formatRice(m.totalAdded)} ${unit}`} />
+                      <LeaderRow left={isBn ? "ব্যবহৃত" : "Consumed"} right={`${formatRice(m.totalConsumed)} ${unit}`} rightClass="text-orange-500 font-semibold" />
+                      <LeaderRow
+                        left={isBn ? "অবশিষ্ট ব্যালেন্স" : "Stock Balance"}
+                        right={`${isPositive ? "+" : ""}${formatRice(m.remaining)} ${unit}`}
+                        rightClass={`font-bold ${isPositive ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-450"}`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Clearance Summary Section (Reconciliation) */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
+            <div>
+              <h2 className="text-base font-bold flex items-center gap-2">
+                <Scale size={18} className="text-[#EA580C]" />
+                <span className="font-[family-name:var(--font-display)]">
+                  {isBn ? "ক্লিয়ারেন্স সামারি (চালের সমন্বয় বিবরণী)" : "Clearance Summary (Stock Reconciliation)"}
+                </span>
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {isBn
+                  ? "কার কত চাল উদ্বৃত্ত (ফেরত পাবে) এবং কার কত চাল বকেয়া (জমা দিতে হবে)"
+                  : "Breakdown of members with surplus rice (to return) vs deficit rice (due to pay)"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#3F7D5C] dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40">
+                {isBn ? `মোট উদ্বৃত্ত: ${formatRice(totalSurplus)} ${unit}` : `Total Surplus: ${formatRice(totalSurplus)} ${unit}`}
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-950/40 text-[#B5533C] dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40">
+                {isBn ? `মোট বকেয়া: ${formatRice(totalDeficit)} ${unit}` : `Total Deficit: ${formatRice(totalDeficit)} ${unit}`}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Surplus Rice Card (To Return / Refund) */}
+            <div className="rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 bg-emerald-50/15 dark:bg-emerald-950/10 overflow-hidden shadow-sm">
+              <div className="p-3.5 bg-[#3F7D5C] text-white flex items-center justify-between">
+                <span className="font-bold text-xs uppercase tracking-wider">
+                  {isBn ? "উদ্বৃত্ত চাল (ফেরত পাবে)" : "To Receive (Surplus Rice)"}
+                </span>
+                <span className="text-xs font-bold font-[family-name:var(--font-mono)]">
+                  +{formatRice(totalSurplus)} {unit}
+                </span>
+              </div>
+              <div className="divide-y divide-emerald-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+                {surplusMembers.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    {isBn ? "কারো চাল উদ্বৃত্ত নেই" : "No surplus members"}
+                  </div>
+                ) : (
+                  surplusMembers.map((m) => (
+                    <div
+                      key={m.userId}
+                      className="p-3 flex items-center justify-between hover:bg-emerald-50/40 dark:hover:bg-slate-800/30 transition-colors"
+                    >
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{m.name}</span>
+                      <span className="text-xs font-bold text-[#3F7D5C] dark:text-emerald-400 font-[family-name:var(--font-mono)] shrink-0">
+                        +{formatRice(m.remaining)} {unit}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="p-3 bg-emerald-50/80 dark:bg-slate-800/80 border-t border-emerald-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                <span>{isBn ? "মোট ফেরতযোগ্য চাল" : "Total To Receive"}</span>
+                <span className="font-[family-name:var(--font-mono)]">+{formatRice(totalSurplus)} {unit}</span>
+              </div>
+            </div>
+
+            {/* Deficit Rice Card (To Pay / Due) */}
+            <div className="rounded-2xl border border-rose-200/80 dark:border-rose-900/40 bg-rose-50/15 dark:bg-rose-950/10 overflow-hidden shadow-sm">
+              <div className="p-3.5 bg-[#B5533C] text-white flex items-center justify-between">
+                <span className="font-bold text-xs uppercase tracking-wider">
+                  {isBn ? "বকেয়া চাল (জমা দিতে হবে)" : "To Pay (Deficit Rice)"}
+                </span>
+                <span className="text-xs font-bold font-[family-name:var(--font-mono)]">
+                  -{formatRice(totalDeficit)} {unit}
+                </span>
+              </div>
+              <div className="divide-y divide-rose-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
+                {deficitMembers.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-gray-400">
+                    {isBn ? "কারো চাল বকেয়া নেই" : "No deficit members"}
+                  </div>
+                ) : (
+                  deficitMembers.map((m) => (
+                    <div
+                      key={m.userId}
+                      className="p-3 flex items-center justify-between hover:bg-rose-50/40 dark:hover:bg-slate-800/30 transition-colors"
+                    >
+                      <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{m.name}</span>
+                      <span className="text-xs font-bold text-[#B5533C] dark:text-rose-400 font-[family-name:var(--font-mono)] shrink-0">
+                        -{formatRice(Math.abs(m.remaining))} {unit}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="p-3 bg-rose-50/80 dark:bg-slate-800/80 border-t border-rose-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-rose-900 dark:text-rose-300">
+                <span>{isBn ? "মোট বকেয়া চাল" : "Total To Pay"}</span>
+                <span className="font-[family-name:var(--font-mono)]">-{formatRice(totalDeficit)} {unit}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Monthly Deposit History - Accordion */}
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-gray-200/80 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-slate-800 pb-3">
+            <div>
+              <h2 className="text-base font-bold flex items-center gap-2">
+                <FileText size={18} className="text-[#EA580C]" />
+                <span className="font-[family-name:var(--font-display)]">
+                  {isBn ? "সদস্যভিত্তিক চাল জমার ইতিহাস" : "Monthly Deposit History"}
+                </span>
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {isBn
+                  ? "সদস্যভিত্তিক চাল জমার হিস্ট্রি দেখতে যেকোনো মেম্বারের ওপর ক্লিক করুন"
+                  : "Click on any member card to expand their deposit entries for this month"}
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-gray-400 bg-gray-100 dark:bg-slate-800 px-3 py-1 rounded-full w-fit">
+              {data.history.length} {isBn ? "টি মোট এন্ট্রি" : "total entries"}
+            </span>
+          </div>
+
+          {filteredMembers.length === 0 ? (
+            <div className="p-8 text-center bg-gray-50/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
+              <Boxes className="mx-auto text-gray-300 dark:text-slate-600 mb-2" size={32} />
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                {isBn ? "কোনো মেম্বার পাওয়া যায়নি" : "No members found"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredMembers.map((m) => {
+                const historyList = memberHistoryGrouped[m.userId] || [];
+                const isExpanded = expandedMemberId === m.userId;
+                const isPositive = m.remaining >= 0;
+
+                return (
+                  <div
+                    key={m.userId}
+                    className="rounded-2xl overflow-hidden bg-white/60 dark:bg-slate-800/50 border border-gray-200/80 dark:border-slate-800 transition"
+                  >
+                    {/* Member Accordion Header */}
+                    <div
+                      onClick={() => setExpandedMemberId(isExpanded ? null : m.userId)}
+                      className="w-full p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-gray-100/60 dark:hover:bg-slate-800/80 transition"
+                    >
+                      {/* Member Info */}
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-sm text-gray-900 dark:text-white">{m.name}</p>
@@ -893,130 +913,140 @@ export default function ManagerRiceOverviewPage() {
                         <p className="text-xs text-gray-400 font-medium mt-0.5 flex flex-wrap items-center gap-2">
                           <span>{historyList.length} {isBn ? "টি এন্ট্রি" : "entries"}</span>
                           <span>•</span>
-                          <span>{isBn ? "মোট জমা" : "Total Added"}: <strong className="text-emerald-600 dark:text-emerald-400">+{formatRice(m.totalAdded)} {unit}</strong></span>
+                          <span>
+                            {isBn ? "মোট জমা" : "Total Added"}:{" "}
+                            <strong className="text-[#3F7D5C] dark:text-emerald-400">
+                              +{formatRice(m.totalAdded)} {unit}
+                            </strong>
+                          </span>
                         </p>
                       </div>
-                    </div>
 
-                    {/* Status Badges & Accordion Toggle */}
-                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-slate-800">
-                      <div className="text-left sm:text-right">
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block">{isBn ? "অবশিষ্ট ব্যালেন্স" : "Stock Balance"}</span>
-                        <span className={`text-sm font-extrabold font-[family-name:var(--font-mono)] ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                          {formatRice(m.remaining)} {unit}
-                        </span>
-                      </div>
+                      {/* Status & Accordion Toggle */}
+                      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200/60 dark:border-slate-800">
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] uppercase font-bold text-gray-400 block">
+                            {isBn ? "অবশিষ্ট ব্যালেন্স" : "Stock Balance"}
+                          </span>
+                          <span
+                            className={`text-sm font-bold font-[family-name:var(--font-mono)] ${
+                              isPositive ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-400"
+                            }`}
+                          >
+                            {isPositive ? "+" : ""}
+                            {formatRice(m.remaining)} {unit}
+                          </span>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedMemberId(m.userId);
-                            setIsModalOpen(true);
-                          }}
-                          className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
-                          title="Deposit Rice"
-                        >
-                          <Plus size={13} />
-                          <span className="hidden sm:inline">{isBn ? "জমা" : "Deposit"}</span>
-                        </button>
-                        <div className="p-1.5 rounded-xl bg-white dark:bg-slate-900 text-gray-500 dark:text-slate-300 border border-gray-200 dark:border-slate-700 shadow-sm">
+                        <div className="p-1.5 rounded-md bg-white dark:bg-slate-900 text-gray-500 dark:text-slate-300 border border-gray-200 dark:border-slate-700 shadow-sm">
                           {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Expanded Content (Deposit Entries List for this Member) */}
-                  {isExpanded && (
-                    <div className="px-4 pb-4 pt-2 border-t border-dashed border-gray-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 space-y-3">
-                      <div className="flex items-center justify-between pt-2">
-                        <p className="text-xs font-bold text-gray-500 dark:text-slate-400">
-                          {isBn ? `${m.name}-এর চাল জমার ইতিহাস` : `Deposit Records for ${m.name}`}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedMemberId(m.userId);
-                            setIsModalOpen(true);
-                          }}
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
-                        >
-                          <Plus size={14} />
-                          <span>{isBn ? "নতুন চাল জমা" : "+ New Deposit"}</span>
-                        </button>
-                      </div>
-
-                      {historyList.length === 0 ? (
-                        <p className="text-xs text-center text-gray-400 py-4 italic bg-gray-50/50 dark:bg-slate-800/40 rounded-xl">
-                          {isBn ? "এই মাসে এই মেম্বারের কোনো চাল জমা রেকর্ড নেই" : "No deposit records for this member in this month"}
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {historyList.map((h) => {
-                            const isAdd = h.amount >= 0;
-                            return (
-                              <div
-                                key={h.id}
-                                className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700/60"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${isAdd ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400"}`}>
-                                    {isAdd ? "+" : "-"}
-                                  </div>
-                                  <div>
-                                    <p className="text-xs font-bold text-gray-900 dark:text-white">
-                                      {formatDate(h.date)}
-                                    </p>
-                                    {h.note && (
-                                      <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                                        💬 {h.note}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                  <span className={`text-sm font-bold font-[family-name:var(--font-mono)] ${isAdd ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                                    {isAdd ? `+${formatRice(h.amount)}` : formatRice(h.amount)} {unit}
-                                  </span>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteTargetId(h.id);
-                                    }}
-                                    className="p-1.5 text-gray-400 hover:text-rose-500 transition rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
-                                    title="Delete Deposit Entry"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
+                    {/* Expanded Content */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-2 border-t border-dashed border-gray-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 space-y-3">
+                        <div className="flex items-center justify-between pt-2">
+                          <p className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                            {isBn ? `${m.name}-এর চাল জমার ইতিহাস` : `Deposit Records for ${m.name}`}
+                          </p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMemberId(m.userId);
+                              setIsModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 bg-[#ff6900] hover:bg-[#1B2A26] text-white rounded-md text-xs font-semibold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                          >
+                            <Plus size={14} />
+                            <span>{isBn ? "নতুন চাল জমা" : "+ New Deposit"}</span>
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+
+                        {historyList.length === 0 ? (
+                          <p className="text-xs text-center text-gray-400 py-4 italic bg-gray-50/50 dark:bg-slate-800/40 rounded-xl">
+                            {isBn ? "এই মাসে এই মেম্বারের কোনো চাল জমা রেকর্ড নেই" : "No deposit records for this member in this month"}
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            {historyList.map((h) => {
+                              const isAdd = h.amount >= 0;
+                              return (
+                                <div
+                                  key={h.id}
+                                  className="flex items-center justify-between p-3 rounded-xl bg-gray-50/80 dark:bg-slate-800/80 border border-gray-100 dark:border-slate-700/60"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                                        isAdd
+                                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                                          : "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
+                                      }`}
+                                    >
+                                      {isAdd ? "+" : "-"}
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-bold text-gray-900 dark:text-white">
+                                        {formatDate(h.date)}
+                                      </p>
+                                      {h.note && (
+                                        <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                                          💬 {h.note}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-3">
+                                    <span
+                                      className={`text-sm font-bold font-[family-name:var(--font-mono)] ${
+                                        isAdd ? "text-[#3F7D5C] dark:text-emerald-400" : "text-[#B5533C] dark:text-rose-400"
+                                      }`}
+                                    >
+                                      {isAdd ? `+${formatRice(h.amount)}` : formatRice(h.amount)} {unit}
+                                    </span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteTargetId(h.id);
+                                      }}
+                                      className="p-1.5 text-gray-400 hover:text-rose-500 transition rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 cursor-pointer"
+                                      title="Delete Deposit Entry"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Add Deposit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-gray-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Plus size={18} className="text-amber-500" />
-                <span>{isBn ? "চাল জমা/বিয়োগ এন্ট্রি করুন" : "Add / Deduct Rice Deposit"}</span>
+                <Plus size={18} className="text-[#ff6900]" />
+                <span className="font-[family-name:var(--font-display)]">
+                  {isBn ? "চাল জমা/বিয়োগ এন্ট্রি করুন" : "Add / Deduct Rice Deposit"}
+                </span>
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 rounded-full"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 rounded-full cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -1030,7 +1060,7 @@ export default function ManagerRiceOverviewPage() {
                 <select
                   value={selectedMemberId}
                   onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                 >
                   {data.members.map((m) => (
                     <option key={m.userId} value={m.userId}>
@@ -1050,7 +1080,7 @@ export default function ManagerRiceOverviewPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="e.g. 50 to add, or -5 to deduct"
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                   required
                 />
               </div>
@@ -1061,7 +1091,7 @@ export default function ManagerRiceOverviewPage() {
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                   required
                 />
               </div>
@@ -1075,7 +1105,7 @@ export default function ManagerRiceOverviewPage() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="e.g. Rice deposit or adjustment note"
-                  className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                 />
               </div>
 
@@ -1083,14 +1113,14 @@ export default function ManagerRiceOverviewPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-sm transition disabled:opacity-50 cursor-pointer"
+                  className="px-5 py-2 bg-[#ff6900] hover:bg-[#1B2A26] text-white rounded-xl text-xs font-semibold shadow-sm transition disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? "Saving..." : "Save Entry"}
                 </button>
@@ -1103,7 +1133,7 @@ export default function ManagerRiceOverviewPage() {
       {/* Delete Confirmation Modal */}
       {deleteTargetId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150 text-center">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-gray-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150 text-center">
             <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-500 flex items-center justify-center mx-auto">
               <AlertTriangle size={24} />
             </div>
@@ -1123,7 +1153,7 @@ export default function ManagerRiceOverviewPage() {
               <button
                 type="button"
                 onClick={() => setDeleteTargetId(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-bold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 {isBn ? "ক্যানসেল" : "Cancel"}
               </button>
@@ -1131,9 +1161,9 @@ export default function ManagerRiceOverviewPage() {
                 type="button"
                 disabled={deleting}
                 onClick={handleConfirmDelete}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-500/20 transition disabled:opacity-50 cursor-pointer"
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-rose-500/20 transition disabled:opacity-50 cursor-pointer"
               >
-                {deleting ? (isBn ? "মুছছে..." : "Deleting...") : (isBn ? "হ্যাঁ, মুছুন" : "Yes, Delete")}
+                {deleting ? (isBn ? "মুছছে..." : "Deleting...") : isBn ? "হ্যাঁ, মুছুন" : "Yes, Delete"}
               </button>
             </div>
           </div>
