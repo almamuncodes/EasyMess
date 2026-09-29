@@ -265,15 +265,7 @@ export default function Sidebar() {
 
   if (!role) {
     return (
-      <p className="text-center
-    text-gray-600
-    text-xl
-    font-semibold
-    max-w-md
-    mx-auto
-    leading-relaxed
-   
-  ">
+      <p className="text-center text-gray-600 text-xl font-semibold max-w-md mx-auto leading-relaxed">
         Please create or join a mess first to access your dashboard
       </p>
     );

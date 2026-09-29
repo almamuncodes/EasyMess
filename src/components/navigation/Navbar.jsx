@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, Sun, Moon, Bell, Settings } from "lucide-react";
@@ -74,6 +74,59 @@ export default function Navbar() {
 
   const navLinks = isLoggedIn ? loggedInMenu : publicMenu;
 
+  // Liquid Glass Pill Navigation
+  const [hoveredHref, setHoveredHref] = useState(null);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, height: 0, top: 0, opacity: 0 });
+  const navContainerRef = useRef(null);
+  const itemRefs = useRef({});
+
+  const isItemActive = useCallback(
+    (href) => {
+      if (href === "/") return pathname === "/";
+      if (href.startsWith("/dashboard")) return pathname.startsWith("/dashboard");
+      return pathname === href || pathname.startsWith(href + "/");
+    },
+    [pathname]
+  );
+
+  const updatePill = useCallback(
+    (targetHref) => {
+      const container = navContainerRef.current;
+      if (!container) return;
+
+      const activeItem = navLinks.find((item) => isItemActive(item.href));
+      const effectiveHref = targetHref ?? activeItem?.href;
+
+      if (!effectiveHref || !itemRefs.current[effectiveHref]) {
+        setPillStyle((prev) => (prev.opacity === 0 ? prev : { ...prev, opacity: 0 }));
+        return;
+      }
+
+      const targetEl = itemRefs.current[effectiveHref];
+      const containerRect = container.getBoundingClientRect();
+      const elRect = targetEl.getBoundingClientRect();
+
+      setPillStyle({
+        left: elRect.left - containerRect.left,
+        top: elRect.top - containerRect.top,
+        width: elRect.width,
+        height: elRect.height,
+        opacity: 1,
+      });
+    },
+    [navLinks, isItemActive]
+  );
+
+  useEffect(() => {
+    updatePill(hoveredHref);
+  }, [hoveredHref, pathname, navLinks, lang, themeMounted, updatePill]);
+
+  useEffect(() => {
+    const handleResize = () => updatePill(hoveredHref);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [hoveredHref, updatePill]);
+
   const toggleLanguage = () => {
     const newLang = lang === "en" ? "bn" : "en";
     setLang(newLang);
@@ -107,29 +160,52 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`
-      transition font-medium relative flex items-center
-      ${
-        pathname === item.href
-          ? "text-orange-500 border-b-2 border-orange-500 "
-          : "text-gray-700 hover:text-orange-500"
-      }
-    `}
-            >
-              <span>{item.name}</span>
-              {item.href === "/chat" && pathname !== "/chat" && chatUnreadCount > 0 && (
-                <span className="ml-1.5 px-1.5 min-w-[18px] h-[18px] bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] font-black font-mono rounded-full flex items-center justify-center shadow-xs">
-                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-                </span>
-              )}
-            </Link>
-          ))}
+        {/* Desktop Liquid Glass Pill Menu */}
+        <div
+          ref={navContainerRef}
+          onMouseLeave={() => setHoveredHref(null)}
+          className="hidden md:flex items-center relative p-1 rounded-full bg-orange-500/[0.07] dark:bg-slate-800/80 backdrop-blur-xl border border-orange-500/15 dark:border-white/10 shadow-[inset_0_1px_3px_rgba(255,255,255,0.7),0_2px_12px_rgba(249,115,22,0.06)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06),0_4px_20px_rgba(0,0,0,0.35)]"
+        >
+          {/* Liquid Sliding Pill Indicator */}
+          <span
+            className="absolute rounded-full transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] pointer-events-none bg-white dark:bg-slate-900 shadow-[0_2px_10px_rgba(249,115,22,0.18),0_1px_3px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.7)] border border-orange-100/90 dark:border-slate-700/80"
+            style={{
+              left: `${pillStyle.left}px`,
+              top: `${pillStyle.top}px`,
+              width: `${pillStyle.width}px`,
+              height: `${pillStyle.height}px`,
+              opacity: pillStyle.opacity,
+            }}
+          />
+
+          {navLinks.map((item) => {
+            const isActive = isItemActive(item.href);
+            const isHovered = hoveredHref === item.href;
+            const isHighlighted = hoveredHref ? isHovered : isActive;
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                ref={(el) => {
+                  if (el) itemRefs.current[item.href] = el;
+                }}
+                onMouseEnter={() => setHoveredHref(item.href)}
+                className={`relative z-10 px-5 py-2 rounded-full text-sm font-semibold transition-colors duration-200 flex items-center gap-1.5 select-none ${
+                  isHighlighted
+                    ? "text-orange-600 dark:text-orange-400 font-bold"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                <span>{item.name}</span>
+                {item.href === "/chat" && pathname !== "/chat" && chatUnreadCount > 0 && (
+                  <span className="ml-1 px-1.5 min-w-[18px] h-[18px] bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] font-black font-mono rounded-full flex items-center justify-center shadow-xs">
+                    {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right Actions */}

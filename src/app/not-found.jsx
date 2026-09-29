@@ -63,13 +63,7 @@ const NotFound = () => {
 
       <Link
         href="/"
-        className="group inline-flex items-center gap-2 bg-orange-500 
-                   text-white font-semibold px-6 py-3 rounded-full 
-                   shadow-md transition-all duration-300 ease-in-out
-                   hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-300/50
-                   hover:-translate-y-1 hover:scale-105
-                   active:scale-95 active:translate-y-0
-                   anim-fade-in-up delay-300"
+        className="group inline-flex items-center gap-2 bg-orange-500 text-white font-semibold px-6 py-3 rounded-full shadow-md transition-all duration-300 ease-in-out hover:bg-orange-600 hover:shadow-xl hover:shadow-orange-300/50 hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0 anim-fade-in-up delay-300"
       >
         <Home
           size={20}
