@@ -1158,7 +1158,7 @@ export default function MessChatPage() {
 
   // RENDER: Full Mess Chat Room
   return (
-    <div className="w-full flex-1 flex flex-col h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-5.5rem)] min-h-0 bg-gradient-to-br from-[#FAF2E8] via-[#FCF7F0] to-[#FFFDFB] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
+    <div className="w-full flex-1 flex flex-col h-[calc(100dvh-8.5rem)] md:h-[calc(100dvh-5.5rem)] min-h-0 overflow-x-hidden bg-gradient-to-br from-[#FAF2E8] via-[#FCF7F0] to-[#FFFDFB] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors">
       <div className="max-w-4xl w-full mx-auto px-2 sm:px-4 pt-1.5 pb-2 md:py-3 flex-1 flex flex-col min-h-0">
         {/* 1. CHAT HEADER */}
         <div className="shrink-0 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl border border-[#EFE2D2]/90 dark:border-slate-800/80 rounded-2xl p-2.5 sm:p-3 shadow-xs flex items-center justify-between mb-2 transition-all">
@@ -1319,11 +1319,13 @@ export default function MessChatPage() {
       <div
         ref={chatContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto min-h-0 rounded-3xl bg-gradient-to-br from-[#FAF2E8]/75 via-white/80 to-[#FAF2E8]/55 dark:from-slate-900/70 dark:via-slate-900/85 dark:to-slate-950/90 border border-[#EFE2D2]/90 dark:border-slate-800/80 p-3 sm:p-5 space-y-4 shadow-inner relative"
+        className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 rounded-3xl bg-gradient-to-br from-[#FAF2E8]/75 via-white/80 to-[#FAF2E8]/55 dark:from-slate-900/70 dark:via-slate-900/85 dark:to-slate-950/90 border border-[#EFE2D2]/90 dark:border-slate-800/80 p-3 sm:p-5 space-y-4 shadow-inner relative"
       >
         {/* Subtle Ambient Decorative Glows for Apple iOS Liquid Glass Refraction */}
-        <div className="pointer-events-none absolute -top-16 -left-16 w-72 h-72 bg-[#F6DFC8]/50 dark:bg-orange-500/10 rounded-full blur-3xl" />
-        <div className="pointer-events-none absolute top-1/2 -right-16 w-80 h-80 bg-[#FAEAD9]/60 dark:bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+          <div className="absolute -top-16 -left-16 w-72 h-72 bg-[#F6DFC8]/50 dark:bg-orange-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 -right-16 w-80 h-80 bg-[#FAEAD9]/60 dark:bg-amber-500/10 rounded-full blur-3xl" />
+        </div>
         {loading ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400">
             <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
