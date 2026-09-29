@@ -265,23 +265,23 @@ export default function BottomNav() {
             <Link
               key={tab.name}
               href={tab.href}
-              className={`relative flex flex-col items-center justify-center py-1.5 px-2.5 sm:px-3 rounded-2xl transition-all duration-200 active:scale-95 select-none ${
+              className={`relative flex flex-col items-center justify-center py-2 px-2.5 sm:px-3 rounded-2xl transition-all duration-200 active:scale-95 select-none ${
                 isActive
-                  ? "text-white font-bold scale-105"
-                  : "text-gray-600 dark:text-gray-400 hover:text-orange-500 dark:hover:text-gray-200"
+                  ? "text-orange-500 dark:text-orange-400 font-bold"
+                  : "text-gray-500 dark:text-gray-400 hover:text-orange-500 dark:hover:text-gray-200"
               }`}
             >
-              {/* Active Tab Highlight Capsule */}
+              {/* Active Tab Top Orange Line Indicator */}
               {isActive && (
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/25 border border-orange-400/40 transition-all duration-300 -z-10" />
+                <span className="absolute top-0 w-7 h-[3px] rounded-full bg-gradient-to-r from-orange-500 to-amber-500 shadow-[0_2px_8px_rgba(249,115,22,0.5)] transition-all duration-200" />
               )}
 
               <div className="relative flex items-center justify-center">
                 {tab.isProfile && userImage ? (
                   <div
-                    className={`w-6 h-6 rounded-full overflow-hidden border transition-all duration-300 ${
+                    className={`w-6 h-6 rounded-full overflow-hidden border transition-all duration-200 ${
                       isActive
-                        ? "border-white ring-2 ring-white/50 scale-110 shadow-sm"
+                        ? "border-orange-500 ring-2 ring-orange-500/30 scale-105 shadow-sm"
                         : "border-gray-300 dark:border-slate-700"
                     }`}
                   >
@@ -295,9 +295,9 @@ export default function BottomNav() {
                   </div>
                 ) : tab.isProfile && userName ? (
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 ${
                       isActive
-                        ? "bg-white text-orange-600 shadow-sm scale-110"
+                        ? "bg-orange-500 text-white shadow-sm scale-105"
                         : "bg-gray-200 dark:bg-slate-800 text-gray-700 dark:text-gray-300"
                     }`}
                   >
@@ -306,9 +306,9 @@ export default function BottomNav() {
                 ) : (
                   <Icon
                     size={20}
-                    className={`transition-all duration-300 ${
+                    className={`transition-all duration-200 ${
                       isActive
-                        ? "scale-110 stroke-[2.4] text-white"
+                        ? "scale-105 stroke-[2.4] text-orange-500 dark:text-orange-400"
                         : "scale-100 stroke-[1.8]"
                     }`}
                   />
@@ -322,7 +322,13 @@ export default function BottomNav() {
                 )}
               </div>
 
-              <span className={`text-[10px] tracking-tight mt-1 font-semibold ${isActive ? "text-white" : "text-gray-600 dark:text-gray-300"}`}>
+              <span
+                className={`text-[10px] tracking-tight mt-1 font-semibold ${
+                  isActive
+                    ? "text-orange-500 dark:text-orange-400 font-bold"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
+              >
                 {tab.name}
               </span>
             </Link>
