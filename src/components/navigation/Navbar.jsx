@@ -67,8 +67,8 @@ export default function Navbar() {
 
   const loggedInMenu = [
     { name: themeMounted ? t("home") : "Home", href: "/" },
+    { name: themeMounted ? t("sheet") : "Sheet", href: "/sheet" },
     { name: themeMounted ? t("chat") : "Chat", href: "/chat" },
-    { name: themeMounted ? t("notice") : "Notice", href: "/notice" },
     { name: themeMounted ? t("dashboard") : "Dashboard", href: dashboardHref },
   ];
 

@@ -22,6 +22,7 @@ import {
   Mail,
   MessageSquare,
   Boxes,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -188,6 +189,12 @@ export default function Sidebar() {
       href: "/dashboard/manager-dashboard/meal-management",
       icon: UtensilsCrossed,
       roles: [ "manager"],
+    },
+    {
+      name: lang === "bn" ? "মিল খাতা (শিট)" : "Meal Sheet",
+      href: "/sheet",
+      icon: FileSpreadsheet,
+      roles: ["manager", "member"],
     },
     ...(riceConfig?.enableRiceManagement === true
       ? [

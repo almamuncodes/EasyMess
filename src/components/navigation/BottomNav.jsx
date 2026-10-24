@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutDashboard, MessageCircle, ClipboardList, User } from "lucide-react";
+import { Home, LayoutDashboard, MessageCircle, FileSpreadsheet, User } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import { useSocket } from "@/components/providers/SocketProvider";
@@ -169,8 +169,8 @@ export default function BottomNav() {
         const navList = [
           "/",
           dashboardHref,
+          "/sheet",
           "/chat",
-          "/notice",
           "/profile",
         ];
 
@@ -226,14 +226,14 @@ export default function BottomNav() {
       icon: LayoutDashboard,
     },
     {
+      name: t("sheet") || "Sheet",
+      href: "/sheet",
+      icon: FileSpreadsheet,
+    },
+    {
       name: t("chat") || "Chat",
       href: "/chat",
       icon: MessageCircle,
-    },
-    {
-      name: t("notice") || "Notice",
-      href: "/notice",
-      icon: ClipboardList,
     },
     {
       name: t("profile") || "Profile",
