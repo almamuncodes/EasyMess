@@ -198,6 +198,11 @@ export default function Navbar() {
                 }`}
               >
                 <span>{item.name}</span>
+                {item.href === "/sheet" && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white text-[8px] font-black tracking-wider uppercase rounded-full shadow-xs animate-bounce pointer-events-none select-none leading-none">
+                    NEW
+                  </span>
+                )}
                 {item.href === "/chat" && pathname !== "/chat" && chatUnreadCount > 0 && (
                   <span className="ml-1 px-1.5 min-w-[18px] h-[18px] bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] font-black font-mono rounded-full flex items-center justify-center shadow-xs">
                     {chatUnreadCount > 9 ? "9+" : chatUnreadCount}

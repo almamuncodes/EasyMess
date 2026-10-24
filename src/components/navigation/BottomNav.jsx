@@ -251,7 +251,7 @@ export default function BottomNav() {
           : "opacity-100 translate-y-0"
       }`}
     >
-      <div className="pointer-events-auto relative bg-white/65 dark:bg-slate-900/65 backdrop-blur-2xl backdrop-saturate-200 border border-white/80 dark:border-white/15 shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] rounded-[26px] p-1.5 px-3 flex justify-around items-center ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300 overflow-hidden">
+      <div className="pointer-events-auto relative bg-white/65 dark:bg-slate-900/65 backdrop-blur-2xl backdrop-saturate-200 border border-white/80 dark:border-white/15 shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.6)] rounded-[26px] p-1.5 px-3 flex justify-around items-center ring-1 ring-black/5 dark:ring-white/10 transition-all duration-300">
         {/* Specular Top Edge Light */}
         <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/90 dark:via-white/20 to-transparent pointer-events-none" />
 
@@ -312,6 +312,13 @@ export default function BottomNav() {
                         : "scale-100 stroke-[1.8]"
                     }`}
                   />
+                )}
+
+                {/* Animated Bouncing "NEW" Badge for Sheet */}
+                {tab.href === "/sheet" && (
+                  <span className="absolute -top-2.5 -right-3.5 px-1.5 py-0.5 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white text-[7.5px] font-black tracking-wider uppercase rounded-full shadow-[0_2px_8px_rgba(244,63,94,0.5)] border border-white dark:border-slate-900 animate-bounce pointer-events-none select-none leading-none z-20">
+                    NEW
+                  </span>
                 )}
 
                 {/* Unread Chat Badge (9+ if > 9) */}

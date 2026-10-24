@@ -303,6 +303,11 @@ export default function Sidebar() {
             >
               <Icon size={16} />
               <span className="text-sm font-medium">{item.name}</span>
+              {item.href === "/sheet" && (
+                <span className="px-1.5 py-0.2 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-black uppercase rounded-full shadow-xs animate-bounce leading-none">
+                  NEW
+                </span>
+              )}
             </Link>
           );
         })}
@@ -332,6 +337,11 @@ export default function Sidebar() {
                 <div className="flex items-center gap-3">
                   <Icon size={20} />
                   <span className="font-medium">{item.name}</span>
+                  {item.href === "/sheet" && (
+                    <span className="px-1.5 py-0.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[8px] font-black tracking-wider uppercase rounded-full shadow-xs animate-bounce leading-none">
+                      NEW
+                    </span>
+                  )}
                 </div>
               </Link>
             );
