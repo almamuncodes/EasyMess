@@ -623,33 +623,49 @@ export default function MealSheetPage() {
                   </tr>
                 ) : (
                   filteredMembers.map((member, memberIdx) => {
+                    const isMe = String(member.userId) === String(userId);
                     const isEven = memberIdx % 2 === 0;
-                    const bgClass = isEven
+                    const bgClass = isMe
+                      ? "bg-orange-50/80 dark:bg-orange-950/25"
+                      : isEven
                       ? "bg-white dark:bg-slate-900"
                       : "bg-slate-50/60 dark:bg-slate-800/30";
 
                     return (
                       <React.Fragment key={member.userId}>
                         {/* Row 1: Breakfast + Spanned Clean Member Name */}
-                        <tr className={`${bgClass} hover:bg-orange-500/5 transition-colors group`}>
-                          {/* Clean Member Info Cell - Fixed Width, Scaled Text, No Clutter */}
+                        <tr className={`${bgClass} hover:bg-orange-500/10 transition-colors group`}>
+                          {/* Clean Member Info Cell - Fixed Width, Scaled Text, Highlight for logged-in user */}
                           <td
                             rowSpan={3}
-                            className={`sticky left-0 z-20 ${bgClass} px-1.5 py-1.5 text-left border-r border-slate-200 dark:border-slate-700 align-middle w-[88px] min-w-[88px] max-w-[88px] sm:w-[115px] sm:min-w-[115px] sm:max-w-[115px] shadow-xs`}
+                            className={`sticky left-0 z-20 ${bgClass} px-1.5 py-1.5 text-left border-r border-slate-200 dark:border-slate-700 align-middle w-[88px] min-w-[88px] max-w-[88px] sm:w-[115px] sm:min-w-[115px] sm:max-w-[115px] shadow-xs ${
+                              isMe ? "border-l-4 border-l-orange-500" : ""
+                            }`}
                           >
                             <div className="flex flex-col justify-center overflow-hidden">
-                              <p
-                                className={`font-bold text-slate-800 dark:text-white break-words leading-tight ${
-                                  (member.name || "").length > 15
-                                    ? "text-[9px]"
-                                    : (member.name || "").length > 9
-                                    ? "text-[10px]"
-                                    : "text-[11px] sm:text-xs"
-                                }`}
-                                title={member.name}
-                              >
-                                {member.name}
-                              </p>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <p
+                                  className={`font-bold break-words leading-tight ${
+                                    isMe
+                                      ? "text-orange-600 dark:text-orange-400 font-extrabold"
+                                      : "text-slate-800 dark:text-white"
+                                  } ${
+                                    (member.name || "").length > 15
+                                      ? "text-[9px]"
+                                      : (member.name || "").length > 9
+                                      ? "text-[10px]"
+                                      : "text-[11px] sm:text-xs"
+                                  }`}
+                                  title={member.name}
+                                >
+                                  {member.name}
+                                </p>
+                                {isMe && (
+                                  <span className="text-[7.5px] font-extrabold px-1 py-0.2 rounded bg-orange-500 text-white leading-none shrink-0">
+                                    {isBn ? "আপনি" : "You"}
+                                  </span>
+                                )}
+                              </div>
                               {!member.isActive && (
                                 <span className="text-[7.5px] text-rose-500 font-semibold leading-none mt-0.5">
                                   {isBn ? "(ত্যাগ)" : "(Left)"}
