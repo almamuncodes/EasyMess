@@ -724,11 +724,29 @@ export default function MealSheetPage() {
                             );
                           })}
 
-                          {/* Member Total Breakfast */}
+                          {/* Member Total - Spans all 3 rows (B, L, D) so all rows have 100% equal height */}
                           <td
-                            className={`md:sticky md:right-0 z-10 ${bgClass} px-1 py-1 border-l-2 border-slate-300 dark:border-slate-700 font-mono text-center font-semibold text-amber-600 dark:text-amber-400 text-[11px]`}
+                            rowSpan={3}
+                            className={`md:sticky md:right-0 z-10 ${bgClass} px-1.5 py-1 border-l-2 border-slate-300 dark:border-slate-700 font-mono text-center align-middle w-12 sm:w-16 min-w-[46px] sm:min-w-[60px] shadow-xs`}
                           >
-                            {member.totals.breakfast}
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <div className="bg-orange-500/15 text-orange-600 dark:text-orange-400 font-black text-xs sm:text-sm px-1.5 py-0.5 rounded-md leading-tight">
+                                {member.totals.totalRaw}
+                              </div>
+                              <div className="text-[8.5px] font-semibold text-slate-500 dark:text-slate-400 leading-none flex items-center justify-center gap-0.5 whitespace-nowrap">
+                                <span className="text-amber-600 dark:text-amber-400" title={isBn ? "সকাল" : "Breakfast"}>
+                                  {member.totals.breakfast}
+                                </span>
+                                <span className="text-slate-300 dark:text-slate-600">/</span>
+                                <span className="text-sky-600 dark:text-sky-400" title={isBn ? "দুপুর" : "Lunch"}>
+                                  {member.totals.lunch}
+                                </span>
+                                <span className="text-slate-300 dark:text-slate-600">/</span>
+                                <span className="text-indigo-600 dark:text-indigo-400" title={isBn ? "রাত" : "Dinner"}>
+                                  {member.totals.dinner}
+                                </span>
+                              </div>
+                            </div>
                           </td>
                         </tr>
 
@@ -783,16 +801,9 @@ export default function MealSheetPage() {
                               </td>
                             );
                           })}
-
-                          {/* Member Total Lunch */}
-                          <td
-                            className={`md:sticky md:right-0 z-10 ${bgClass} px-1 py-1 border-l-2 border-slate-300 dark:border-slate-700 font-mono text-center font-semibold text-sky-600 dark:text-sky-400 text-[11px]`}
-                          >
-                            {member.totals.lunch}
-                          </td>
                         </tr>
 
-                        {/* Row 3: Dinner + Member Grand Total */}
+                        {/* Row 3: Dinner */}
                         <tr className={`${bgClass} hover:bg-orange-500/5 transition-colors border-b-2 border-slate-300/80 dark:border-slate-700/80 group`}>
                           {/* Dinner Label - Compact */}
                           <td
@@ -843,18 +854,6 @@ export default function MealSheetPage() {
                               </td>
                             );
                           })}
-
-                          {/* Member Total Dinner & Subtotal Box */}
-                          <td
-                            className={`md:sticky md:right-0 z-10 ${bgClass} px-1 py-1 border-l-2 border-slate-300 dark:border-slate-700 font-mono text-center`}
-                          >
-                            <div className="text-indigo-600 dark:text-indigo-400 font-semibold text-[10px] leading-tight">
-                              {member.totals.dinner}
-                            </div>
-                            <div className="bg-orange-500/10 text-orange-600 dark:text-orange-400 font-extrabold text-[11px] px-1 py-0.5 rounded mt-0.5">
-                              {member.totals.totalRaw}
-                            </div>
-                          </td>
                         </tr>
                       </React.Fragment>
                     );
