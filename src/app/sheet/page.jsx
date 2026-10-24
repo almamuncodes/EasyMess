@@ -14,7 +14,6 @@ import {
   Download,
   Maximize2,
   Minimize2,
-  Printer,
   RefreshCw,
   Search,
   Users,
@@ -272,11 +271,6 @@ export default function MealSheetPage() {
     toast.success(isBn ? "সিএসভি ফাইল ডাউনলোড হয়েছে" : "CSV exported successfully");
   };
 
-  // Browser print trigger
-  const handlePrint = () => {
-    window.print();
-  };
-
   // If user is not logged in
   if (!isAuthPending && !userId) {
     return (
@@ -440,16 +434,6 @@ export default function MealSheetPage() {
           >
             <Download className="w-4 h-4 text-emerald-500" />
             <span className="hidden sm:inline">{isBn ? "এক্সপোর্ট" : "Export"}</span>
-          </button>
-
-          {/* Print Button */}
-          <button
-            onClick={handlePrint}
-            title={isBn ? "প্রিন্ট করুন" : "Print Sheet"}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-medium rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
-          >
-            <Printer className="w-4 h-4 text-blue-500" />
-            <span className="hidden sm:inline">{isBn ? "প্রিন্ট" : "Print"}</span>
           </button>
 
           {/* Fullscreen Button */}
