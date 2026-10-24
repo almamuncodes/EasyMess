@@ -169,8 +169,8 @@ export default function BottomNav() {
         const navList = [
           "/",
           dashboardHref,
-          "/sheet",
           "/chat",
+          "/sheet",
           "/profile",
         ];
 
@@ -226,14 +226,14 @@ export default function BottomNav() {
       icon: LayoutDashboard,
     },
     {
-      name: t("sheet") || "Sheet",
-      href: "/sheet",
-      icon: FileSpreadsheet,
-    },
-    {
       name: t("chat") || "Chat",
       href: "/chat",
       icon: MessageCircle,
+    },
+    {
+      name: t("sheet") || "Sheet",
+      href: "/sheet",
+      icon: FileSpreadsheet,
     },
     {
       name: t("profile") || "Profile",
