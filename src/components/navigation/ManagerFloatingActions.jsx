@@ -9,7 +9,7 @@ import {
   Store,
   Wallet,
   X,
-  Sparkles,
+  Power,
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
@@ -458,12 +458,7 @@ export default function ManagerFloatingActions() {
           {isOpen ? (
             <X size={22} className="transition-transform duration-200" />
           ) : (
-            <div className="flex flex-col items-center justify-center pointer-events-none select-none">
-              <Sparkles size={18} className="animate-spin-slow" />
-              <span className="text-[9px] font-black tracking-tighter uppercase mt-0.5 leading-none">
-                MGR
-              </span>
-            </div>
+            <Power size={22} className="stroke-[2.5] transition-transform group-hover:scale-110 pointer-events-none select-none" />
           )}
 
           {/* Left/Right Dock Guide Arrow */}
