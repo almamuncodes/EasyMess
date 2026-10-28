@@ -46,7 +46,12 @@ export default function ManagerRiceManagementPage() {
   const [loading, setLoading] = useState(true);
 
   const [members, setMembers] = useState([]);
-  const [activeGuestUserId, setActiveGuestUserId] = useState(null);
+  const [mealWeights, setMealWeights] = useState({ breakfast: 0.5, lunch: 1, dinner: 1 });
+
+  // Guest Meal Modal state
+  const [editingGuestMember, setEditingGuestMember] = useState(null);
+  const [isGuestModalOpen, setIsGuestModalOpen] = useState(false);
+  const [savingGuest, setSavingGuest] = useState(false);
 
   // Deposit modal state
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -55,7 +60,25 @@ export default function ManagerRiceManagementPage() {
   const [depositNote, setDepositNote] = useState("");
   const [savingDeposit, setSavingDeposit] = useState(false);
 
-  const fetchData = async (showLoader = false) => {
+  // Fetch Mess meal settings (weights)
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/user/mess-settings/${userId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.mealSettings) {
+          const ms = d.mealSettings;
+          setMealWeights({
+            breakfast: ms.breakfastWeight !== undefined ? Number(ms.breakfastWeight) : 0.5,
+            lunch: ms.lunchWeight !== undefined ? Number(ms.lunchWeight) : 1,
+            dinner: ms.dinnerWeight !== undefined ? Number(ms.dinnerWeight) : 1,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
+
+  const fetchData = React.useCallback(async (showLoader = false) => {
     if (!userId) return;
     if (showLoader) setLoading(true);
 
@@ -75,10 +98,33 @@ export default function ManagerRiceManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, date]);
 
   useEffect(() => {
-    if (userId) fetchData(true);
+    if (!userId) return;
+    let ignore = false;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/rice/daily?managerId=${userId}&date=${date}`)
+      .then((res) => res.json())
+      .then((resData) => {
+        if (ignore) return;
+        setLoading(false);
+        if (resData.success) {
+          setMembers(resData.members || []);
+        } else {
+          toast.error(resData.message || "Failed to load daily rice management");
+        }
+      })
+      .catch((err) => {
+        if (ignore) return;
+        console.error(err);
+        setLoading(false);
+        toast.error("Error connecting to server");
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, [userId, date]);
 
   // Toggle rice state (Breakfast, Lunch, Dinner Rice) without changing meal management meals!
@@ -115,23 +161,41 @@ export default function ManagerRiceManagementPage() {
     }
   };
 
-  // Change Guest Rice count (+ / -) without touching original Meal Management Guest Meals!
-  const handleGuestMealChange = async (memberId, delta) => {
-    const member = members.find((m) => m.userId === memberId);
-    if (!member) return;
+  // Open modal for guest meals edit
+  const openGuestModal = (member) => {
+    setEditingGuestMember({
+      userId: member.userId,
+      name: member.name,
+      image: member.image,
+      guestBreakfast: member.guestBreakfast || 0,
+      guestLunch: member.guestLunch || 0,
+      guestDinner: member.guestDinner || 0,
+      guestRiceExtra: member.guestRiceExtra || 0,
+    });
+    setIsGuestModalOpen(true);
+  };
 
-    const currentExtra = member.guestRiceExtra || 0;
-    const baseGuest = (member.guestBreakfast || 0) + (member.guestLunch || 0) + (member.guestDinner || 0);
+  // Save guest meals per meal time (Breakfast, Lunch, Dinner)
+  const handleSaveGuestMeals = async () => {
+    if (!editingGuestMember || !userId) return;
+    setSavingGuest(true);
 
-    // Prevent total guest rice from going below 0
-    if (baseGuest + currentExtra + delta < 0) return;
-
-    const newExtra = currentExtra + delta;
+    const bCount = mealWeights.breakfast === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestBreakfast) || 0);
+    const lCount = mealWeights.lunch === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestLunch) || 0);
+    const dCount = mealWeights.dinner === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestDinner) || 0);
 
     // Optimistic UI update
     setMembers((prev) =>
       prev.map((m) =>
-        m.userId === memberId ? { ...m, guestRiceExtra: newExtra } : m
+        m.userId === editingGuestMember.userId
+          ? {
+              ...m,
+              guestBreakfast: bCount,
+              guestLunch: lCount,
+              guestDinner: dCount,
+              guestRiceExtra: 0,
+            }
+          : m
       )
     );
 
@@ -143,20 +207,33 @@ export default function ManagerRiceManagementPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             managerId: userId,
-            userId: memberId,
+            userId: editingGuestMember.userId,
             date,
-            guestRiceExtra: newExtra,
+            guestBreakfast: bCount,
+            guestLunch: lCount,
+            guestDinner: dCount,
+            guestRiceExtra: 0,
           }),
         }
       );
       const resData = await res.json();
-      if (!resData.success) {
+      if (resData.success) {
+        toast.success(
+          isBn
+            ? `${editingGuestMember.name}-এর গেস্ট মিল আপডেট হয়েছে`
+            : `Updated guest meals for ${editingGuestMember.name}`
+        );
+        setIsGuestModalOpen(false);
+        fetchData(false);
+      } else {
         toast.error(resData.message || "Failed to update guest rice");
         fetchData(false);
       }
     } catch (err) {
       toast.error("Error updating guest rice");
       fetchData(false);
+    } finally {
+      setSavingGuest(false);
     }
   };
 
@@ -214,10 +291,13 @@ export default function ManagerRiceManagementPage() {
       if (isBf) acc.breakfast += 1;
       if (isLn) acc.lunch += 1;
       if (isDn) acc.dinner += 1;
+      acc.guestBreakfast += curr.guestBreakfast || 0;
+      acc.guestLunch += curr.guestLunch || 0;
+      acc.guestDinner += curr.guestDinner || 0;
       acc.guestMeal += (curr.guestBreakfast || 0) + (curr.guestLunch || 0) + (curr.guestDinner || 0) + (curr.guestRiceExtra || 0);
       return acc;
     },
-    { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 }
+    { breakfast: 0, lunch: 0, dinner: 0, guestBreakfast: 0, guestLunch: 0, guestDinner: 0, guestMeal: 0 }
   );
 
   if (loading) {
@@ -308,6 +388,11 @@ export default function ManagerRiceManagementPage() {
           <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
             {summary.breakfast} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Meals"}</span>
           </p>
+          {summary.guestBreakfast > 0 && (
+            <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 mt-0.5">
+              +{summary.guestBreakfast} {isBn ? "গেস্ট" : "guest"}
+            </p>
+          )}
         </div>
 
         {/* Lunch */}
@@ -321,6 +406,11 @@ export default function ManagerRiceManagementPage() {
           <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
             {summary.lunch} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Meals"}</span>
           </p>
+          {summary.guestLunch > 0 && (
+            <p className="text-[11px] font-semibold text-orange-700 dark:text-orange-300 mt-0.5">
+              +{summary.guestLunch} {isBn ? "গেস্ট" : "guest"}
+            </p>
+          )}
         </div>
 
         {/* Dinner */}
@@ -334,6 +424,11 @@ export default function ManagerRiceManagementPage() {
           <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
             {summary.dinner} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Meals"}</span>
           </p>
+          {summary.guestDinner > 0 && (
+            <p className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 mt-0.5">
+              +{summary.guestDinner} {isBn ? "গেস্ট" : "guest"}
+            </p>
+          )}
         </div>
 
         {/* Guest Rice */}
@@ -346,6 +441,9 @@ export default function ManagerRiceManagementPage() {
           </div>
           <p className="text-xl sm:text-2xl font-bold font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
             {summary.guestMeal} <span className="text-xs font-normal text-gray-500">{isBn ? "জন" : "Extra"}</span>
+          </p>
+          <p className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 mt-0.5">
+            🌅 {summary.guestBreakfast} • ☀️ {summary.guestLunch} • 🌙 {summary.guestDinner}
           </p>
         </div>
       </div>
@@ -386,26 +484,22 @@ export default function ManagerRiceManagementPage() {
                     </div>
                   </div>
 
-                  {/* Guest Rice (+ / -) */}
-                  <div className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/40 p-1.5 rounded-xl border border-purple-200/50">
-                    <button
-                      onClick={() => handleGuestMealChange(m.userId, -1)}
-                      className="p-1 rounded-lg bg-white dark:bg-slate-800 text-purple-600 hover:bg-purple-100 transition cursor-pointer"
-                      title="Decrease Guest Rice"
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <span className="px-2 text-xs font-bold font-[family-name:var(--font-mono)] text-purple-950 dark:text-purple-200">
-                      Guest: {totalGuest}
-                    </span>
-                    <button
-                      onClick={() => handleGuestMealChange(m.userId, 1)}
-                      className="p-1 rounded-lg bg-white dark:bg-slate-800 text-purple-600 hover:bg-purple-100 transition cursor-pointer"
-                      title="Increase Guest Rice"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
+                  {/* Guest Rice Button (Opens Meal-specific Guest Modal) */}
+                  <button
+                    onClick={() => openGuestModal(m)}
+                    className="px-2.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/45 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    title={isBn ? "গেস্ট মিল বিস্তারিত ও পরিবর্তন" : "Edit Guest Meals"}
+                  >
+                    <Users size={12} className="text-purple-600 dark:text-purple-400" />
+                    <span className="font-bold">Guest: {totalGuest}</span>
+                    {totalGuest > 0 ? (
+                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                        (🌅{m.guestBreakfast || 0} ☀️{m.guestLunch || 0} 🌙{m.guestDinner || 0})
+                      </span>
+                    ) : (
+                      <Plus size={11} className="text-purple-500" />
+                    )}
+                  </button>
                 </div>
 
                 {/* Meal Toggles */}
@@ -425,6 +519,11 @@ export default function ManagerRiceManagementPage() {
                       >
                         {isBf ? <Check size={14} /> : <X size={14} />}
                         <span>BF: {isBf ? "ON" : "OFF"}</span>
+                        {(m.guestBreakfast || 0) > 0 && (
+                          <span className="ml-0.5 px-1 rounded bg-black/20 text-[10px]">
+                            +{m.guestBreakfast}g
+                          </span>
+                        )}
                       </button>
 
                       <button
@@ -437,6 +536,11 @@ export default function ManagerRiceManagementPage() {
                       >
                         {isLn ? <Check size={14} /> : <X size={14} />}
                         <span>LN: {isLn ? "ON" : "OFF"}</span>
+                        {(m.guestLunch || 0) > 0 && (
+                          <span className="ml-0.5 px-1 rounded bg-black/20 text-[10px]">
+                            +{m.guestLunch}g
+                          </span>
+                        )}
                       </button>
 
                       <button
@@ -449,6 +553,11 @@ export default function ManagerRiceManagementPage() {
                       >
                         {isDn ? <Check size={14} /> : <X size={14} />}
                         <span>DN: {isDn ? "ON" : "OFF"}</span>
+                        {(m.guestDinner || 0) > 0 && (
+                          <span className="ml-0.5 px-1 rounded bg-black/20 text-[10px]">
+                            +{m.guestDinner}g
+                          </span>
+                        )}
                       </button>
                     </div>
                   );
@@ -504,6 +613,11 @@ export default function ManagerRiceManagementPage() {
                             >
                               {isBf ? <Check size={14} /> : <X size={14} />}
                               <span>{isBf ? "ON" : "OFF"}</span>
+                              {(m.guestBreakfast || 0) > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${m.guestBreakfast} guest breakfast`}>
+                                  +{m.guestBreakfast}g
+                                </span>
+                              )}
                             </button>
                           </td>
 
@@ -519,6 +633,11 @@ export default function ManagerRiceManagementPage() {
                             >
                               {isLn ? <Check size={14} /> : <X size={14} />}
                               <span>{isLn ? "ON" : "OFF"}</span>
+                              {(m.guestLunch || 0) > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${m.guestLunch} guest lunch`}>
+                                  +{m.guestLunch}g
+                                </span>
+                              )}
                             </button>
                           </td>
 
@@ -534,6 +653,11 @@ export default function ManagerRiceManagementPage() {
                             >
                               {isDn ? <Check size={14} /> : <X size={14} />}
                               <span>{isDn ? "ON" : "OFF"}</span>
+                              {(m.guestDinner || 0) > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${m.guestDinner} guest dinner`}>
+                                  +{m.guestDinner}g
+                                </span>
+                              )}
                             </button>
                           </td>
                         </>
@@ -542,25 +666,26 @@ export default function ManagerRiceManagementPage() {
 
                     {/* Guest Rice / Guest Meals (+ / -) */}
                     <td className="py-3.5 px-4 text-center">
-                      <div className="inline-flex items-center gap-1 bg-purple-50 dark:bg-purple-950/40 p-1.5 rounded-xl border border-purple-200/50">
-                        <button
-                          onClick={() => handleGuestMealChange(m.userId, -1)}
-                          className="p-1 rounded-lg bg-white dark:bg-slate-800 text-purple-600 hover:bg-purple-100 transition cursor-pointer"
-                          title="Decrease Guest Rice"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="px-2 text-xs font-bold font-[family-name:var(--font-mono)] text-purple-950 dark:text-purple-200">
-                          {totalGuest}
-                        </span>
-                        <button
-                          onClick={() => handleGuestMealChange(m.userId, 1)}
-                          className="p-1 rounded-lg bg-white dark:bg-slate-800 text-purple-600 hover:bg-purple-100 transition cursor-pointer"
-                          title="Increase Guest Rice"
-                        >
-                          <Plus size={12} />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => openGuestModal(m)}
+                        className="px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60 rounded-xl text-xs font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition inline-flex flex-col items-center gap-0.5 cursor-pointer shadow-xs"
+                        title={isBn ? "গেস্ট মিল বিস্তারিত ও পরিবর্তন" : "Edit Guest Meals Breakdown"}
+                      >
+                        <div className="flex items-center gap-1.5 font-bold">
+                          <Users size={13} className="text-purple-600 dark:text-purple-400" />
+                          <span>Guest: {totalGuest}</span>
+                          <Plus size={11} className="text-purple-500" />
+                        </div>
+                        {totalGuest > 0 ? (
+                          <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                            🌅 {m.guestBreakfast || 0} • ☀️ {m.guestLunch || 0} • 🌙 {m.guestDinner || 0}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 font-normal">
+                            {isBn ? "গেস্ট যোগ করুন" : "+ Add guest"}
+                          </span>
+                        )}
+                      </button>
                     </td>
                   </tr>
                 );
@@ -569,6 +694,130 @@ export default function ManagerRiceManagementPage() {
           </table>
         </div>
       </div>
+
+      {/* Guest Meal Breakdown Modal */}
+      {isGuestModalOpen && editingGuestMember && (
+        <div className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl w-full max-w-sm border border-gray-100 dark:border-slate-800 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <MemberAvatar src={editingGuestMember.image} name={editingGuestMember.name} size={36} />
+                <div>
+                  <h2 className="text-sm font-bold text-gray-900 dark:text-white">
+                    {editingGuestMember.name}
+                  </h2>
+                  <p className="text-[11px] text-purple-600 dark:text-purple-400 font-medium">
+                    {isBn ? "গেস্ট মিলের হিসাব" : "Guest Meals Breakdown"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGuestModalOpen(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {[
+                { label: isBn ? "সকালের গেস্ট" : "Guest Breakfast", key: "guestBreakfast", type: "breakfast", icon: "🌅" },
+                { label: isBn ? "দুপুরের গেস্ট" : "Guest Lunch", key: "guestLunch", type: "lunch", icon: "☀️" },
+                { label: isBn ? "রাতের গেস্ট" : "Guest Dinner", key: "guestDinner", type: "dinner", icon: "🌙" },
+              ].map(({ label, key, type, icon }) => {
+                const isWeightZero = mealWeights[type] === 0;
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center justify-between p-3 rounded-xl border ${
+                      isWeightZero
+                        ? "bg-gray-100/50 dark:bg-slate-800/30 border-dashed border-gray-200 dark:border-slate-800 opacity-60"
+                        : "bg-gray-50 dark:bg-slate-800/60 border-gray-100 dark:border-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{icon}</span>
+                      <div>
+                        <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">
+                          {label}
+                        </span>
+                        {isWeightZero && (
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {isBn ? "মেসে এই বেলা বন্ধ" : "Disabled in mess"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingGuestMember((prev) => ({
+                            ...prev,
+                            [key]: Math.max(0, (prev[key] || 0) - 1),
+                          }))
+                        }
+                        disabled={isWeightZero}
+                        className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 flex items-center justify-center transition font-bold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-7 text-center font-bold text-xs sm:text-sm font-[family-name:var(--font-mono)] text-gray-900 dark:text-white">
+                        {isWeightZero ? 0 : editingGuestMember[key] || 0}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingGuestMember((prev) => ({
+                            ...prev,
+                            [key]: (prev[key] || 0) + 1,
+                          }))
+                        }
+                        disabled={isWeightZero}
+                        className="w-7 h-7 rounded-lg bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center transition font-bold shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Total Guest in Modal */}
+            <div className="flex items-center justify-between px-3 py-2 bg-purple-50/70 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/30 text-xs">
+              <span className="font-semibold text-purple-900 dark:text-purple-300">
+                {isBn ? "মোট গেস্ট মিল:" : "Total Guest Meals:"}
+              </span>
+              <span className="font-bold font-[family-name:var(--font-mono)] text-purple-950 dark:text-purple-200 text-sm">
+                {(editingGuestMember.guestBreakfast || 0) +
+                  (editingGuestMember.guestLunch || 0) +
+                  (editingGuestMember.guestDinner || 0)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsGuestModalOpen(false)}
+                className="w-full py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-xs transition cursor-pointer"
+              >
+                {isBn ? "বাতিল" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveGuestMeals}
+                disabled={savingGuest}
+                className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-xs transition shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {savingGuest ? (isBn ? "সংরক্ষণ হচ্ছে..." : "Saving...") : (isBn ? "সংরক্ষণ করুন" : "Save Changes")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Deposit Modal */}
       {isDepositModalOpen && (
