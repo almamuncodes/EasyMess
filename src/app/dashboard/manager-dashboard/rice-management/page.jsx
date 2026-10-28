@@ -161,28 +161,33 @@ export default function ManagerRiceManagementPage() {
     }
   };
 
-  // Open modal for guest meals edit
+  // Open modal for guest rice edit
   const openGuestModal = (member) => {
+    const gBf = member.guestBreakfastRice !== undefined ? member.guestBreakfastRice : (member.guestBreakfast || 0);
+    const gLn = member.guestLunchRice !== undefined ? member.guestLunchRice : (member.guestLunch || 0);
+    const gDn = member.guestDinnerRice !== undefined ? member.guestDinnerRice : (member.guestDinner || 0);
+
     setEditingGuestMember({
       userId: member.userId,
       name: member.name,
       image: member.image,
-      guestBreakfast: member.guestBreakfast || 0,
-      guestLunch: member.guestLunch || 0,
-      guestDinner: member.guestDinner || 0,
+      guestBreakfastRice: gBf,
+      guestLunchRice: gLn,
+      guestDinnerRice: gDn,
       guestRiceExtra: member.guestRiceExtra || 0,
     });
     setIsGuestModalOpen(true);
   };
 
-  // Save guest meals per meal time (Breakfast, Lunch, Dinner)
+  // Save guest rice per meal time (Breakfast, Lunch, Dinner Rice)
+  // NOTE: This updates ONLY rice management (Meals.guestBreakfastRice etc.), keeping original meal management meals untouched!
   const handleSaveGuestMeals = async () => {
     if (!editingGuestMember || !userId) return;
     setSavingGuest(true);
 
-    const bCount = mealWeights.breakfast === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestBreakfast) || 0);
-    const lCount = mealWeights.lunch === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestLunch) || 0);
-    const dCount = mealWeights.dinner === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestDinner) || 0);
+    const bCount = mealWeights.breakfast === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestBreakfastRice) || 0);
+    const lCount = mealWeights.lunch === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestLunchRice) || 0);
+    const dCount = mealWeights.dinner === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestDinnerRice) || 0);
 
     // Optimistic UI update
     setMembers((prev) =>
@@ -190,9 +195,9 @@ export default function ManagerRiceManagementPage() {
         m.userId === editingGuestMember.userId
           ? {
               ...m,
-              guestBreakfast: bCount,
-              guestLunch: lCount,
-              guestDinner: dCount,
+              guestBreakfastRice: bCount,
+              guestLunchRice: lCount,
+              guestDinnerRice: dCount,
               guestRiceExtra: 0,
             }
           : m
@@ -209,9 +214,9 @@ export default function ManagerRiceManagementPage() {
             managerId: userId,
             userId: editingGuestMember.userId,
             date,
-            guestBreakfast: bCount,
-            guestLunch: lCount,
-            guestDinner: dCount,
+            guestBreakfastRice: bCount,
+            guestLunchRice: lCount,
+            guestDinnerRice: dCount,
             guestRiceExtra: 0,
           }),
         }
@@ -220,8 +225,8 @@ export default function ManagerRiceManagementPage() {
       if (resData.success) {
         toast.success(
           isBn
-            ? `${editingGuestMember.name}-এর গেস্ট মিল আপডেট হয়েছে`
-            : `Updated guest meals for ${editingGuestMember.name}`
+            ? `${editingGuestMember.name}-এর গেস্ট চালের হিসাব আপডেট হয়েছে`
+            : `Updated guest rice for ${editingGuestMember.name}`
         );
         setIsGuestModalOpen(false);
         fetchData(false);
@@ -291,10 +296,15 @@ export default function ManagerRiceManagementPage() {
       if (isBf) acc.breakfast += 1;
       if (isLn) acc.lunch += 1;
       if (isDn) acc.dinner += 1;
-      acc.guestBreakfast += curr.guestBreakfast || 0;
-      acc.guestLunch += curr.guestLunch || 0;
-      acc.guestDinner += curr.guestDinner || 0;
-      acc.guestMeal += (curr.guestBreakfast || 0) + (curr.guestLunch || 0) + (curr.guestDinner || 0) + (curr.guestRiceExtra || 0);
+
+      const gBf = curr.guestBreakfastRice !== undefined ? curr.guestBreakfastRice : (curr.guestBreakfast || 0);
+      const gLn = curr.guestLunchRice !== undefined ? curr.guestLunchRice : (curr.guestLunch || 0);
+      const gDn = curr.guestDinnerRice !== undefined ? curr.guestDinnerRice : (curr.guestDinner || 0);
+
+      acc.guestBreakfast += gBf;
+      acc.guestLunch += gLn;
+      acc.guestDinner += gDn;
+      acc.guestMeal += gBf + gLn + gDn + (curr.guestRiceExtra || 0);
       return acc;
     },
     { breakfast: 0, lunch: 0, dinner: 0, guestBreakfast: 0, guestLunch: 0, guestDinner: 0, guestMeal: 0 }
@@ -471,7 +481,10 @@ export default function ManagerRiceManagementPage() {
         {/* Mobile View - Cards (No Horizontal Scrolling) */}
         <div className="md:hidden space-y-3">
           {filteredMembers.map((m) => {
-            const totalGuest = Math.max(0, (m.guestBreakfast || 0) + (m.guestLunch || 0) + (m.guestDinner || 0) + (m.guestRiceExtra || 0));
+            const gBf = m.guestBreakfastRice !== undefined ? m.guestBreakfastRice : (m.guestBreakfast || 0);
+            const gLn = m.guestLunchRice !== undefined ? m.guestLunchRice : (m.guestLunch || 0);
+            const gDn = m.guestDinnerRice !== undefined ? m.guestDinnerRice : (m.guestDinner || 0);
+            const totalGuest = Math.max(0, gBf + gLn + gDn + (m.guestRiceExtra || 0));
 
             return (
               <div key={m.userId} className="p-3.5 rounded-xl bg-gray-50/70 dark:bg-slate-800/40 border border-gray-100 dark:border-slate-800 space-y-3">
@@ -488,13 +501,13 @@ export default function ManagerRiceManagementPage() {
                   <button
                     onClick={() => openGuestModal(m)}
                     className="px-2.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/45 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    title={isBn ? "গেস্ট মিল বিস্তারিত ও পরিবর্তন" : "Edit Guest Meals"}
+                    title={isBn ? "গেস্ট চালের হিসাব বিস্তারিত ও পরিবর্তন" : "Edit Guest Rice"}
                   >
                     <Users size={12} className="text-purple-600 dark:text-purple-400" />
                     <span className="font-bold">Guest: {totalGuest}</span>
                     {totalGuest > 0 ? (
                       <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
-                        (🌅{m.guestBreakfast || 0} ☀️{m.guestLunch || 0} 🌙{m.guestDinner || 0})
+                        (🌅{gBf} ☀️{gLn} 🌙{gDn})
                       </span>
                     ) : (
                       <Plus size={11} className="text-purple-500" />
@@ -519,9 +532,9 @@ export default function ManagerRiceManagementPage() {
                       >
                         {isBf ? <Check size={14} /> : <X size={14} />}
                         <span>BF: {isBf ? "ON" : "OFF"}</span>
-                        {(m.guestBreakfast || 0) > 0 && (
+                        {gBf > 0 && (
                           <span className="ml-0.5 px-1 rounded bg-black/20 text-[10px]">
-                            +{m.guestBreakfast}g
+                            +{gBf}g
                           </span>
                         )}
                       </button>
@@ -536,9 +549,9 @@ export default function ManagerRiceManagementPage() {
                       >
                         {isLn ? <Check size={14} /> : <X size={14} />}
                         <span>LN: {isLn ? "ON" : "OFF"}</span>
-                        {(m.guestLunch || 0) > 0 && (
+                        {gLn > 0 && (
                           <span className="ml-0.5 px-1 rounded bg-black/20 text-[10px]">
-                            +{m.guestLunch}g
+                            +{gLn}g
                           </span>
                         )}
                       </button>
@@ -553,9 +566,9 @@ export default function ManagerRiceManagementPage() {
                       >
                         {isDn ? <Check size={14} /> : <X size={14} />}
                         <span>DN: {isDn ? "ON" : "OFF"}</span>
-                        {(m.guestDinner || 0) > 0 && (
+                        {gDn > 0 && (
                           <span className="ml-0.5 px-1 rounded bg-black/20 text-[10px]">
-                            +{m.guestDinner}g
+                            +{gDn}g
                           </span>
                         )}
                       </button>
@@ -581,7 +594,10 @@ export default function ManagerRiceManagementPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
               {filteredMembers.map((m) => {
-                const totalGuest = Math.max(0, (m.guestBreakfast || 0) + (m.guestLunch || 0) + (m.guestDinner || 0) + (m.guestRiceExtra || 0));
+                const gBf = m.guestBreakfastRice !== undefined ? m.guestBreakfastRice : (m.guestBreakfast || 0);
+                const gLn = m.guestLunchRice !== undefined ? m.guestLunchRice : (m.guestLunch || 0);
+                const gDn = m.guestDinnerRice !== undefined ? m.guestDinnerRice : (m.guestDinner || 0);
+                const totalGuest = Math.max(0, gBf + gLn + gDn + (m.guestRiceExtra || 0));
 
                 return (
                   <tr key={m.userId} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/30 transition">
@@ -613,9 +629,9 @@ export default function ManagerRiceManagementPage() {
                             >
                               {isBf ? <Check size={14} /> : <X size={14} />}
                               <span>{isBf ? "ON" : "OFF"}</span>
-                              {(m.guestBreakfast || 0) > 0 && (
-                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${m.guestBreakfast} guest breakfast`}>
-                                  +{m.guestBreakfast}g
+                              {gBf > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${gBf} guest breakfast rice`}>
+                                  +{gBf}g
                                 </span>
                               )}
                             </button>
@@ -633,9 +649,9 @@ export default function ManagerRiceManagementPage() {
                             >
                               {isLn ? <Check size={14} /> : <X size={14} />}
                               <span>{isLn ? "ON" : "OFF"}</span>
-                              {(m.guestLunch || 0) > 0 && (
-                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${m.guestLunch} guest lunch`}>
-                                  +{m.guestLunch}g
+                              {gLn > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${gLn} guest lunch rice`}>
+                                  +{gLn}g
                                 </span>
                               )}
                             </button>
@@ -653,9 +669,9 @@ export default function ManagerRiceManagementPage() {
                             >
                               {isDn ? <Check size={14} /> : <X size={14} />}
                               <span>{isDn ? "ON" : "OFF"}</span>
-                              {(m.guestDinner || 0) > 0 && (
-                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${m.guestDinner} guest dinner`}>
-                                  +{m.guestDinner}g
+                              {gDn > 0 && (
+                                <span className="ml-0.5 px-1.5 py-0.2 rounded-md bg-black/20 text-[10px] font-semibold" title={`${gDn} guest dinner rice`}>
+                                  +{gDn}g
                                 </span>
                               )}
                             </button>
@@ -669,7 +685,7 @@ export default function ManagerRiceManagementPage() {
                       <button
                         onClick={() => openGuestModal(m)}
                         className="px-3 py-1.5 bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/70 dark:border-purple-800/60 rounded-xl text-xs font-semibold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition inline-flex flex-col items-center gap-0.5 cursor-pointer shadow-xs"
-                        title={isBn ? "গেস্ট মিল বিস্তারিত ও পরিবর্তন" : "Edit Guest Meals Breakdown"}
+                        title={isBn ? "গেস্ট চালের হিসাব বিস্তারিত ও পরিবর্তন" : "Edit Guest Rice Breakdown"}
                       >
                         <div className="flex items-center gap-1.5 font-bold">
                           <Users size={13} className="text-purple-600 dark:text-purple-400" />
@@ -678,7 +694,7 @@ export default function ManagerRiceManagementPage() {
                         </div>
                         {totalGuest > 0 ? (
                           <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
-                            🌅 {m.guestBreakfast || 0} • ☀️ {m.guestLunch || 0} • 🌙 {m.guestDinner || 0}
+                            🌅 {gBf} • ☀️ {gLn} • 🌙 {gDn}
                           </span>
                         ) : (
                           <span className="text-[10px] text-gray-400 font-normal">
@@ -707,7 +723,7 @@ export default function ManagerRiceManagementPage() {
                     {editingGuestMember.name}
                   </h2>
                   <p className="text-[11px] text-purple-600 dark:text-purple-400 font-medium">
-                    {isBn ? "গেস্ট মিলের হিসাব" : "Guest Meals Breakdown"}
+                    {isBn ? "গেস্ট চালের হিসাব" : "Guest Rice Breakdown"}
                   </p>
                 </div>
               </div>
@@ -722,9 +738,9 @@ export default function ManagerRiceManagementPage() {
 
             <div className="space-y-2.5">
               {[
-                { label: isBn ? "সকালের গেস্ট" : "Guest Breakfast", key: "guestBreakfast", type: "breakfast", icon: "🌅" },
-                { label: isBn ? "দুপুরের গেস্ট" : "Guest Lunch", key: "guestLunch", type: "lunch", icon: "☀️" },
-                { label: isBn ? "রাতের গেস্ট" : "Guest Dinner", key: "guestDinner", type: "dinner", icon: "🌙" },
+                { label: isBn ? "সকালের গেস্ট চাল" : "Guest Breakfast Rice", key: "guestBreakfastRice", type: "breakfast", icon: "🌅" },
+                { label: isBn ? "দুপুরের গেস্ট চাল" : "Guest Lunch Rice", key: "guestLunchRice", type: "lunch", icon: "☀️" },
+                { label: isBn ? "রাতের গেস্ট চাল" : "Guest Dinner Rice", key: "guestDinnerRice", type: "dinner", icon: "🌙" },
               ].map(({ label, key, type, icon }) => {
                 const isWeightZero = mealWeights[type] === 0;
                 return (
@@ -789,12 +805,12 @@ export default function ManagerRiceManagementPage() {
             {/* Total Guest in Modal */}
             <div className="flex items-center justify-between px-3 py-2 bg-purple-50/70 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/30 text-xs">
               <span className="font-semibold text-purple-900 dark:text-purple-300">
-                {isBn ? "মোট গেস্ট মিল:" : "Total Guest Meals:"}
+                {isBn ? "মোট গেস্ট চাল:" : "Total Guest Rice:"}
               </span>
               <span className="font-bold font-[family-name:var(--font-mono)] text-purple-950 dark:text-purple-200 text-sm">
-                {(editingGuestMember.guestBreakfast || 0) +
-                  (editingGuestMember.guestLunch || 0) +
-                  (editingGuestMember.guestDinner || 0)}
+                {(editingGuestMember.guestBreakfastRice || 0) +
+                  (editingGuestMember.guestLunchRice || 0) +
+                  (editingGuestMember.guestDinnerRice || 0)}
               </span>
             </div>
 
