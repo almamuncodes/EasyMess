@@ -9,7 +9,7 @@ import {
   Store,
   Wallet,
   X,
-  Power,
+  Zap,
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
@@ -458,7 +458,7 @@ export default function ManagerFloatingActions() {
           {isOpen ? (
             <X size={22} className="transition-transform duration-200" />
           ) : (
-            <Power size={22} className="stroke-[2.5] transition-transform group-hover:scale-110 pointer-events-none select-none" />
+            <Zap size={24} className="fill-white stroke-white transition-transform group-hover:scale-110 pointer-events-none select-none drop-shadow-sm" />
           )}
 
           {/* Left/Right Dock Guide Arrow */}
