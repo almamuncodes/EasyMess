@@ -176,9 +176,8 @@ export default function ManagerFloatingActions() {
     return () => window.removeEventListener("resize", handleResize);
   }, [mounted]);
 
-  // Pointer drag events (supports both touch and mouse seamlessly)
+  // Pointer drag events
   const handlePointerDown = (e) => {
-    // Only primary button
     if (e.button !== undefined && e.button !== 0) return;
 
     dragRef.current = {
@@ -253,7 +252,7 @@ export default function ManagerFloatingActions() {
         // ignore
       }
     } else {
-      // It was a tap / click
+      // Tap / click
       setIsDragging(false);
       setIsOpen((prev) => !prev);
     }
@@ -276,52 +275,88 @@ export default function ManagerFloatingActions() {
     return null;
   }
 
-  // Quick Action Items
+  // Quick Action Items (Order: Bazaar -> Payments -> Meal -> Rice)
   const items = [
+    {
+      id: "bazaar",
+      name: isBn ? "বাজার হিসাব" : "Bazaar",
+      shortName: isBn ? "বাজার" : "Bazaar",
+      href: "/dashboard/manager-dashboard/bazaar",
+      icon: Store,
+      gradient: "from-blue-500 to-indigo-600",
+      shadow: "shadow-blue-500/30",
+    },
+    {
+      id: "payments",
+      name: isBn ? "পেমেন্ট কালেকশন" : "Payments",
+      shortName: isBn ? "পেমেন্ট" : "Pay",
+      href: "/dashboard/manager-dashboard/payments",
+      icon: Wallet,
+      gradient: "from-purple-500 to-violet-600",
+      shadow: "shadow-purple-500/30",
+    },
     {
       id: "meals",
       name: isBn ? "মিল কন্ট্রোল" : "Meal Management",
-      desc: isBn ? "দৈনিক মিল চালু/বন্ধ" : "Daily meal toggles",
+      shortName: isBn ? "মিল" : "Meal",
       href: "/dashboard/manager-dashboard/meal-management",
       icon: UtensilsCrossed,
       gradient: "from-amber-500 to-orange-500",
-      shadow: "shadow-orange-500/25",
+      shadow: "shadow-orange-500/30",
     },
     ...(riceConfig?.enableRiceManagement === true
       ? [
           {
             id: "rice",
             name: isBn ? "রাইস কন্ট্রোল" : "Rice Management",
-            desc: isBn ? "দৈনিক চাল ও গেস্ট চাল" : "Daily rice & guests",
+            shortName: isBn ? "চাল" : "Rice",
             href: "/dashboard/manager-dashboard/rice-management",
             icon: Boxes,
             gradient: "from-emerald-500 to-teal-600",
-            shadow: "shadow-emerald-500/25",
+            shadow: "shadow-emerald-500/30",
           },
         ]
       : []),
-    {
-      id: "bazaar",
-      name: isBn ? "বাজার হিসাব" : "Bazaar",
-      desc: isBn ? "দৈনিক বাজার ও খরচ" : "Daily mess expenses",
-      href: "/dashboard/manager-dashboard/bazaar",
-      icon: Store,
-      gradient: "from-blue-500 to-indigo-600",
-      shadow: "shadow-blue-500/25",
-    },
-    {
-      id: "payments",
-      name: isBn ? "পেমেন্ট কালেকশন" : "Payments",
-      desc: isBn ? "সদস্যদের জমা ও হিসাব" : "Member deposits",
-      href: "/dashboard/manager-dashboard/payments",
-      icon: Wallet,
-      gradient: "from-purple-500 to-violet-600",
-      shadow: "shadow-purple-500/25",
-    },
   ];
 
   const isLeft = pos.side === "left";
-  const openUpwards = pos.y > 320;
+  const count = items.length;
+
+  // Radial angles calculation for circular arc
+  // When on right edge, items blossom out to the left (100° to 260°)
+  // When on left edge, items blossom out to the right (-80° to +80°)
+  const winH = typeof window !== "undefined" ? window.innerHeight : 800;
+  const isNearTop = pos.y < 160;
+  const isNearBottom = pos.y > winH - 160;
+
+  let angles = [];
+  if (!isLeft) {
+    // Right side dock (pointing leftwards into the screen)
+    if (count === 4) {
+      if (isNearTop) angles = [200, 165, 130, 95];
+      else if (isNearBottom) angles = [265, 230, 195, 160];
+      else angles = [245, 195, 145, 95];
+    } else {
+      if (isNearTop) angles = [180, 145, 110];
+      else if (isNearBottom) angles = [250, 215, 180];
+      else angles = [225, 180, 135];
+    }
+  } else {
+    // Left side dock (pointing rightwards into the screen)
+    if (count === 4) {
+      if (isNearTop) angles = [-20, 15, 50, 85];
+      else if (isNearBottom) angles = [-85, -50, -15, 20];
+      else angles = [-65, -15, 35, 85];
+    } else {
+      if (isNearTop) angles = [0, 35, 70];
+      else if (isNearBottom) angles = [-70, -35, 0];
+      else angles = [-45, 0, 45];
+    }
+  }
+
+  const radius = 95; // radius in px around the center trigger button
+  const triggerRadius = 28; // half of 56px trigger
+  const itemRadius = 25; // half of 50px item
 
   return (
     <>
@@ -333,7 +368,7 @@ export default function ManagerFloatingActions() {
         />
       )}
 
-      {/* Floating Widget Container */}
+      {/* Floating Widget Root */}
       <div
         style={{
           transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
@@ -343,83 +378,87 @@ export default function ManagerFloatingActions() {
           isDragging ? "transition-none pointer-events-auto" : "transition-transform duration-300 ease-out"
         }`}
       >
-        {/* Menu Items (Speed Dial / Radial list) */}
-        {isOpen && (
-          <div
-            className={`absolute flex flex-col gap-2.5 z-50 ${
-              openUpwards ? "bottom-16" : "top-16"
-            } ${isLeft ? "left-0 items-start" : "right-0 items-end"} animate-in fade-in zoom-in-95 duration-200`}
-          >
-            {items.map((item, idx) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
+        {/* Radial Circular Action Buttons */}
+        <div className="relative w-14 h-14 pointer-events-none">
+          {items.map((item, idx) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href;
+            const angleDeg = angles[idx] || 0;
+            const rad = (angleDeg * Math.PI) / 180;
+            const offsetX = Math.round(triggerRadius + radius * Math.cos(rad) - itemRadius);
+            const offsetY = Math.round(triggerRadius + radius * Math.sin(rad) - itemRadius);
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsOpen(false);
-                    router.push(item.href);
-                  }}
-                  style={{
-                    animationDelay: `${idx * 40}ms`,
-                  }}
-                  className={`group flex items-center gap-2.5 p-1 rounded-2xl cursor-pointer transition-all active:scale-95 ${
-                    isLeft ? "flex-row" : "flex-row-reverse"
+            return (
+              <button
+                key={item.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                  router.push(item.href);
+                }}
+                title={item.name}
+                aria-label={item.name}
+                style={{
+                  transform: isOpen
+                    ? `translate3d(${offsetX}px, ${offsetY}px, 0) scale(1)`
+                    : `translate3d(3px, 3px, 0) scale(0)`,
+                  opacity: isOpen ? 1 : 0,
+                  transitionDelay: isOpen ? `${idx * 35}ms` : "0ms",
+                  pointerEvents: isOpen ? "auto" : "none",
+                }}
+                className={`group absolute top-0 left-0 w-[50px] h-[50px] rounded-full bg-gradient-to-tr ${
+                  item.gradient
+                } text-white flex flex-col items-center justify-center shadow-xl ${
+                  item.shadow
+                } ring-2 ring-white/90 dark:ring-slate-800 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer active:scale-90 hover:scale-110`}
+              >
+                {/* Active Indicator Dot */}
+                {isActive && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-white shadow-xs"></span>
+                )}
+
+                <Icon size={18} className="transition-transform group-hover:scale-110" />
+                <span className="text-[9px] font-black tracking-tight leading-none mt-0.5">
+                  {item.shortName}
+                </span>
+
+                {/* Floating Tooltip Label (hover on desktop or tap) */}
+                <span
+                  className={`pointer-events-none absolute whitespace-nowrap px-2 py-1 rounded-lg text-[10px] font-bold bg-gray-900/90 dark:bg-slate-900/90 text-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 ${
+                    isLeft ? "left-full ml-2" : "right-full mr-2"
                   }`}
                 >
-                  {/* Icon Circle */}
-                  <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${item.gradient} text-white flex items-center justify-center shadow-lg ${item.shadow} group-hover:scale-110 transition-transform duration-200 ${
-                      isActive ? "ring-2 ring-white ring-offset-2 ring-offset-orange-500" : ""
-                    }`}
-                  >
-                    <Icon size={20} />
-                  </div>
+                  {item.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-                  {/* Label Pill */}
-                  <div className="px-3.5 py-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl border border-gray-200/80 dark:border-slate-800 shadow-lg shadow-black/5 flex flex-col text-left whitespace-nowrap min-w-[125px]">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white leading-tight flex items-center justify-between gap-1">
-                      <span>{item.name}</span>
-                      {isActive && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      )}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-medium leading-none mt-0.5">
-                      {item.desc}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Main Floating Trigger Button */}
+        {/* Main Floating Trigger Button (100% Round Circle) */}
         <div
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerCancel}
-          className={`relative group cursor-grab active:cursor-grabbing w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+          className={`absolute top-0 left-0 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 cursor-grab active:cursor-grabbing ${
             isOpen
-              ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 rotate-90 scale-95 shadow-xl shadow-black/20"
-              : "bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/35 hover:scale-105 active:scale-95"
+              ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 rotate-90 scale-95 shadow-2xl shadow-black/30 ring-4 ring-orange-500/30"
+              : "bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white shadow-xl shadow-orange-500/40 hover:scale-105 active:scale-95 ring-2 ring-white/50 dark:ring-slate-800"
           }`}
           title={isBn ? "ম্যানেজার কুইক অ্যাকশন (টেনে সরানো যায়)" : "Manager Quick Actions (Draggable)"}
           aria-label="Manager Quick Actions"
         >
-          {/* Subtle Ambient Glow Ring */}
+          {/* Subtle Ambient Pulse Ring */}
           {!isOpen && (
-            <span className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 opacity-30 blur-sm group-hover:opacity-50 transition-opacity -z-10 animate-pulse"></span>
+            <span className="absolute -inset-1 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 opacity-40 blur-xs group-hover:opacity-60 transition-opacity -z-10 animate-pulse"></span>
           )}
 
-          {/* Icon: changes to X when open */}
+          {/* Icon: transforms to X when open */}
           {isOpen ? (
             <X size={22} className="transition-transform duration-200" />
           ) : (
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center pointer-events-none select-none">
               <Sparkles size={18} className="animate-spin-slow" />
               <span className="text-[9px] font-black tracking-tighter uppercase mt-0.5 leading-none">
                 MGR
@@ -427,10 +466,10 @@ export default function ManagerFloatingActions() {
             </div>
           )}
 
-          {/* Left/Right Dock Arrow Indicator */}
+          {/* Left/Right Dock Guide Arrow */}
           {!isOpen && !isDragging && (
             <span
-              className={`absolute top-1/2 -translate-y-1/2 text-[10px] opacity-40 group-hover:opacity-80 transition-opacity ${
+              className={`absolute top-1/2 -translate-y-1/2 text-[10px] opacity-40 transition-opacity pointer-events-none ${
                 isLeft ? "-left-1" : "-right-1"
               }`}
             >
