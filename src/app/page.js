@@ -177,7 +177,7 @@ export default function LandingPage() {
     if (typeof window !== "undefined") {
       const cached = sessionStorage.getItem("cached_today_meals");
       if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
+        try { return JSON.parse(cached); } catch (e) { }
       }
     }
     return null;
@@ -190,7 +190,7 @@ export default function LandingPage() {
     if (typeof window !== "undefined") {
       const cached = sessionStorage.getItem("cached_mess_info");
       if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
+        try { return JSON.parse(cached); } catch (e) { }
       }
     }
     return null;
@@ -199,7 +199,7 @@ export default function LandingPage() {
     if (typeof window !== "undefined") {
       const cached = sessionStorage.getItem("cached_month_summary");
       if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
+        try { return JSON.parse(cached); } catch (e) { }
       }
     }
     return null;
@@ -787,7 +787,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#F3F1EC] dark:bg-slate-950 font-body">
       {fonts}
-      <section className="mx-auto max-w-2xl px-4 py-14">
+      <section className="mx-auto max-w-2xl px-4 pt-3 pb-8 sm:pt-6 sm:pb-12">
         <p className="font-meta text-[11px] uppercase tracking-[0.3em] text-[#FF6900]">
           EasyMess
         </p>
@@ -799,10 +799,10 @@ export default function LandingPage() {
           </div>
         ) : (
           <>
-            <h1 className="font-display mt-2 text-3xl font-bold text-[#16181D] dark:text-white">
+            <h1 className="font-display mt-1 text-2xl sm:text-3xl font-bold text-[#16181D] dark:text-white">
               {messInfo?.messName || (lang === "en" ? "Your mess" : "আপনার মেস")}
             </h1>
-            <p className="mt-1 font-meta text-xs text-[#9a9691] dark:text-slate-400">
+            <p className="mt-0.5 font-meta text-xs text-[#9a9691] dark:text-slate-400">
               {messInfo?.totalMembers ?? "—"} {t("members")} · {lang === "en" ? "managed by" : "পরিচালনায়"}{" "}
               <span className="font-semibold text-gray-700 dark:text-slate-300">{messInfo?.managerName || "—"}</span>
             </p>
@@ -810,50 +810,47 @@ export default function LandingPage() {
         )}
 
         {/* This month's rate & bill — Clean Glass Cards over #F3F1EC */}
-        <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
-          <div className="relative overflow-hidden rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 p-3 sm:p-4 text-center border border-amber-200/80 dark:border-amber-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+        <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="relative overflow-hidden rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 p-2.5 sm:p-4 text-center border border-amber-200/80 dark:border-amber-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
             <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
             <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300 font-semibold truncate">
               {t("mealRate")}
             </p>
-            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-black text-amber-950 dark:text-amber-100">
+            <p className="font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black text-amber-950 dark:text-amber-100">
               {monthSummary ? `৳${monthSummary.mealRate}` : "—"}
             </p>
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-orange-50/80 dark:bg-orange-950/25 p-3 sm:p-4 text-center border border-orange-200/80 dark:border-orange-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+          <div className="relative overflow-hidden rounded-2xl bg-orange-50/80 dark:bg-orange-950/25 p-2.5 sm:p-4 text-center border border-orange-200/80 dark:border-orange-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
             <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
             <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-orange-700 dark:text-orange-300 font-semibold truncate">
               {t("yourBill")}
             </p>
-            <p className="font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-black text-orange-950 dark:text-orange-100">
+            <p className="font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black text-orange-950 dark:text-orange-100">
               {monthSummary ? `৳${monthSummary.bill}` : "—"}
             </p>
           </div>
-          <div className={`relative overflow-hidden rounded-2xl p-3 sm:p-4 text-center border shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ${
-            monthSummary?.status === "due"
+          <div className={`relative overflow-hidden rounded-2xl p-2.5 sm:p-4 text-center border shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ${monthSummary?.status === "due"
               ? "bg-red-50/80 dark:bg-red-950/25 border-red-200/80 dark:border-red-900/40"
               : "bg-emerald-50/80 dark:bg-emerald-950/25 border-emerald-200/80 dark:border-emerald-900/40"
-          }`}>
-            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
-            <p className={`font-meta text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold truncate ${
-              monthSummary?.status === "due" ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
             }`}>
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+            <p className={`font-meta text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold truncate ${monthSummary?.status === "due" ? "text-red-700 dark:text-red-300" : "text-emerald-700 dark:text-emerald-300"
+              }`}>
               {monthSummary?.status === "due" ? t("youOwe") : t("advance")}
             </p>
-            <p className={`font-display mt-1 text-sm min-[-375px]:text-base sm:text-xl font-black ${
-              monthSummary?.status === "due"
+            <p className={`font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black ${monthSummary?.status === "due"
                 ? "text-red-600 dark:text-red-400"
                 : "text-emerald-950 dark:text-emerald-100"
-            }`}>
+              }`}>
               {monthSummary ? `৳${Math.abs(monthSummary.balance)}` : "—"}
             </p>
           </div>
         </div>
 
-        <h2 className="font-display mt-10 text-xl font-bold text-[#16181D] dark:text-white">
+        <h2 className="font-display mt-4 text-lg sm:text-xl font-bold text-[#16181D] dark:text-white">
           {t("todaysMeals")}
         </h2>
-        <p className="mt-1 font-meta text-xs text-[#9a9691] dark:text-slate-400">
+        <p className="mt-0.5 font-meta text-xs text-[#9a9691] dark:text-slate-400">
           {new Date().toLocaleDateString(lang === "en" ? "en-US" : "bn-BD", {
             weekday: "long",
             month: "long",
@@ -862,7 +859,7 @@ export default function LandingPage() {
         </p>
 
         {mealsLoading ? (
-          <div className="mt-6 space-y-3">
+          <div className="mt-4 space-y-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[#EAE7E0] dark:border-slate-800 animate-pulse">
                 <div className="flex items-center gap-2.5">
@@ -874,13 +871,13 @@ export default function LandingPage() {
             ))}
           </div>
         ) : !todayMeals ? (
-          <p className="mt-6 font-meta text-xs text-red-500">
+          <p className="mt-4 font-meta text-xs text-red-500">
             {mealError ? t("couldNotLoadMeals") : t("couldNotLoadMeals")}
           </p>
         ) : (
           <>
             {/* Meals Summary — Breakfast, Lunch, Dinner */}
-            <div className="mt-4 grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="mt-2.5 grid grid-cols-3 gap-2 sm:gap-3">
               {mealTypes.map((m) => {
                 const guestKey = `guest${m.key.charAt(0).toUpperCase()}${m.key.slice(1)}`;
                 const totalMealCount = todayMeals.summary?.[m.key] ?? 0;
@@ -890,25 +887,65 @@ export default function LandingPage() {
                 );
                 const ownCountForType = Math.max(0, totalMealCount - guestCountForType);
 
+                const isRiceEnabled = !!(mealSettings?.enableRiceManagement || todayMeals?.mealSettings?.enableRiceManagement);
+                const riceUnitName = mealSettings?.riceUnitName || todayMeals?.mealSettings?.riceUnitName || (lang === "en" ? "Rice" : "চাল");
+
+                const riceCountForType = todayMeals.summary?.[`rice${m.key.charAt(0).toUpperCase()}${m.key.slice(1)}`] ??
+                  todayMeals.members.reduce((sum, mem) => {
+                    const isRiceOn = mem[`${m.key}Rice`] !== undefined ? mem[`${m.key}Rice`] : mem[m.key];
+                    const guestCount = mem[guestKey] || 0;
+                    return sum + (isRiceOn ? 1 : 0) + guestCount;
+                  }, 0);
+
                 return (
                   <div
                     key={m.key}
-                    className="rounded-2xl bg-white dark:bg-slate-900 p-4 text-center shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-300"
+                    className="rounded-2xl bg-white dark:bg-slate-900 p-2 sm:p-3 text-center shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 hover:shadow-md hover:scale-[1.02] transition-all duration-300"
                   >
                     <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
                       {m.label}
                     </p>
-                    <p className="font-display mt-1 text-2xl font-black text-[#16181D] dark:text-white">
-                      {totalMealCount}
-                    </p>
-                    {guestCountForType > 0 ? (
-                      <p className="font-meta text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
-                        ({ownCountForType} own + {guestCountForType} guest)
-                      </p>
+
+                    {isRiceEnabled ? (
+                      <div className="mt-1 flex items-center justify-around">
+                        {/* Meal count */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-display text-lg sm:text-2xl font-black text-[#16181D] dark:text-white leading-tight">
+                            {totalMealCount}
+                          </p>
+                          <p className="font-meta text-[9px] text-[#9a9691] dark:text-slate-500 truncate mt-0.5">
+                            {guestCountForType > 0 ? `${ownCountForType}+${guestCountForType}g` : (lang === "en" ? "Meal" : "মিল")}
+                          </p>
+                        </div>
+
+                        {/* Divider line as indicated in screenshot */}
+                        <div className="h-7 w-[1px] bg-gray-200 dark:bg-slate-800 shrink-0 mx-1" />
+
+                        {/* Rice count */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-display text-lg sm:text-2xl font-black text-amber-600 dark:text-amber-400 leading-tight">
+                            {riceCountForType}
+                          </p>
+                          <p className="font-meta text-[9px] text-amber-700/80 dark:text-amber-300/80 truncate mt-0.5 font-medium">
+                            {riceUnitName}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="font-meta text-[10px] text-[#9a9691] dark:text-slate-500">
-                        {t("eatingOf")} {todayMeals.members.length} {t("eating")}
-                      </p>
+                      <>
+                        <p className="font-display mt-0.5 text-xl sm:text-2xl font-black text-[#16181D] dark:text-white">
+                          {totalMealCount}
+                        </p>
+                        {guestCountForType > 0 ? (
+                          <p className="font-meta text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">
+                            ({ownCountForType} + {guestCountForType}g)
+                          </p>
+                        ) : (
+                          <p className="font-meta text-[10px] text-[#9a9691] dark:text-slate-500">
+                            {t("eatingOf")} {todayMeals.members.length}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 );
@@ -916,7 +953,7 @@ export default function LandingPage() {
             </div>
 
             {/* Members Meal Status List Container */}
-            <div className="mt-6 rounded-2xl bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 overflow-hidden transition-all duration-300">
+            <div className="mt-3.5 rounded-2xl bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 overflow-hidden transition-all duration-300">
               <div className="flex items-center justify-between border-b border-[#E7E5E1] dark:border-slate-800 px-5 py-3 bg-gray-50/50 dark:bg-slate-800/40">
                 <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
                   {t("memberHeader")}
@@ -958,7 +995,7 @@ export default function LandingPage() {
                           onClick={() => setSelectedMember(member)}
                         />
                       ) : (
-                        <span 
+                        <span
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FF6900]/10 dark:bg-orange-950/40 font-meta text-xs font-bold text-[#FF6900] dark:text-orange-400 cursor-pointer hover:bg-[#FF6900]/20 transition-colors"
                           onClick={() => setSelectedMember(member)}
                         >
@@ -992,25 +1029,22 @@ export default function LandingPage() {
                         return (
                           <div key={m.key} className="w-8 flex items-center justify-center relative">
                             <span
-                              className={`block h-3 w-3 rounded-full transition-all duration-300 ${
-                                isMealOn
+                              className={`block h-3 w-3 rounded-full transition-all duration-300 ${isMealOn
                                   ? isOpen
                                     ? "bg-[#FF6900] shadow-sm shadow-orange-500/50 scale-110 ring-2 ring-orange-400/40"
                                     : "bg-[#FF6900] shadow-sm shadow-orange-500/40 scale-110 opacity-90"
                                   : guestCountForMeal > 0
-                                  ? "bg-amber-500/30 border border-amber-500"
-                                  : "bg-[#E7E5E1] dark:bg-slate-700"
-                              }`}
+                                    ? "bg-amber-500/30 border border-amber-500"
+                                    : "bg-[#E7E5E1] dark:bg-slate-700"
+                                }`}
                               style={
                                 isMealOn && isOpen
                                   ? { animation: "pulse 3.5s cubic-bezier(0.4, 0, 0.6, 1) infinite" }
                                   : undefined
                               }
-                              title={`${isMe ? t("youLabel") : member.name} — ${
-                                m.label
-                              }: ${isMealOn ? "Own Meal ON" : "Own Meal OFF"}${
-                                guestCountForMeal > 0 ? ` (+${guestCountForMeal} Guest)` : ""
-                              }`}
+                              title={`${isMe ? t("youLabel") : member.name} — ${m.label
+                                }: ${isMealOn ? "Own Meal ON" : "Own Meal OFF"}${guestCountForMeal > 0 ? ` (+${guestCountForMeal} Guest)` : ""
+                                }`}
                             />
                             {guestCountForMeal > 0 && (
                               <span
@@ -1063,7 +1097,7 @@ function MemberProfileModal({ member, onClose, isBn }) {
           setWhatsapp(data.whatsappNumber);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         if (!ignore) setLoading(false);
       });
@@ -1083,26 +1117,26 @@ function MemberProfileModal({ member, onClose, isBn }) {
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 pb-20 md:pb-4 backdrop-blur-sm transition-all duration-300"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center relative border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
         onClick={(e) => e.stopPropagation()}
       >
-        <button 
+        <button
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl font-bold transition-colors cursor-pointer"
           onClick={onClose}
           aria-label="Close modal"
         >
           ✕
         </button>
-        
+
         {member.image ? (
-          <Image 
-            src={getOptimizedImageUrl(member.image, { width: 400, height: 400 })} 
-            alt={member.name} 
+          <Image
+            src={getOptimizedImageUrl(member.image, { width: 400, height: 400 })}
+            alt={member.name}
             width={192}
             height={192}
             unoptimized={typeof member.image === "string" && member.image.startsWith("http")}
@@ -1116,7 +1150,7 @@ function MemberProfileModal({ member, onClose, isBn }) {
             </span>
           </div>
         )}
-        
+
         <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mb-1">
           {member.name}
         </h3>
