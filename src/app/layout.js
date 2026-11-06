@@ -13,6 +13,7 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import BroadcastModalListener from "@/components/BroadcastModalListener";
 import WhatsAppRequiredModal from "@/components/auth/WhatsAppRequiredModal";
 import ManagerFloatingActions from "@/components/navigation/ManagerFloatingActions";
+import MemberFloatingActions from "@/components/navigation/MemberFloatingActions";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -247,6 +248,7 @@ export default function RootLayout({ children }) {
               <Footer />
               <BottomNav />
               <ManagerFloatingActions />
+              <MemberFloatingActions />
               <PWAInstallPrompt />
               <BroadcastModalListener />
               <WhatsAppRequiredModal />
