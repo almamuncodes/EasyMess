@@ -79,15 +79,15 @@ function Perforation({ className = "" }) {
 
 function SummaryCard({ label, value, mono: useMono = true, icon = "📊" }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/70 dark:border-amber-900/40 backdrop-blur-xl p-3.5 min-[375px]:p-4 sm:p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-amber-50/80 dark:bg-amber-950/25 border border-amber-200/70 dark:border-amber-900/40 backdrop-blur-xl p-2.5 sm:p-4 md:p-5 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300">
       <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400">
+      <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+        <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-[#EA580C] dark:text-orange-400 truncate pr-1">
           {label}
         </p>
-        <span className="text-sm">{icon}</span>
+        <span className="text-xs sm:text-sm shrink-0">{icon}</span>
       </div>
-      <p className={`mt-0.5 text-sm min-[375px]:text-base sm:text-xl md:text-2xl font-bold text-gray-950 dark:text-slate-100 whitespace-nowrap ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
+      <p className={`mt-0.5 text-sm min-[375px]:text-base sm:text-xl font-bold text-gray-950 dark:text-slate-100 whitespace-nowrap leading-tight ${useMono ? "font-[family-name:var(--font-mono)]" : ""}`}>
         {value}
       </p>
     </div>
@@ -410,14 +410,14 @@ export default function OverviewDashboard({ role }) {
     <div
       className={`${display.variable} ${body.variable} ${mono.variable} min-h-screen bg-[#F2F4F1] dark:bg-slate-950 font-[family-name:var(--font-body)] text-[#1B2A26] dark:text-slate-200 border dark:border-slate-800 rounded-2xl`}
     >
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mx-auto max-w-5xl px-3 sm:px-6 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-[#C99A3E]">
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.18em] text-[#C99A3E]">
               {isManager ? "Manager" : "Member"} · Monthly Overview
             </p>
-            <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-semibold">
+            <h1 className="mt-0.5 sm:mt-1 font-[family-name:var(--font-display)] text-2xl sm:text-3xl font-semibold">
               {data?.messName || "EasyMess"}
             </h1>
           </div>
@@ -426,7 +426,7 @@ export default function OverviewDashboard({ role }) {
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
+              className="rounded-lg sm:rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
             >
               {monthOptions.map((m) => (
                 <option key={m} value={m}>
@@ -437,7 +437,7 @@ export default function OverviewDashboard({ role }) {
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
+              className="rounded-lg sm:rounded-md border border-[#1B2A26]/15 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C99A3E]"
             >
               {yearOptions.map((y) => (
                 <option key={y} value={y}>
@@ -449,21 +449,21 @@ export default function OverviewDashboard({ role }) {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-md border border-[#B5533C]/30 bg-[#B5533C]/5 px-4 py-3 text-sm text-[#B5533C]">
+          <div className="mb-4 sm:mb-6 rounded-md border border-[#B5533C]/30 bg-[#B5533C]/5 px-4 py-3 text-sm text-[#B5533C]">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-md bg-[#1B2A26]/10" />
+              <div key={i} className="h-16 sm:h-20 animate-pulse rounded-xl sm:rounded-2xl bg-[#1B2A26]/10" />
             ))}
           </div>
         ) : data ? (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-4">
               <SummaryCard label="Total Deposit" value={`৳ ${taka(data.summary.totalDeposit)}`} icon="💰" />
               <SummaryCard label="Total Bazaar" value={`৳ ${taka(data.summary.totalBazaar)}`} icon="🛒" />
               <SummaryCard label="Total Meals" value={data.summary.totalMeal} icon="🍽️" mono />
@@ -471,7 +471,7 @@ export default function OverviewDashboard({ role }) {
             </div>
 
             {/* Action Bar */}
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
+            <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-3 sm:pb-4">
               <div className="flex items-center gap-2">
                 <p className="font-[family-name:var(--font-display)] text-lg">Member Summary</p>
               </div>
@@ -487,7 +487,7 @@ export default function OverviewDashboard({ role }) {
               </div>
             </div>
             {/* Search & Filter Bar */}
-            <div className="mt-6 relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+            <div className="mt-3.5 sm:mt-6 relative z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
               <div className="flex flex-1 items-center gap-2 sm:gap-3 w-full">
                 {/* Search Input */}
                 <div className="relative flex-1">

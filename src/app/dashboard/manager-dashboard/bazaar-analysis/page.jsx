@@ -246,51 +246,51 @@ export default function ManagerBazaarAnalysisPage() {
         </div>
 
         {/* Responsive Overview Stat Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between text-gray-400 mb-1.5">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-5 rounded-xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between text-gray-400 mb-0.5 sm:mb-1.5">
+              <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 truncate pr-1">
                 {isBn ? "মোট বাজার" : "Total Spend"}
               </span>
-              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500" />
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0" />
             </div>
-            <p className="text-lg sm:text-2xl font-black font-mono">
+            <p className="text-base sm:text-2xl font-black font-mono leading-tight">
               ৳{taka(stats.totalAmount)}
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between text-gray-400 mb-1.5">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+          <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-5 rounded-xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between text-gray-400 mb-0.5 sm:mb-1.5">
+              <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 truncate pr-1">
                 {isBn ? "মোট দিন" : "Total Entries"}
               </span>
-              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500" />
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 shrink-0" />
             </div>
-            <p className="text-lg sm:text-2xl font-black font-mono">
+            <p className="text-base sm:text-2xl font-black font-mono leading-tight">
               {stats.count} {isBn ? "টি" : "logs"}
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between text-gray-400 mb-1.5">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+          <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-5 rounded-xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between text-gray-400 mb-0.5 sm:mb-1.5">
+              <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 truncate pr-1">
                 {isBn ? "গড় বাজার" : "Daily Avg"}
               </span>
-              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500 shrink-0" />
             </div>
-            <p className="text-lg sm:text-2xl font-black font-mono">
+            <p className="text-base sm:text-2xl font-black font-mono leading-tight">
               ৳{taka(stats.avgAmount)}
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
-            <div className="flex items-center justify-between text-gray-400 mb-1.5">
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+          <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-5 rounded-xl sm:rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm">
+            <div className="flex items-center justify-between text-gray-400 mb-0.5 sm:mb-1.5">
+              <span className="text-[9px] sm:text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 truncate pr-1">
                 {isBn ? "সর্বোচ্চ বাজার" : "Highest Single"}
               </span>
-              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500" />
+              <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500 shrink-0" />
             </div>
-            <p className="text-lg sm:text-2xl font-black font-mono">
+            <p className="text-base sm:text-2xl font-black font-mono leading-tight">
               ৳{taka(getBazaarAmount(stats.maxBazaar))}
             </p>
           </div>

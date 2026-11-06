@@ -22,7 +22,7 @@ import {
   Mail,
   MessageSquare,
   Boxes,
-  FileSpreadsheet,
+ 
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -113,6 +113,7 @@ export default function Sidebar() {
           { name: lang === "bn" ? "রাইস ওভারভিউ" : "Rice Overview", href: "/dashboard/user-dashboard/rice-overview", icon: BarChart3, roles: ["member"] },
         ]
       : []),
+ 
     {
       name: t("overview"),
       href: "/dashboard/manager-dashboard/overview",
@@ -173,12 +174,6 @@ export default function Sidebar() {
       roles: ["admin"],
     },
     {
-      name: t("myMess"),
-      href: "/dashboard/manager-dashboard/my-mess",
-      icon: Home,
-      roles: [ "manager"],
-    },
-    {
       name: t("myMeals"),
       href: "/dashboard/manager-dashboard/my-meals",
       icon: Utensils,
@@ -190,17 +185,32 @@ export default function Sidebar() {
       icon: UtensilsCrossed,
       roles: [ "manager"],
     },
-    {
-      name: lang === "bn" ? "মিল খাতা (শিট)" : "Meal Sheet",
-      href: "/sheet",
-      icon: FileSpreadsheet,
-      roles: ["manager", "member"],
-    },
     ...(riceConfig?.enableRiceManagement === true
       ? [
           { name: t("riceManagement"), href: "/dashboard/manager-dashboard/rice-management", icon: Boxes, roles: ["manager"] },
         ]
       : []),
+    {
+      name: t("paymentsSidebar"),
+      href: "/dashboard/manager-dashboard/payments",
+      icon: Wallet,
+      roles: [ "manager"],
+    },
+    { name: t("bazaarSidebar"), href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
+    { name: t("bazaarAnalysis"), href: "/dashboard/manager-dashboard/bazaar-analysis", icon: BarChart3, roles: ["manager"] },
+    { name: t("bazaarSchedule"), href: "/dashboard/manager-dashboard/bazaar-schedule", icon: Calendar, roles: ["manager"] },
+    {
+      name: t("billsSidebar"),
+      href: "/dashboard/manager-dashboard/bills",
+      icon: Receipt,
+      roles: [ "manager"],
+    },
+    {
+      name: t("myMess"),
+      href: "/dashboard/manager-dashboard/my-mess",
+      icon: Home,
+      roles: [ "manager"],
+    },
     {
       name: t("mealsSidebar"),
       href: "/dashboard/user-dashboard/meals",
@@ -220,27 +230,12 @@ export default function Sidebar() {
     },
     {
       name: t("billsSidebar"),
-      href: "/dashboard/manager-dashboard/bills",
-      icon: Receipt,
-      roles: [ "manager"],
-    },
-    {
-      name: t("paymentsSidebar"),
-      href: "/dashboard/manager-dashboard/payments",
-      icon: Wallet,
-      roles: [ "manager"],
-    },
-    {
-      name: t("billsSidebar"),
       href: "/dashboard/user-dashboard/bills",
       icon: Receipt,
       roles: ["member"],
     },
-    { name: t("bazaarSidebar"), href: "/dashboard/manager-dashboard/bazaar", icon: Store, roles: ["manager"] },
     { name: t("bazaarSidebar"), href: "/dashboard/user-dashboard/bazaar", icon: Store, roles: ["member"] },
-    { name: t("bazaarAnalysis"), href: "/dashboard/manager-dashboard/bazaar-analysis", icon: BarChart3, roles: ["manager"] },
     { name: t("bazaarAnalysis"), href: "/dashboard/user-dashboard/bazaar-analysis", icon: BarChart3, roles: ["member"] },
-    { name: t("bazaarSchedule"), href: "/dashboard/manager-dashboard/bazaar-schedule", icon: Calendar, roles: ["manager"] },
     { name: t("bazaarSchedule"), href: "/dashboard/user-dashboard/bazaar-schedule", icon: Calendar, roles: ["member"] },
     {
       name: t("activityLog"),

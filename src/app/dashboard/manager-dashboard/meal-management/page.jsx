@@ -332,66 +332,66 @@ export default function MealManagementPage() {
       </div>
 
       {/* Liquid Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {/* Breakfast Card */}
-        <div className={`relative overflow-hidden ${mealWeights.breakfast === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-amber-50/80 dark:bg-amber-950/25 border-amber-200/80 dark:border-amber-900/40"} border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}>
+        <div className={`relative overflow-hidden ${mealWeights.breakfast === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-amber-50/80 dark:bg-amber-950/25 border-amber-200/80 dark:border-amber-900/40"} border backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-amber-500/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
-            <Sun size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-amber-500/15 dark:bg-amber-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
+            <Sun className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-              Breakfast {mealWeights.breakfast === 0 && <span className="text-[10px] text-gray-400 font-normal">(Weight 0)</span>}
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider truncate">
+              Breakfast {mealWeights.breakfast === 0 && <span className="text-[9px] text-gray-400 font-normal">(0)</span>}
             </p>
-            <p className="text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-0.5 leading-tight">
               {mealWeights.breakfast === 0 ? "—" : data.summary.breakfast}
             </p>
           </div>
         </div>
 
         {/* Lunch Card */}
-        <div className={`relative overflow-hidden ${mealWeights.lunch === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-orange-50/80 dark:bg-orange-950/25 border-orange-200/80 dark:border-orange-900/40"} border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}>
+        <div className={`relative overflow-hidden ${mealWeights.lunch === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-orange-50/80 dark:bg-orange-950/25 border-orange-200/80 dark:border-orange-900/40"} border backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-orange-500/15 dark:bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
-            <Sunset size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-orange-500/15 dark:bg-orange-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
+            <Sunset className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-              Lunch {mealWeights.lunch === 0 && <span className="text-[10px] text-gray-400 font-normal">(Weight 0)</span>}
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider truncate">
+              Lunch {mealWeights.lunch === 0 && <span className="text-[9px] text-gray-400 font-normal">(0)</span>}
             </p>
-            <p className="text-2xl font-extrabold text-orange-950 dark:text-orange-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-orange-950 dark:text-orange-100 mt-0.5 leading-tight">
               {mealWeights.lunch === 0 ? "—" : data.summary.lunch}
             </p>
           </div>
         </div>
 
         {/* Dinner Card */}
-        <div className={`relative overflow-hidden ${mealWeights.dinner === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-indigo-50/80 dark:bg-indigo-950/25 border-indigo-200/80 dark:border-indigo-900/40"} border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}>
+        <div className={`relative overflow-hidden ${mealWeights.dinner === 0 ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800" : "bg-indigo-50/80 dark:bg-indigo-950/25 border-indigo-200/80 dark:border-indigo-900/40"} border backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
-            <Moon size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+            <Moon className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
-              Dinner {mealWeights.dinner === 0 && <span className="text-[10px] text-gray-400 font-normal">(Weight 0)</span>}
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider truncate">
+              Dinner {mealWeights.dinner === 0 && <span className="text-[9px] text-gray-400 font-normal">(0)</span>}
             </p>
-            <p className="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-0.5 leading-tight">
               {mealWeights.dinner === 0 ? "—" : data.summary.dinner}
             </p>
           </div>
         </div>
 
         {/* Guest Meal Card */}
-        <div className="relative overflow-hidden bg-purple-50/80 dark:bg-purple-950/25 border border-purple-200/80 dark:border-purple-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+        <div className="relative overflow-hidden bg-purple-50/80 dark:bg-purple-950/25 border border-purple-200/80 dark:border-purple-900/40 backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300">
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-purple-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-purple-500/15 dark:bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-inner">
-            <Users size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-purple-500/15 dark:bg-purple-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-inner">
+            <Users className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
               Guest Meals
             </p>
-            <p className="text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-0.5 leading-tight">
               {data.summary.guestMeal}
             </p>
           </div>

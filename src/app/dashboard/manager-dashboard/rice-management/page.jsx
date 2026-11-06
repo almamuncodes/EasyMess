@@ -387,27 +387,27 @@ export default function ManagerRiceManagementPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {/* Breakfast Card */}
         <div
           className={`relative overflow-hidden ${
             mealWeights.breakfast === 0
               ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800"
               : "bg-amber-50/80 dark:bg-amber-950/25 border-amber-200/80 dark:border-amber-900/40"
-          } border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}
+          } border backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}
         >
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-amber-500/15 dark:bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
-            <Sun size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-amber-500/15 dark:bg-amber-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-inner">
+            <Sun className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider truncate">
               {isBn ? "সকালের চাল" : "Breakfast Rice"}
             </p>
-            <p className="text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-amber-950 dark:text-amber-100 mt-0.5 leading-tight">
               {summary.breakfast + summary.guestBreakfast}
             </p>
-            <p className="text-[11px] text-amber-800/70 dark:text-amber-300/60 mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-amber-800/70 dark:text-amber-300/60 mt-0.5 truncate">
               {summary.breakfast} {isBn ? "জন" : "mem"}
               {summary.guestBreakfast > 0 && ` + ${summary.guestBreakfast} guest`}
             </p>
@@ -420,20 +420,20 @@ export default function ManagerRiceManagementPage() {
             mealWeights.lunch === 0
               ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800"
               : "bg-orange-50/80 dark:bg-orange-950/25 border-orange-200/80 dark:border-orange-900/40"
-          } border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}
+          } border backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}
         >
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-orange-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-orange-500/15 dark:bg-orange-500/20 rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
-            <Sunset size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-orange-500/15 dark:bg-orange-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-inner">
+            <Sunset className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wider truncate">
               {isBn ? "দুপুরের চাল" : "Lunch Rice"}
             </p>
-            <p className="text-2xl font-extrabold text-orange-950 dark:text-orange-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-orange-950 dark:text-orange-100 mt-0.5 leading-tight">
               {summary.lunch + summary.guestLunch}
             </p>
-            <p className="text-[11px] text-orange-800/70 dark:text-orange-300/60 mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-orange-800/70 dark:text-orange-300/60 mt-0.5 truncate">
               {summary.lunch} {isBn ? "জন" : "mem"}
               {summary.guestLunch > 0 && ` + ${summary.guestLunch} guest`}
             </p>
@@ -446,20 +446,20 @@ export default function ManagerRiceManagementPage() {
             mealWeights.dinner === 0
               ? "opacity-60 bg-gray-50/80 dark:bg-slate-900/40 border-dashed border-gray-300 dark:border-slate-800"
               : "bg-indigo-50/80 dark:bg-indigo-950/25 border-indigo-200/80 dark:border-indigo-900/40"
-          } border backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300`}
+          } border backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300`}
         >
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
-            <Moon size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-indigo-500/15 dark:bg-indigo-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+            <Moon className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider truncate">
               {isBn ? "রাতের চাল" : "Dinner Rice"}
             </p>
-            <p className="text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-indigo-950 dark:text-indigo-100 mt-0.5 leading-tight">
               {summary.dinner + summary.guestDinner}
             </p>
-            <p className="text-[11px] text-indigo-800/70 dark:text-indigo-300/60 mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-indigo-800/70 dark:text-indigo-300/60 mt-0.5 truncate">
               {summary.dinner} {isBn ? "জন" : "mem"}
               {summary.guestDinner > 0 && ` + ${summary.guestDinner} guest`}
             </p>
@@ -467,19 +467,19 @@ export default function ManagerRiceManagementPage() {
         </div>
 
         {/* Guest Rice Card */}
-        <div className="relative overflow-hidden bg-purple-50/80 dark:bg-purple-950/25 border border-purple-200/80 dark:border-purple-900/40 backdrop-blur-xl p-4.5 rounded-2xl flex items-center gap-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+        <div className="relative overflow-hidden bg-purple-50/80 dark:bg-purple-950/25 border border-purple-200/80 dark:border-purple-900/40 backdrop-blur-xl p-2.5 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-2.5 sm:gap-4 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300">
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-purple-400/40 to-transparent pointer-events-none" />
-          <div className="w-12 h-12 bg-purple-500/15 dark:bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-inner">
-            <Users size={24} />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 shrink-0 bg-purple-500/15 dark:bg-purple-500/20 rounded-lg sm:rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-inner">
+            <Users className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] sm:text-xs font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider truncate">
               {isBn ? "মোট গেস্ট চাল" : "Guest Rice"}
             </p>
-            <p className="text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-0.5">
+            <p className="text-base sm:text-2xl font-extrabold text-purple-950 dark:text-purple-100 mt-0.5 leading-tight">
               {summary.guestMeal}
             </p>
-            <p className="text-[11px] text-purple-800/70 dark:text-purple-300/60 mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-purple-800/70 dark:text-purple-300/60 mt-0.5 truncate">
               🌅 {summary.guestBreakfast} &nbsp;☀️ {summary.guestLunch} &nbsp;🌙 {summary.guestDinner}
             </p>
           </div>
