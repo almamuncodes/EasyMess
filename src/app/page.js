@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
 import { useTranslation } from "@/lib/useTranslation";
 import PageLoader from "@/components/ui/PageLoader";
+import HomeOverviewSkeleton from "@/components/ui/HomeOverviewSkeleton";
 import { preloadImage, getOptimizedImageUrl, shimmerBlurDataUrl } from "@/lib/image-utils";
 import { toast } from "sonner";
 
@@ -471,12 +472,21 @@ export default function LandingPage() {
     `}</style>
   );
 
-  // সেশন লোড হচ্ছে, বা লগইন থাকলে mess membership চেক হচ্ছে — flash এড়াতে skeleton (ক্যাশ থাকলে সরাসরি পেজ রেন্ডার হবে)
-  if (isPending || checkingMess) {
+  const isBn = lang === "bn";
+
+  // চেক: ইউজার মেসে জয়েন করা মেম্বার কিনা (ক্যাশ অথবা স্টেট থেকে)
+  const isKnownMessMember =
+    (typeof window !== "undefined" && sessionStorage.getItem("user_has_mess") === "true") ||
+    (session && hasMess === true);
+
+  // ১. সেশন লোড হচ্ছে
+  if (isPending) {
+    // শুধুমাত্র পূর্বে মেস মেম্বার হিসেবে ক্যাশ করা থাকলে হোম স্কেলিটন দেখাবে, অন্যথায় সাধারণ পেজ লোডার
+    if (isKnownMessMember) {
+      return <HomeOverviewSkeleton />;
+    }
     return <PageLoader text={lang === "en" ? "Loading EasyMess..." : "EasyMess লোড হচ্ছে..."} />;
   }
-
-  const isBn = lang === "bn";
 
   // ================= State 1: Logged out — marketing landing ================= //
   if (!session) {
@@ -720,6 +730,14 @@ export default function LandingPage() {
     );
   }
 
+  // ইউজার লগইন রয়েছে, মেস সদস্যপদ চেক হচ্ছে
+  if (checkingMess) {
+    if (isKnownMessMember || hasMess === true) {
+      return <HomeOverviewSkeleton />;
+    }
+    return <PageLoader text={lang === "en" ? "Loading EasyMess..." : "EasyMess লোড হচ্ছে..."} />;
+  }
+
   // ================= State 2: Logged in, no mess yet ================= //
   if (!hasMess) {
     return (
@@ -777,6 +795,11 @@ export default function LandingPage() {
     );
   }
 
+  // মেস মেম্বার নিশ্চিত, তবে আজকের মিল ডাটা এখনো লোড হয়নি — স্কেলিটন দেখানো হবে
+  if (mealsLoading && !todayMeals) {
+    return <HomeOverviewSkeleton />;
+  }
+
   // ================= State 3: Member of an existing mess — read-only overview ================= //
   const mealTypes = [
     { key: "breakfast", label: lang === "en" ? "Breakfast" : "সকাল" },
@@ -816,8 +839,8 @@ export default function LandingPage() {
             <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300 font-semibold truncate">
               {t("mealRate")}
             </p>
-            <p className="font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black text-amber-950 dark:text-amber-100">
-              {monthSummary ? `৳${monthSummary.mealRate}` : "—"}
+            <p className="font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black text-amber-950 dark:text-amber-100 flex items-center justify-center">
+              {monthSummary ? `৳${monthSummary.mealRate}` : <span className="inline-block h-5 w-14 rounded-md bg-amber-200/80 dark:bg-amber-900/60 animate-pulse my-0.5" />}
             </p>
           </div>
           <div className="relative overflow-hidden rounded-2xl bg-orange-50/80 dark:bg-orange-950/25 p-2.5 sm:p-4 text-center border border-orange-200/80 dark:border-orange-900/40 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300">
@@ -825,8 +848,8 @@ export default function LandingPage() {
             <p className="font-meta text-[9px] sm:text-[10px] uppercase tracking-wide text-orange-700 dark:text-orange-300 font-semibold truncate">
               {t("yourBill")}
             </p>
-            <p className="font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black text-orange-950 dark:text-orange-100">
-              {monthSummary ? `৳${monthSummary.bill}` : "—"}
+            <p className="font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black text-orange-950 dark:text-orange-100 flex items-center justify-center">
+              {monthSummary ? `৳${monthSummary.bill}` : <span className="inline-block h-5 w-14 rounded-md bg-orange-200/80 dark:bg-orange-900/60 animate-pulse my-0.5" />}
             </p>
           </div>
           <div className={`relative overflow-hidden rounded-2xl p-2.5 sm:p-4 text-center border shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-300 ${monthSummary?.status === "due"
@@ -838,11 +861,11 @@ export default function LandingPage() {
               }`}>
               {monthSummary?.status === "due" ? t("youOwe") : t("advance")}
             </p>
-            <p className={`font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black ${monthSummary?.status === "due"
+            <p className={`font-display mt-0.5 text-sm min-[-375px]:text-base sm:text-xl font-black flex items-center justify-center ${monthSummary?.status === "due"
                 ? "text-red-600 dark:text-red-400"
                 : "text-emerald-950 dark:text-emerald-100"
               }`}>
-              {monthSummary ? `৳${Math.abs(monthSummary.balance)}` : "—"}
+              {monthSummary ? `৳${Math.abs(monthSummary.balance)}` : <span className="inline-block h-5 w-14 rounded-md bg-red-200/80 dark:bg-red-900/60 animate-pulse my-0.5" />}
             </p>
           </div>
         </div>
@@ -859,17 +882,86 @@ export default function LandingPage() {
         </p>
 
         {mealsLoading ? (
-          <div className="mt-4 space-y-2">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between px-5 py-3 border-b border-[#EAE7E0] dark:border-slate-800 animate-pulse">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-full bg-[#E7E5E1] dark:bg-slate-800" />
-                  <div className="h-4 w-28 rounded bg-[#E7E5E1] dark:bg-slate-800" />
+          <>
+            {/* 3 Meals Cards Skeleton */}
+            <div className="mt-2.5 grid grid-cols-3 gap-2 sm:gap-3">
+              {["BREAKFAST", "LUNCH", "DINNER"].map((type) => (
+                <div
+                  key={type}
+                  className="rounded-2xl bg-white dark:bg-slate-900 p-2 sm:p-3 text-center shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800"
+                >
+                  <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
+                    {type}
+                  </p>
+                  <div className="mt-1.5 flex items-center justify-around">
+                    <div className="flex-1 min-w-0">
+                      <div className="h-5 sm:h-6 w-6 sm:w-7 mx-auto rounded-md bg-gray-200/90 dark:bg-slate-800 animate-pulse" />
+                      <p className="font-meta text-[9px] text-[#9a9691] dark:text-slate-500 truncate mt-1">Meal</p>
+                    </div>
+                    <div className="h-7 w-[1px] bg-gray-200 dark:bg-slate-800 shrink-0 mx-1" />
+                    <div className="flex-1 min-w-0">
+                      <div className="h-5 sm:h-6 w-6 sm:w-7 mx-auto rounded-md bg-amber-300/70 dark:bg-amber-700/50 animate-pulse" />
+                      <p className="font-meta text-[9px] text-amber-700/80 dark:text-amber-400 truncate mt-1 font-medium">Rice</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="h-4 w-12 rounded bg-[#E7E5E1] dark:bg-slate-800" />
+              ))}
+            </div>
+
+            {/* Member List Skeleton */}
+            <div className="mt-3.5 rounded-2xl bg-white dark:bg-slate-900 shadow-[0_1px_3px_rgba(22,24,29,0.05)] ring-1 ring-[#EAE7E0] dark:ring-slate-800 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-[#E7E5E1] dark:border-slate-800 px-5 py-3 bg-gray-50/50 dark:bg-slate-800/40">
+                <p className="font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
+                  {t("memberHeader")}
+                </p>
+                <div className="flex gap-4 sm:gap-6 shrink-0">
+                  {["B", "L", "D"].map((col) => (
+                    <p key={col} className="w-8 text-center font-meta text-[10px] uppercase tracking-wide text-[#9a9691] dark:text-slate-400 font-semibold">
+                      {col}
+                    </p>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
+
+              {[
+                { w: "w-28", m: true, dots: [true, true, true] },
+                { w: "w-36", m: false, dots: [true, true, true] },
+                { w: "w-32", m: false, dots: [false, false, false] },
+                { w: "w-28", m: false, dots: [true, true, true] },
+                { w: "w-30", m: false, dots: [true, true, true] },
+              ].map((row, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between px-5 py-3 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-[#F3F1EC] dark:[&:not(:last-child)]:border-slate-800/60"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <div className="h-8 w-8 rounded-full bg-gray-200/90 dark:bg-slate-800 shrink-0 animate-pulse" />
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <div className={`h-4 ${row.w} rounded-md bg-gray-200/80 dark:bg-slate-800 animate-pulse`} />
+                      {row.m && (
+                        <span className="font-meta text-[9px] uppercase tracking-wide text-[#9a9691] dark:text-slate-500 font-bold">
+                          {t("managerLabel")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-4 sm:gap-6 shrink-0">
+                    {row.dots.map((isOn, dotIdx) => (
+                      <div key={dotIdx} className="w-8 flex items-center justify-center">
+                        <span
+                          className={`block h-3 w-3 rounded-full ${
+                            isOn
+                              ? "bg-[#FF6900] shadow-xs shadow-orange-500/40 opacity-70 animate-pulse"
+                              : "bg-[#E7E5E1] dark:bg-slate-800"
+                          }`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : !todayMeals ? (
           <p className="mt-4 font-meta text-xs text-red-500">
             {mealError ? t("couldNotLoadMeals") : t("couldNotLoadMeals")}

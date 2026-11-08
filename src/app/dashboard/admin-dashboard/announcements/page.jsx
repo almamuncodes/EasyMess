@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -21,6 +21,9 @@ import {
   UploadCloud,
   X,
   Trash2,
+  Users,
+  ShieldCheck,
+  Clock,
 } from "lucide-react";
 
 function Avatar({ name, src, size = 44 }) {
@@ -57,8 +60,8 @@ function Avatar({ name, src, size = 44 }) {
 }
 
 export default function AdminAnnouncementsPage() {
-  const user = GetUser();
-  const adminUserId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const adminUserId = session?.user?.id;
   const { lang } = useTranslation();
   const isBn = lang === "bn";
 
@@ -68,6 +71,7 @@ export default function AdminAnnouncementsPage() {
   const [actionUrl, setActionUrl] = useState("");
   const [actionText, setActionText] = useState("");
   const [urgency, setUrgency] = useState("normal");
+  const [criticalDuration, setCriticalDuration] = useState(15);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -213,6 +217,15 @@ export default function AdminAnnouncementsPage() {
       return;
     }
 
+    if (urgency === "critical" && !actionUrl.trim()) {
+      toast.error(
+        isBn
+          ? "ক্রিটিক্যাল অ্যালার্টের জন্য অ্যাকশন লিংক (Action Link URL) প্রদান করা আবশ্যক!"
+          : "Action Link URL is required for Critical System Alert!"
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch(
@@ -228,6 +241,7 @@ export default function AdminAnnouncementsPage() {
             urgency,
             actionUrl,
             actionText,
+            criticalDuration: Number(criticalDuration) || 15,
           }),
         }
       );
@@ -235,8 +249,8 @@ export default function AdminAnnouncementsPage() {
       if (res.ok && data.success) {
         toast.success(
           isBn
-            ? "সকল ইউজারের কাছে পপআপ মোডাল ব্রডকাস্ট পাঠানো হয়েছে!"
-            : "Broadcast popup announcement sent successfully to all users!"
+            ? "সকল মেস মেম্বারদের কাছে পপআপ মোডাল ব্রডকাস্ট পাঠানো হয়েছে!"
+            : "Broadcast popup announcement sent successfully to mess members!"
         );
         setTitle("");
         setMessage("");
@@ -267,8 +281,8 @@ export default function AdminAnnouncementsPage() {
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mt-1">
             {isBn
-              ? "ক্লাউডিনারি ইমেজ আপলোড ও অটো-লিংকসহ সকল মেসের সকল ইউজারের জন্য পপআপ নোটিশ।"
-              : "Broadcast popup announcement with Cloudinary image upload, auto-hyperlinks, and action buttons."}
+              ? "ক্লাউডিনারি ইমেজ আপলোড ও অটো-লিংকসহ শুধুমাত্র লগইনকৃত মেস মেম্বারদের জন্য পপআপ নোটিশ।"
+              : "Broadcast popup announcement with Cloudinary image upload, auto-hyperlinks, specifically for mess members."}
           </p>
         </div>
       </div>
@@ -279,10 +293,29 @@ export default function AdminAnnouncementsPage() {
           onSubmit={handleSendBroadcast}
           className="lg:col-span-7 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm space-y-4"
         >
-          <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Radio size={18} className="text-orange-500" />
-            {isBn ? "নতুন পপআপ মোডাল বার্তা তৈরি করুন" : "Compose Popup Announcement"}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Radio size={18} className="text-orange-500" />
+              {isBn ? "নতুন পপআপ মোডাল বার্তা তৈরি করুন" : "Compose Popup Announcement"}
+            </h2>
+          </div>
+
+          {/* Audience Filter Notice Banner */}
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-900/40 text-orange-950 dark:text-orange-200 text-xs">
+            <div className="w-6 h-6 rounded-lg bg-orange-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <Users size={13} />
+            </div>
+            <div className="leading-relaxed">
+              <p className="font-bold text-orange-800 dark:text-orange-300">
+                {isBn ? "🎯 টার্গেটেড অডিয়েন্স: শুধুমাত্র লগইনকৃত মেস মেম্বাররা" : "🎯 Target Audience: Logged-in Mess Members Only"}
+              </p>
+              <p className="text-[11px] text-gray-600 dark:text-slate-400 mt-0.5">
+                {isBn
+                  ? "যেসব ইউজার লগইন নেই বা কোনো মেসে যুক্ত নন, তাঁদের স্ক্রিনে এই পপআপটি উঠবে না।"
+                  : "Unauthenticated guests or users without a mess will NOT receive this popup modal."}
+              </p>
+            </div>
+          </div>
 
           <div className="space-y-3">
             <div>
@@ -400,6 +433,40 @@ export default function AdminAnnouncementsPage() {
                 <option value="urgent">{isBn ? "জরুরী নোটিশ (Urgent Announcement)" : "Urgent Announcement"}</option>
                 <option value="critical">{isBn ? "অত্যন্ত জরুরী অ্যালার্ট (Critical Alert)" : "Critical System Alert"}</option>
               </select>
+
+              {urgency === "critical" && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                      <Clock size={13} className="text-rose-500" />
+                      <span>{isBn ? "বাধ্যতামূলক অবস্থানের সময়সীমা:" : "Required Stay Duration on Link:"}</span>
+                    </label>
+                    <select
+                      value={criticalDuration}
+                      onChange={(e) => setCriticalDuration(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-rose-300 dark:border-rose-900 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-rose-700 dark:text-rose-300"
+                    >
+                      <option value={10}>{isBn ? "১০ সেকেন্ড (সংক্ষিপ্ত ব্রাউজিং)" : "10 Seconds (Quick visit)"}</option>
+                      <option value={15}>{isBn ? "১৫ সেকেন্ড (সুপার রিকমেন্ডেড - রিভিউ/ফর্ম)" : "15 Seconds (Recommended - Review/Form)"}</option>
+                      <option value={20}>{isBn ? "২০ সেকেন্ড (মনোযোগ দিয়ে পড়ার জন্য)" : "20 Seconds (Careful reading)"}</option>
+                      <option value={30}>{isBn ? "৩০ সেকেন্ড (ভিডিও বা দীর্ঘ ফর্ম)" : "30 Seconds (Video or long form)"}</option>
+                      <option value={60}>{isBn ? "১ মিনিট (বাধ্যতামূলক নিয়মাবলী)" : "1 Minute (Long notice/policy)"}</option>
+                    </select>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-800 dark:text-rose-200 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-rose-700 dark:text-rose-300">
+                      <AlertTriangle size={15} className="text-rose-600" />
+                      <span>{isBn ? "ক্রিটিক্যাল অ্যালার্ট কার্যপ্রণালী:" : "Critical Alert Rules:"}</span>
+                    </div>
+                    <p className="leading-relaxed text-[11px] text-gray-700 dark:text-slate-300">
+                      {isBn
+                        ? `ইউজারদের স্ক্রিনে কোনো ক্রস (X) বা ক্লোজ বাটন থাকবে না। লিঙ্কে প্রবেশ করে নির্ধারিত ${criticalDuration} সেকেন্ড অপেক্ষা করলে নোটিশটি স্বয়ংক্রিয়ভাবে বন্ধ হবে। লিঙ্কে না গিয়ে অ্যাপ বন্ধ করে পুনরায় ঢুকলেও মোডালটি আবার আসবে।`
+                        : `No close button will be provided. Users must visit the link and stay for at least ${criticalDuration} seconds before the notice automatically closes.`}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -422,7 +489,7 @@ export default function AdminAnnouncementsPage() {
             className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 cursor-pointer"
           >
             <Send size={16} />
-            <span>{submitting ? (isBn ? "ব্রডকাস্ট হচ্ছে..." : "Broadcasting...") : (isBn ? "সকল ইউজারের নিকট পপআপ ব্রডকাস্ট পাঠান" : "Send Popup Broadcast Now")}</span>
+            <span>{submitting ? (isBn ? "ব্রডকাস্ট হচ্ছে..." : "Broadcasting...") : (isBn ? "মেস মেম্বারদের নিকট পপআপ ব্রডকাস্ট পাঠান" : "Send Popup Broadcast to Mess Members")}</span>
           </button>
         </form>
 

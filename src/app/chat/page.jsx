@@ -44,6 +44,7 @@ import {
   AtSign,
 } from "lucide-react";
 import { toast } from "sonner";
+import ChatMessageSkeleton from "@/components/ui/ChatMessageSkeleton";
 
 export const dynamic = "force-dynamic";
 
@@ -1327,10 +1328,7 @@ export default function MessChatPage() {
           <div className="absolute top-1/2 -right-16 w-80 h-80 bg-[#FAEAD9]/60 dark:bg-amber-500/10 rounded-full blur-3xl" />
         </div>
         {loading ? (
-          <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-2" />
-            <p className="text-xs">{isBn ? "মেসেজ লোড হচ্ছে..." : "Loading messages..."}</p>
-          </div>
+          <ChatMessageSkeleton />
         ) : messages.length === 0 ? (
           <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-6">
             <div className="w-16 h-16 rounded-3xl bg-orange-50 dark:bg-orange-950/30 text-orange-500 flex items-center justify-center mb-3">

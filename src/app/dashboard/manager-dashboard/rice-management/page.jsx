@@ -81,6 +81,18 @@ const readMember = (m) => ({
 const inputCls =
   "w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition";
 
+const getCachedRice = (uId, d) => {
+  if (typeof window === "undefined" || !uId) return null;
+  try {
+    const raw = sessionStorage.getItem(`manager_rice_${uId}_${d}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function ManagerRiceManagementPage() {
   const user = GetUser();
   const userId = user?.user?.id;
@@ -89,9 +101,27 @@ export default function ManagerRiceManagementPage() {
 
   const [date, setDate] = useState(() => getBDDateStr());
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState(() => {
+    if (typeof window !== "undefined") {
+      const d = getBDDateStr();
+      const uId = userId || sessionStorage.getItem("user_id") || sessionStorage.getItem("auth_user_id");
+      const cached = getCachedRice(uId, d);
+      if (cached) return cached;
+    }
+    return [];
+  });
+
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const d = getBDDateStr();
+      const uId = userId || sessionStorage.getItem("user_id") || sessionStorage.getItem("auth_user_id");
+      const cached = getCachedRice(uId, d);
+      if (cached) return false;
+    }
+    return true;
+  });
+
   const [mealWeights, setMealWeights] = useState({ breakfast: 0.5, lunch: 1, dinner: 1 });
 
   // Guest Meal Modal state
@@ -133,7 +163,12 @@ export default function ManagerRiceManagementPage() {
         const res = await fetch(`${API}/api/rice/daily?managerId=${userId}&date=${date}`);
         const resData = await res.json();
         if (resData.success) {
-          setMembers(resData.members || []);
+          const fetchedMembers = resData.members || [];
+          setMembers(fetchedMembers);
+          if (typeof window !== "undefined" && userId) {
+            sessionStorage.setItem(`manager_rice_${userId}_${date}`, JSON.stringify(fetchedMembers));
+            sessionStorage.setItem("user_id", userId);
+          }
         } else {
           toast.error(resData.message || "Failed to load daily rice management");
         }
@@ -149,6 +184,7 @@ export default function ManagerRiceManagementPage() {
 
   useEffect(() => {
     if (!userId) return;
+    sessionStorage.setItem("user_id", userId);
     let ignore = false;
 
     fetch(`${API}/api/rice/daily?managerId=${userId}&date=${date}`)
@@ -156,17 +192,24 @@ export default function ManagerRiceManagementPage() {
       .then((resData) => {
         if (ignore) return;
         setLoading(false);
-        if (resData.success) {
-          setMembers(resData.members || []);
+        if (resData.success && resData.members) {
+          setMembers(resData.members);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(`manager_rice_${userId}_${date}`, JSON.stringify(resData.members));
+          }
         } else {
-          toast.error(resData.message || "Failed to load daily rice management");
+          const cached = getCachedRice(userId, date);
+          if (!cached) {
+            toast.error(resData.message || "Failed to load daily rice management");
+          }
         }
       })
       .catch((err) => {
         if (ignore) return;
         console.error(err);
         setLoading(false);
-        toast.error("Error connecting to server");
+        const cached = getCachedRice(userId, date);
+        if (!cached) toast.error("Error connecting to server");
       });
 
     return () => {
@@ -178,8 +221,14 @@ export default function ManagerRiceManagementPage() {
   const handleToggleMeal = async (memberId, mealType, currentVal) => {
     const riceKey = `${mealType}Rice`;
     const newVal = !currentVal;
-    // Optimistic UI update
-    setMembers((prev) => prev.map((m) => (m.userId === memberId ? { ...m, [riceKey]: newVal } : m)));
+    // Optimistic UI update and cache update
+    setMembers((prev) => {
+      const updated = prev.map((m) => (m.userId === memberId ? { ...m, [riceKey]: newVal } : m));
+      if (typeof window !== "undefined" && userId) {
+        sessionStorage.setItem(`manager_rice_${userId}_${date}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
 
     try {
       const res = await fetch(`${API}/api/rice/daily`, {
@@ -223,14 +272,18 @@ export default function ManagerRiceManagementPage() {
     const lCount = mealWeights.lunch === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestLunchRice) || 0);
     const dCount = mealWeights.dinner === 0 ? 0 : Math.max(0, parseInt(editingGuestMember.guestDinnerRice) || 0);
 
-    // Optimistic UI update
-    setMembers((prev) =>
-      prev.map((m) =>
+    // Optimistic UI update and cache update
+    setMembers((prev) => {
+      const updated = prev.map((m) =>
         m.userId === editingGuestMember.userId
           ? { ...m, guestBreakfastRice: bCount, guestLunchRice: lCount, guestDinnerRice: dCount, guestRiceExtra: 0 }
           : m
-      )
-    );
+      );
+      if (typeof window !== "undefined" && userId) {
+        sessionStorage.setItem(`manager_rice_${userId}_${date}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
 
     try {
       const res = await fetch(`${API}/api/rice/daily`, {
@@ -360,7 +413,17 @@ export default function ManagerRiceManagementPage() {
             <input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setDate(newDate);
+                const cached = getCachedRice(userId, newDate);
+                if (cached) {
+                  setMembers(cached);
+                  setLoading(false);
+                } else {
+                  setLoading(true);
+                }
+              }}
               className="pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition backdrop-blur-sm cursor-pointer"
             />
           </div>

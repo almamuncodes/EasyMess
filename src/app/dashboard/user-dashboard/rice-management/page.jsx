@@ -66,16 +66,31 @@ export default function UserRiceManagementPage() {
   const [month, setMonth] = useState(() => getBDNow().month);
   const [year, setYear] = useState(() => getBDNow().year);
 
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_rice_summary_${userId}_${month}_${year}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
+      }
+    }
+    return {
+      config: { enableRiceManagement: true, ricePerMeal: 1, riceUnitName: "Unit" },
+      summary: { totalAdded: 0, totalConsumed: 0, remaining: 0, todayConsumed: 0 },
+      deposits: [],
+      consumptionHistory: [],
+    };
+  });
+
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      return !sessionStorage.getItem(`user_rice_summary_${userId}_${month}_${year}`);
+    }
+    return true;
+  });
   const [activeTab, setActiveTab] = useState("all"); // "all", "deposits", "consumption"
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [data, setData] = useState({
-    config: { enableRiceManagement: true, ricePerMeal: 1, riceUnitName: "Unit" },
-    summary: { totalAdded: 0, totalConsumed: 0, remaining: 0, todayConsumed: 0 },
-    deposits: [],
-    consumptionHistory: [],
-  });
 
   const monthOptions = useMemo(
     () => [
@@ -100,31 +115,34 @@ export default function UserRiceManagementPage() {
     return [currentY - 1, currentY, currentY + 1];
   }, []);
 
-  const fetchData = async (showLoader = false) => {
+  const fetchData = useCallback(() => {
     if (!userId) return;
-    if (showLoader) setLoading(true);
 
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ""}/api/rice/member-summary?userId=${userId}&month=${month}&year=${year}`
-      );
-      const resData = await res.json();
-      if (resData.success) {
-        setData(resData);
-      } else {
-        toast.error(resData.message || "Failed to load rice details");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Error connecting to server");
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || ""}/api/rice/member-summary?userId=${userId}&month=${month}&year=${year}`
+    )
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.success) {
+          setData(resData);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(`user_rice_summary_${userId}_${month}_${year}`, JSON.stringify(resData));
+          }
+        } else {
+          toast.error(resData.message || "Failed to load rice details");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [userId, month, year]);
 
   useEffect(() => {
-    if (userId) fetchData(true);
-  }, [userId, month, year]);
+    if (userId) fetchData();
+  }, [userId, month, year, fetchData]);
 
   const unit = data.config.riceUnitName || "Unit";
   const remaining = data.summary.remaining || 0;

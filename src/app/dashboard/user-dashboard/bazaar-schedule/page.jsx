@@ -1,41 +1,53 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
-import { Calendar as CalendarIcon, Clock, AlertCircle, ShoppingBag, Sparkles, Users } from "lucide-react";
-import PageLoader from "@/components/ui/PageLoader";
+import { Calendar as CalendarIcon, Clock, AlertCircle, ShoppingBag, Sparkles } from "lucide-react";
 import { getBDDateStr } from "@/lib/date-utils";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function UserBazaarSchedulePage() {
-  const { t, lang } = useTranslation();
+  const { lang } = useTranslation();
   const isBn = lang === "bn";
 
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
-  const [schedules, setSchedules] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [schedules, setSchedules] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`user_bazaar_schedules_${userId}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => schedules.length === 0);
 
-  const loadSchedules = useCallback(async () => {
+  const loadSchedules = useCallback(() => {
     if (!userId) return;
 
-    try {
-      const now = new Date();
-      const res = await fetch(
-        `${API_BASE}/api/bazaar-schedules?userId=${userId}&month=${now.getMonth() + 1}&year=${now.getFullYear()}`
-      );
-      const data = await res.json();
-      if (data.success) {
-        setSchedules(data.data || []);
-      }
-    } catch (err) {
-      console.error("Error loading user bazaar schedule:", err);
-    } finally {
-      setLoading(false);
-    }
+    const now = new Date();
+    fetch(`${API_BASE}/api/bazaar-schedules?userId=${userId}&month=${now.getMonth() + 1}&year=${now.getFullYear()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setSchedules(data.data);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(`user_bazaar_schedules_${userId}`, JSON.stringify(data.data));
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading user bazaar schedule:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [userId]);
 
   useEffect(() => {
@@ -52,7 +64,25 @@ export default function UserBazaarSchedulePage() {
     return isUserAssigned && s.dateStr >= todayStr;
   });
 
-  if (loading) return <PageLoader text={isBn ? "আপনার বাজার রুটিন লোড হচ্ছে..." : "Loading bazaar schedule..."} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 animate-pulse">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 space-y-3">
+            <div className="h-4 w-32 bg-orange-100 dark:bg-orange-950/40 rounded-full" />
+            <div className="h-7 w-64 bg-gray-200 dark:bg-slate-800 rounded-xl" />
+            <div className="h-4 w-80 bg-gray-100 dark:bg-slate-800/60 rounded-lg" />
+          </div>
+          <div className="h-36 rounded-3xl bg-gradient-to-r from-orange-200/50 via-amber-200/40 to-orange-200/50 dark:from-slate-800 dark:to-slate-900" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 text-gray-900 dark:text-slate-100">
@@ -112,7 +142,7 @@ export default function UserBazaarSchedulePage() {
 
                 {nextDuty.note && (
                   <p className="text-xs text-orange-200 italic mt-1">
-                    "{nextDuty.note}"
+                    &ldquo;{nextDuty.note}&rdquo;
                   </p>
                 )}
               </div>

@@ -434,10 +434,24 @@ export default function UserOverviewPage() {
         )}
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-2xl bg-[#1B2A26]/10" />
-            ))}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {["Total Deposit", "Total Bazaar", "Total Meals", "Meal Rate"].map((label, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</p>
+                  <div className="h-6 w-24 rounded bg-gray-200 dark:bg-slate-700 animate-pulse mt-1" />
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1B2A26]/10 dark:border-slate-800 pb-4">
+              <p className="font-[family-name:var(--font-display)] text-lg font-semibold">Member Summary</p>
+              <div className="rounded-xl bg-[#ff6900] px-3.5 py-2 text-xs font-semibold text-white opacity-80">
+                📄 Download PDF
+              </div>
+            </div>
           </div>
         ) : data ? (
           <>

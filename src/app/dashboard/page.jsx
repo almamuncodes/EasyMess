@@ -8,6 +8,7 @@ import { useTranslation } from "@/lib/useTranslation";
 
 
 import PageLoader from '@/components/ui/PageLoader';
+import DashboardOverviewSkeleton from '@/components/ui/DashboardOverviewSkeleton';
 
 const Page = () => {
   const user = GetUser();
@@ -80,7 +81,7 @@ const Page = () => {
   }, [userId, router]);
 
   if (loading) {
-    return <PageLoader text={t("checkingAccess")} />;
+    return <DashboardOverviewSkeleton />;
   }
 
   if (!role) {

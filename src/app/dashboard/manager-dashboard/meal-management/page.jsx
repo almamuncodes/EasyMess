@@ -25,6 +25,18 @@ import {
 import { useTranslation } from "@/lib/useTranslation";
 import { getBDDateStr } from "@/lib/date-utils";
 
+const getCachedMeals = (uId, d) => {
+  if (typeof window === "undefined" || !uId) return null;
+  try {
+    const raw = sessionStorage.getItem(`manager_meals_${uId}_${d}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.members?.length ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function MealManagementPage() {
   const user = GetUser();
   const userId = user?.user?.id;
@@ -32,12 +44,29 @@ export default function MealManagementPage() {
 
   const [date, setDate] = useState(() => getBDDateStr());
   const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
 
-  const [data, setData] = useState({
-    summary: { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 },
-    members: [],
+  const [data, setData] = useState(() => {
+    if (typeof window !== "undefined") {
+      const d = getBDDateStr();
+      const uId = userId || sessionStorage.getItem("user_id") || sessionStorage.getItem("auth_user_id");
+      const cached = getCachedMeals(uId, d);
+      if (cached) return cached;
+    }
+    return {
+      summary: { breakfast: 0, lunch: 0, dinner: 0, guestMeal: 0 },
+      members: [],
+    };
+  });
+
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const d = getBDDateStr();
+      const uId = userId || sessionStorage.getItem("user_id") || sessionStorage.getItem("auth_user_id");
+      const cached = getCachedMeals(uId, d);
+      if (cached) return false;
+    }
+    return true;
   });
 
   const [mealWeights, setMealWeights] = useState({
@@ -98,6 +127,7 @@ export default function MealManagementPage() {
     setData(updatedData);
     if (typeof window !== "undefined" && userId) {
       sessionStorage.setItem(`manager_meals_${userId}_${targetDate}`, JSON.stringify(updatedData));
+      sessionStorage.setItem("user_id", userId);
     }
   }, [userId]);
 
@@ -126,6 +156,7 @@ export default function MealManagementPage() {
 
   useEffect(() => {
     if (!userId) return;
+    sessionStorage.setItem("user_id", userId);
     let ignore = false;
 
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/manager/meals?userId=${userId}&date=${date}`)
@@ -136,7 +167,10 @@ export default function MealManagementPage() {
         if (result.success) {
           processMealResults(result, date);
         } else {
-          toast.error(result.message || "Failed to load meal data");
+          const cached = getCachedMeals(userId, date);
+          if (!cached) {
+            toast.error(result.message || "Failed to load meal data");
+          }
         }
       })
       .catch((err) => {
@@ -178,24 +212,59 @@ export default function MealManagementPage() {
       return;
     }
     if (!userId) return;
-    const cacheKey = `manager_meals_${userId}_${date}`;
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem(cacheKey);
-    }
-
     const newStatus = !member[mealType];
     const updatedMember = {
       ...member,
       [mealType]: newStatus,
     };
 
-    // Optimistic UI update
-    setData((prev) => ({
-      ...prev,
-      members: prev.members.map((m) =>
+    // Optimistic UI update and cache update
+    setData((prev) => {
+      const nextMembers = prev.members.map((m) =>
         m.userId === member.userId ? updatedMember : m
-      ),
-    }));
+      );
+      const selectedDate = new Date(date);
+      selectedDate.setUTCHours(0, 0, 0, 0);
+
+      const totalBreakfast = nextMembers.reduce((sum, m) => {
+        const joinDate = new Date(m.createdAt);
+        joinDate.setUTCHours(0, 0, 0, 0);
+        return joinDate <= selectedDate ? sum + (m.breakfast ? 1 : 0) + (m.guestBreakfast || 0) : sum;
+      }, 0);
+
+      const totalLunch = nextMembers.reduce((sum, m) => {
+        const joinDate = new Date(m.createdAt);
+        joinDate.setUTCHours(0, 0, 0, 0);
+        return joinDate <= selectedDate ? sum + (m.lunch ? 1 : 0) + (m.guestLunch || 0) : sum;
+      }, 0);
+
+      const totalDinner = nextMembers.reduce((sum, m) => {
+        const joinDate = new Date(m.createdAt);
+        joinDate.setUTCHours(0, 0, 0, 0);
+        return joinDate <= selectedDate ? sum + (m.dinner ? 1 : 0) + (m.guestDinner || 0) : sum;
+      }, 0);
+
+      const totalGuest = nextMembers.reduce((sum, m) => {
+        const joinDate = new Date(m.createdAt);
+        joinDate.setUTCHours(0, 0, 0, 0);
+        return joinDate <= selectedDate ? sum + (m.guestBreakfast + m.guestLunch + m.guestDinner) : sum;
+      }, 0);
+
+      const updated = {
+        summary: {
+          breakfast: totalBreakfast,
+          lunch: totalLunch,
+          dinner: totalDinner,
+          guestMeal: totalGuest,
+        },
+        members: nextMembers,
+      };
+
+      if (typeof window !== "undefined" && userId) {
+        sessionStorage.setItem(`manager_meals_${userId}_${date}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
 
     setSavingId(`${member.userId}-${mealType}`);
 
@@ -316,7 +385,17 @@ export default function MealManagementPage() {
             <input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setDate(newDate);
+                const cached = getCachedMeals(userId, newDate);
+                if (cached) {
+                  setData(cached);
+                  setLoading(false);
+                } else {
+                  setLoading(true);
+                }
+              }}
               className="pl-10 pr-4 py-2 bg-white/50 dark:bg-slate-800/60 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition backdrop-blur-sm"
             />
           </div>

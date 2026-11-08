@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import {
   Calendar as CalendarIcon,
@@ -24,20 +24,45 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 import { getBDDateStr } from "@/lib/date-utils";
 
 export default function ManagerBazaarSchedulePage() {
-  const { t, lang } = useTranslation();
+  const { lang } = useTranslation();
   const isBn = lang === "bn";
 
-  const user = GetUser();
-  const managerId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const managerId = session?.user?.id;
 
   const [date, setDate] = useState(() => getBDDateStr());
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [note, setNote] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [members, setMembers] = useState([]);
-  const [schedules, setSchedules] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [members, setMembers] = useState(() => {
+    if (typeof window !== "undefined" && managerId) {
+      const cached = sessionStorage.getItem(`manager_members_${managerId}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const now = new Date();
+  const scheduleMonthKey = `${now.getMonth() + 1}_${now.getFullYear()}`;
+
+  const [schedules, setSchedules] = useState(() => {
+    if (typeof window !== "undefined" && managerId) {
+      const cached = sessionStorage.getItem(`manager_bazaar_schedules_${managerId}_${scheduleMonthKey}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const [loading, setLoading] = useState(() => schedules.length === 0);
   const [submitting, setSubmitting] = useState(false);
 
   // Custom Delete Modal State
@@ -49,33 +74,45 @@ export default function ManagerBazaarSchedulePage() {
     isDeleting: false,
   });
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(() => {
     if (!managerId) return;
 
-    try {
-      // 1. Fetch mess members
-      const memRes = await fetch(`${API_BASE}/api/manager/meals?userId=${managerId}&date=${date}`);
-      const memData = await memRes.json();
-      if (memData.success) {
-        setMembers(memData.members || []);
-      }
+    // 1. Fetch mess members
+    fetch(`${API_BASE}/api/manager/meals?userId=${managerId}&date=${date}`)
+      .then((res) => res.json())
+      .then((memData) => {
+        if (memData.success && memData.members) {
+          setMembers(memData.members);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(`manager_members_${managerId}`, JSON.stringify(memData.members));
+          }
+        }
+      })
+      .catch(() => {});
 
-      // 2. Fetch bazaar duty schedules
-      const now = new Date(date);
-      const schRes = await fetch(
-        `${API_BASE}/api/bazaar-schedules?userId=${managerId}&month=${now.getMonth() + 1}&year=${now.getFullYear()}`
-      );
-      const schData = await schRes.json();
-      if (schData.success) {
-        setSchedules(schData.data || []);
-      }
-    } catch (err) {
-      console.error("Error loading bazaar schedule data:", err);
-      toast.error(isBn ? "ডাটা লোড করতে ব্যর্থ হয়েছে" : "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }, [managerId, date, isBn]);
+    // 2. Fetch bazaar duty schedules
+    const targetDate = new Date(date);
+    const m = targetDate.getMonth() + 1;
+    const y = targetDate.getFullYear();
+    const cacheKey = `manager_bazaar_schedules_${managerId}_${m}_${y}`;
+
+    fetch(`${API_BASE}/api/bazaar-schedules?userId=${managerId}&month=${m}&year=${y}`)
+      .then((res) => res.json())
+      .then((schData) => {
+        if (schData.success && schData.data) {
+          setSchedules(schData.data);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(cacheKey, JSON.stringify(schData.data));
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading bazaar schedule data:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [managerId, date]);
 
   useEffect(() => {
     loadData();
@@ -192,7 +229,32 @@ export default function ManagerBazaarSchedulePage() {
     });
   }, [schedules, searchQuery]);
 
-  if (loading) return <PageLoader text={isBn ? "বাজারের রুটিন লোড হচ্ছে..." : "Loading bazaar schedule..."} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 animate-pulse">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 space-y-3">
+            <div className="h-4 w-32 bg-orange-100 dark:bg-orange-950/40 rounded-full" />
+            <div className="h-7 w-64 bg-gray-200 dark:bg-slate-800 rounded-xl" />
+            <div className="h-4 w-80 bg-gray-100 dark:bg-slate-800/60 rounded-lg" />
+          </div>
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 space-y-4">
+            <div className="h-5 w-48 bg-gray-200 dark:bg-slate-800 rounded-lg" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="h-11 bg-gray-100 dark:bg-slate-800 rounded-xl" />
+              <div className="h-11 bg-gray-100 dark:bg-slate-800 rounded-xl" />
+            </div>
+            <div className="h-24 bg-gray-50 dark:bg-slate-800/40 rounded-2xl" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 text-gray-900 dark:text-slate-100">

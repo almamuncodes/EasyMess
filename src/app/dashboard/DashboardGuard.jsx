@@ -8,6 +8,7 @@ import Sidebar from "./DashboardSideBar";
 import { useTranslation } from "@/lib/useTranslation";
 import { authClient } from "@/lib/auth-client";
 import PageLoader from "@/components/ui/PageLoader";
+import DashboardOverviewSkeleton from "@/components/ui/DashboardOverviewSkeleton";
 import BroadcastModalListener from "@/components/BroadcastModalListener";
 
 export default function DashboardGuard({ children }) {
@@ -163,8 +164,8 @@ export default function DashboardGuard({ children }) {
         <aside className="w-full md:w-64 shrink-0 bg-white dark:bg-slate-900">
           <Sidebar />
         </aside>
-        <main className="flex-1 p-4 md:p-6 bg-gray-50 dark:bg-slate-950 flex items-center justify-center min-h-[60vh]">
-          <PageLoader text={t("checkingAccess")} fullScreen={false} />
+        <main className="flex-1 p-4 md:p-6 bg-gray-50 dark:bg-slate-950">
+          <DashboardOverviewSkeleton />
         </main>
       </div>
     );

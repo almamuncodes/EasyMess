@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import {
   History,
@@ -20,29 +20,44 @@ import PageLoader from "@/components/ui/PageLoader";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default function ActivityLogPage() {
-  const { t, lang } = useTranslation();
+  const { lang } = useTranslation();
   const isBn = lang === "bn";
 
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [logs, setLogs] = useState(() => {
+    if (typeof window !== "undefined" && userId) {
+      const cached = sessionStorage.getItem(`activity_logs_${userId}`);
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => logs.length === 0);
 
-  const loadLogs = useCallback(async () => {
+  const loadLogs = useCallback(() => {
     if (!userId) return;
 
-    try {
-      const res = await fetch(`${API_BASE}/api/activity-logs?userId=${userId}`);
-      const data = await res.json();
-      if (data.success) {
-        setLogs(data.data || []);
-      }
-    } catch (err) {
-      console.error("Error loading activity logs:", err);
-    } finally {
-      setLoading(false);
-    }
+    fetch(`${API_BASE}/api/activity-logs?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setLogs(data.data);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(`activity_logs_${userId}`, JSON.stringify(data.data));
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading activity logs:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [userId]);
 
   useEffect(() => {
@@ -110,7 +125,24 @@ export default function ActivityLogPage() {
     };
   };
 
-  if (loading) return <PageLoader text={isBn ? "মেসের অ্যাক্টিভিটি লগ লোড হচ্ছে..." : "Loading activity log..."} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 animate-pulse">
+        <div className="max-w-4xl mx-auto space-y-5 sm:space-y-6">
+          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 space-y-3">
+            <div className="h-4 w-36 bg-orange-100 dark:bg-orange-950/40 rounded-full" />
+            <div className="h-7 w-60 bg-gray-200 dark:bg-slate-800 rounded-xl" />
+            <div className="h-4 w-80 bg-gray-100 dark:bg-slate-800/60 rounded-lg" />
+          </div>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-20 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-orange-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-3 sm:p-6 lg:p-8 text-gray-900 dark:text-slate-100">

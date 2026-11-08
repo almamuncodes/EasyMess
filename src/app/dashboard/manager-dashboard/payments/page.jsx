@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, memo } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef, memo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Fraunces,
@@ -416,6 +416,7 @@ const MemberLedgerRow = memo(function MemberLedgerRow({
    এড / এডিট মোডাল
    ============================================================ */
 function DepositModal({ mode, initial, onClose, onSave, selectedMonth }) {
+  const noteInputRef = useRef(null);
   const [amount, setAmount] = useState(initial?.amount ?? "");
   const [paymentMethod, setPaymentMethod] = useState(
     initial?.paymentMethod ?? "Cash",
@@ -438,7 +439,7 @@ function DepositModal({ mode, initial, onClose, onSave, selectedMonth }) {
   const [error, setError] = useState("");
 
   const submit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!amount || Number(amount) <= 0) {
       setError("Please enter a valid amount");
       return;
@@ -463,42 +464,76 @@ function DepositModal({ mode, initial, onClose, onSave, selectedMonth }) {
       <form
         onSubmit={submit}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-2xl overflow-hidden bg-[#F7F6EE] dark:bg-slate-900 border border-[#DCDCC9] dark:border-slate-800 text-neutral-900 dark:text-slate-100"
+        className="w-full max-w-sm rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 text-neutral-900 dark:text-slate-100 shadow-xl"
       >
-       
-        <div className="px-6 py-5">
-          <h2
-           
-            className="text-xl font-semibold mb-4"
-          >
-            {mode === "edit" ? "Edit Deposit" : "Add New Deposit"}
-          </h2>
+        <div className="px-5 py-5 sm:px-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-white">
+              {mode === "edit" ? "Edit Deposit" : "Add New Deposit"}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-7 h-7 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-slate-200 hover:bg-neutral-100 dark:hover:bg-slate-800 flex items-center justify-center transition cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
 
           {error && (
-            <p
-              className="text-sm mb-3 px-3 py-2 rounded-lg"
-              style={{ background: "#FCE7EF", color: "#C23E73" }}
-            >
+            <p className="text-xs sm:text-sm mb-3.5 px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/40 font-medium">
               {error}
             </p>
           )}
 
-          <label className="block text-xs font-medium mb-1" style={{ color: "#5B6A5F" }}>
+          <label className="block text-xs font-bold mb-1.5 text-neutral-600 dark:text-slate-300">
             Amount (৳)
           </label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full mb-3 px-3 py-2 rounded-lg outline-none text-sm tabular-nums bg-white dark:bg-slate-950 text-neutral-900 dark:text-slate-100 border border-[#DCDCC9] dark:border-slate-800"
-            placeholder="2000"
-            autoFocus
-          />
+          <div className="relative mb-2">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-neutral-400 dark:text-slate-500 pointer-events-none">
+              ৳
+            </span>
+            <input
+              type="number"
+              inputMode="decimal"
+              enterKeyHint="next"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  noteInputRef.current?.focus();
+                  noteInputRef.current?.select?.();
+                }
+              }}
+              className="w-full pl-8 pr-3 py-2.5 rounded-xl outline-none text-base font-bold tabular-nums bg-neutral-50 dark:bg-slate-950 text-neutral-900 dark:text-slate-100 border border-neutral-200 dark:border-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10"
+              placeholder="2000"
+              autoFocus
+            />
+          </div>
 
-          <label className="block text-xs font-medium mb-1" style={{ color: "#5B6A5F" }}>
+          {/* Quick preset amount chips */}
+          <div className="flex items-center gap-1.5 mb-3.5 overflow-x-auto pb-1 scrollbar-hide">
+            {[500, 1000, 1500, 2000, 3000].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setAmount(String(preset))}
+                className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition active:scale-95 cursor-pointer border ${
+                  Number(amount) === preset
+                    ? "bg-orange-500 text-white border-orange-500 shadow-xs"
+                    : "bg-neutral-50 dark:bg-slate-800 text-neutral-700 dark:text-slate-300 border-neutral-200 dark:border-slate-700 hover:bg-neutral-100 dark:hover:bg-slate-700"
+                }`}
+              >
+                ৳{preset}
+              </button>
+            ))}
+          </div>
+
+          <label className="block text-xs font-bold mb-1.5 text-neutral-600 dark:text-slate-300">
             Payment Method
           </label>
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-1.5 sm:gap-2 mb-3.5">
             {Object.keys(PAYMENT_STYLES).map((key) => {
               const style = PAYMENT_STYLES[key];
               const active = paymentMethod === key;
@@ -507,11 +542,15 @@ function DepositModal({ mode, initial, onClose, onSave, selectedMonth }) {
                   type="button"
                   key={key}
                   onClick={() => setPaymentMethod(key)}
-                  className="flex-1 text-xs font-semibold py-2 rounded-lg transition-all"
+                  className={`flex-1 text-xs font-bold py-2 rounded-xl transition-all cursor-pointer border ${
+                    active
+                      ? "ring-2 ring-orange-500/30 font-extrabold shadow-xs"
+                      : "bg-neutral-50 dark:bg-slate-800/60 border-neutral-200 dark:border-slate-700 text-neutral-600 dark:text-slate-400"
+                  }`}
                   style={{
-                    background: active ? style.bg : "#FFFFFF",
-                    color: active ? style.text : "#8A8A78",
-                    border: `1px solid ${active ? style.ring : "#DCDCC9"}`,
+                    background: active ? style.bg : undefined,
+                    color: active ? style.text : undefined,
+                    borderColor: active ? style.ring : undefined,
                   }}
                 >
                   {style.label}
@@ -520,49 +559,52 @@ function DepositModal({ mode, initial, onClose, onSave, selectedMonth }) {
             })}
           </div>
 
-          <label className="block text-xs font-medium mb-1" style={{ color: "#5B6A5F" }}>
+          <label className="block text-xs font-bold mb-1 text-neutral-600 dark:text-slate-300">
             Date
           </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full mb-3 px-3 py-2 rounded-lg outline-none text-sm"
-            style={{ background: "#FFFFFF", border: "1px solid #DCDCC9" }}
+            className="w-full mb-3.5 px-3 py-2 rounded-xl outline-none text-xs sm:text-sm bg-neutral-50 dark:bg-slate-950 text-neutral-900 dark:text-slate-100 border border-neutral-200 dark:border-slate-800 focus:border-orange-500 font-medium"
           />
 
-          {/* Note field — এখন character limit + live counter সহ */}
-          <label className="flex items-center justify-between text-xs font-medium mb-1" style={{ color: "#5B6A5F" }}>
+          {/* Note field with live counter */}
+          <label className="flex items-center justify-between text-xs font-bold mb-1 text-neutral-600 dark:text-slate-300">
             <span>Note (Optional)</span>
-            <span style={{ color: note.length >= NOTE_MAX_LENGTH ? "#C23E73" : "#A3A3A3" }}>
+            <span className={note.length >= NOTE_MAX_LENGTH ? "text-rose-500 font-bold" : "text-neutral-400 text-[11px]"}>
               {note.length}/{NOTE_MAX_LENGTH}
             </span>
           </label>
           <input
+            ref={noteInputRef}
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                submit(e);
+              }
+            }}
+            enterKeyHint="done"
             maxLength={NOTE_MAX_LENGTH}
-            className="w-full mb-5 px-3 py-2 rounded-lg outline-none text-sm"
-            style={{ background: "#FFFFFF", border: "1px solid #DCDCC9" }}
-            placeholder="July month's installment"
+            className="w-full mb-5 px-3 py-2 rounded-xl outline-none text-xs sm:text-sm bg-neutral-50 dark:bg-slate-950 text-neutral-900 dark:text-slate-100 border border-neutral-200 dark:border-slate-800 focus:border-orange-500"
+            placeholder="e.g. July month's installment"
           />
 
           <div className="flex gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 rounded-lg text-sm font-medium"
-              style={{ background: "#EDEDDF", color: "#5B6A5F" }}
+              className="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-neutral-100 hover:bg-neutral-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-neutral-700 dark:text-slate-300 transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2 rounded-lg text-sm font-medium disabled:opacity-60"
-              style={{ background: "#ff6900", color: "#F1EFE2" }}
+              className="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20 active:scale-[0.98] transition cursor-pointer disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving..." : "Save Deposit"}
             </button>
           </div>
         </div>
