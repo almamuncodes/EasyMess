@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Image from "next/image";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-utils";
 import {
@@ -100,8 +100,8 @@ const COMMON_ITEMS = [
 ];
 
 export default function ManagerBazaarPage() {
-  const user = GetUser();
-  const managerId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const managerId = session?.user?.id;
   const { lang } = useTranslation();
   const isBn = lang === "bn";
 

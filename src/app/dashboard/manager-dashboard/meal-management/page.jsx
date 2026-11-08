@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
 export const dynamic = "force-dynamic";
@@ -38,8 +38,8 @@ const getCachedMeals = (uId, d) => {
 };
 
 export default function MealManagementPage() {
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const { t, lang } = useTranslation();
 
   const [date, setDate] = useState(() => getBDDateStr());

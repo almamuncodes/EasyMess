@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import {
   Boxes,
@@ -58,8 +58,8 @@ function formatDate(dateStr) {
 }
 
 export default function UserRiceManagementPage() {
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const { t, lang } = useTranslation();
   const isBn = lang === "bn";
 

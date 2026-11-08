@@ -1,6 +1,6 @@
 "use client";
 
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useState, useEffect, useCallback } from "react";
 import { ChevronDown, Paperclip, X, ShoppingCart, Calendar } from "lucide-react";
 import { useTranslation } from "@/lib/useTranslation";
@@ -28,8 +28,8 @@ function formatDate(d, isBn = false) {
 }
 
 export default function BazaarHistory() {
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const { lang } = useTranslation();
   const isBn = lang === "bn";
 

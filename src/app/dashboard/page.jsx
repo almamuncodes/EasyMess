@@ -1,9 +1,9 @@
 'use client';
-import { GetUser } from '@/components/action/action';
+import { authClient } from '@/lib/auth-client';
 import { AlertTriangle, Home, Loader2, UtensilsCrossed } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from "@/lib/useTranslation";
 
 
@@ -11,15 +11,15 @@ import PageLoader from '@/components/ui/PageLoader';
 import DashboardOverviewSkeleton from '@/components/ui/DashboardOverviewSkeleton';
 
 const Page = () => {
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session, isPending } = authClient.useSession();
+  const userId = session?.user?.id;
   const router = useRouter();
   const { t } = useTranslation();
 
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const redirectByRole = (r) => {
+  const redirectByRole = useCallback((r) => {
     if (r === "member") {
       router.replace("/dashboard/user-dashboard/overview");
     } else if (r === "manager") {
@@ -27,13 +27,13 @@ const Page = () => {
     } else if (r === "admin") {
       router.replace("/dashboard/admin-dashboard/overview");
     }
-  };
+  }, [router]);
 
   useEffect(() => {
-    if (!user) {
+    if (!isPending && !session?.user) {
       router.push("/signin");
     }
-  }, [user, router]);
+  }, [session, isPending, router]);
 
   useEffect(() => {
     if (role) {
@@ -78,7 +78,7 @@ const Page = () => {
     };
 
     fetchUserRole();
-  }, [userId, router]);
+  }, [userId, redirectByRole, role]);
 
   if (loading) {
     return <DashboardOverviewSkeleton />;

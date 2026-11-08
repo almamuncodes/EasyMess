@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import MemberAvatar from "@/components/ui/MemberAvatar";
 import {
@@ -94,8 +94,8 @@ const getCachedRice = (uId, d) => {
 };
 
 export default function ManagerRiceManagementPage() {
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
   const { lang } = useTranslation();
   const isBn = lang === "bn";
 

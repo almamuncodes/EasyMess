@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import {
   Sparkles,
@@ -98,9 +98,9 @@ export default function UserOverviewPage() {
   const { t, lang } = useTranslation();
   const isBn = lang === "bn";
 
-  const user = GetUser();
-  const userId = user?.user?.id;
-  const role = user?.user?.role || "member";
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
+  const role = session?.user?.role || "member";
 
   const [month, setMonth] = useState(() => getBDNow().month);
   const [year, setYear] = useState(() => getBDNow().year);
@@ -118,6 +118,10 @@ export default function UserOverviewPage() {
     return null;
   });
   const [loading, setLoading] = useState(() => !data);
+  const dataRef = useRef(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -161,7 +165,7 @@ export default function UserOverviewPage() {
       return [...list].sort((a, b) => (a.balance || 0) - (b.balance || 0));
     }
     return list;
-  }, [data?.members, searchQuery, sortBy]);
+  }, [data, searchQuery, sortBy]);
 
   // Fetch member images from mess meals API to enrich overview members & sync 7-day cache
   useEffect(() => {
@@ -194,15 +198,24 @@ export default function UserOverviewPage() {
       const cached = sessionStorage.getItem(key);
       if (cached) {
         try {
-          setData(JSON.parse(cached));
-          setLoading(false);
+          const parsed = JSON.parse(cached);
+          Promise.resolve().then(() => {
+            if (!cancelled) {
+              setData(parsed);
+              setLoading(false);
+            }
+          });
         } catch (e) {}
       } else {
-        if (!data) setLoading(true);
+        Promise.resolve().then(() => {
+          if (!cancelled && !dataRef.current) setLoading(true);
+        });
       }
     }
 
-    setError("");
+    Promise.resolve().then(() => {
+      if (!cancelled) setError("");
+    });
 
     fetchOverview({ userId, month, year })
       .then((res) => {
@@ -214,7 +227,7 @@ export default function UserOverviewPage() {
         }
       })
       .catch((err) => {
-        if (!cancelled && !data) setError(err.message || "Failed to load overview data");
+        if (!cancelled && !dataRef.current) setError(err.message || "Failed to load overview data");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Fraunces, Inter, IBM_Plex_Mono } from "next/font/google";
 import { fetchOverview } from "@/components/action/action2";
-import { GetUser } from "@/components/action/action";
+import { authClient } from "@/lib/auth-client";
 import { useTranslation } from "@/lib/useTranslation";
 import {
   Sparkles,
@@ -125,8 +125,8 @@ export default function OverviewDashboard({ role }) {
   const [year, setYear] = useState(() => getBDNow().year);
   const [showPredictor, setShowPredictor] = useState(false);
 
-  const user = GetUser();
-  const userId = user?.user?.id;
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
 
   const [data, setData] = useState(() => {
     if (typeof window !== "undefined" && userId) {
@@ -138,6 +138,10 @@ export default function OverviewDashboard({ role }) {
     return null;
   });
   const [loading, setLoading] = useState(() => !data);
+  const dataRef = useRef(data);
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -181,7 +185,7 @@ export default function OverviewDashboard({ role }) {
       return [...list].sort((a, b) => (a.balance || 0) - (b.balance || 0));
     }
     return list;
-  }, [data?.members, searchQuery, sortBy]);
+  }, [data, searchQuery, sortBy]);
 
   // Fetch member images from mess meals API to enrich overview members & sync 7-day cache
   useEffect(() => {
@@ -215,15 +219,23 @@ export default function OverviewDashboard({ role }) {
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
-          setData(parsed);
-          setLoading(false);
+          Promise.resolve().then(() => {
+            if (!cancelled) {
+              setData(parsed);
+              setLoading(false);
+            }
+          });
         } catch (e) { }
       } else {
-        if (!data) setLoading(true);
+        Promise.resolve().then(() => {
+          if (!cancelled && !dataRef.current) setLoading(true);
+        });
       }
     }
 
-    setError("");
+    Promise.resolve().then(() => {
+      if (!cancelled) setError("");
+    });
 
     fetchOverview({ userId, month, year })
       .then((res) => {
@@ -235,7 +247,7 @@ export default function OverviewDashboard({ role }) {
         }
       })
       .catch((err) => {
-        if (!cancelled && !data) setError(err.message || "কিছু একটা ভুল হয়েছে");
+        if (!cancelled && !dataRef.current) setError(err.message || "কিছু একটা ভুল হয়েছে");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
